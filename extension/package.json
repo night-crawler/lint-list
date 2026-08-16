@@ -1,0 +1,9 @@
+{
+	"name": "lint-audit-extension",
+	"version": "0.1.0",
+	"type": "module",
+	"description": "omp extension: seeded random rule audit with parallel sub-agent evaluation and apply phase",
+	"omp": {
+		"extensions": ["./index.ts"]
+	}
+}
