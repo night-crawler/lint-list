@@ -1,0 +1,13 @@
+{
+  "id": 688,
+  "title": "Opaque Multi-Environment Monolith Config Files",
+  "category": "Configuration Complexity",
+  "damaged_code": "```yaml\n# app_config.yaml\ndevelopment:\n  db_host: \"localhost\"\nproduction:\n  db_host: \"10.0.0.5\" # Live in same file; typo here breaks production\n```",
+  "pattern": "Consolidating configurations for development, testing, staging, and production inside a single file parsed by all environments.",
+  "why_bad": "Exposes production topology details and keys to developers in local environments. It makes the configuration overly complex and ensures that a typo added during local development can bring down production.",
+  "detection": "A single configuration schema or file containing distinct keys representing active operational profiles or deployment tiers.",
+  "counterexample": "```yaml\n# config.yaml (only the schema structure; real properties are injected per environment)\ndb_host: \"${DB_HOST}\"\n```",
+  "fix": "Separate environment profiles into distinct physical files; load only the specific configuration matching the active execution container at runtime.",
+  "strength": "Strong",
+  "source": "[Pragmatic Programmers] Michael T. Nygard - *Release It!_ Design and Deploy Production-Ready Software* (2007, Pragmatic Bookshelf).pdf, Section 14.2."
+}

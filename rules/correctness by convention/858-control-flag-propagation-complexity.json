@@ -1,0 +1,13 @@
+{
+  "id": 858,
+  "title": "Control Flag Propagation Complexity",
+  "category": "Correctness By Convention",
+  "damaged_code": "```rust\n// Java-like\nboolean done = false;\nwhile (!done) {\n    if (condition) {\n        done = true; // BUG: Artificial state variable propagation\n    }\n}\n```",
+  "pattern": "Using an artificial boolean control flag (e.g., done) to control the flow and termination of a loop instead of early returns or breaks.",
+  "why_bad": "The control flag complicates the control flow and forces the developer to trace how the flag changes and propagates across all branching conditions, increasing cognitive load and bug probability.",
+  "detection": "A loop condition depends on a local boolean flag variable that is modified inside nested branch clauses of the loop body.",
+  "counterexample": "Using direct break or return statements to exit immediately once the termination condition is met.",
+  "fix": "Replace the control flag with a direct return or break statement to simplify the control flow: `if (condition) { return; }`.",
+  "strength": "Strong",
+  "source": "Martin Fowler, Refactoring, p. 483-484 [483-484]."
+}

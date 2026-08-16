@@ -1,0 +1,13 @@
+{
+  "id": 448,
+  "title": "Hazard Pointer Poisoning Avoidance Failure",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```c\nstruct node* traverse_list() {\n    struct node* curr = head;\n    while (curr) {\n        hp[thread_id] = curr;\n        // BUG: Fails to check if curr was deleted \n        // before the hazard pointer was registered!\n        curr = curr->next; \n    }\n}\n```",
+  "pattern": "Reading a node pointer, registering it as a hazard pointer, and then traversing to its successor without verifying that the node is still valid.",
+  "why_bad": "A concurrent updater could remove and free the node in the split-second gap *before* the hazard pointer was registered. If this occurs, the traversal pointer `curr` becomes invalid, and accessing `curr->next` results in memory corruption.",
+  "detection": "A hazard-pointer registration block that does not re-read the active head/parent pointer to verify the node is still linked in the data structure.",
+  "counterexample": "Verifying the node is still live after registering the hazard pointer.",
+  "fix": "Re-verify the node's validity immediately after registering the hazard pointer.\n```c\nstruct node* curr = head;\nwhile (curr) {\n    hp[thread_id] = curr;\n    if (head != curr) { // Double check validity\n        curr = head; // Restart traversal\n        continue;\n    }\n    curr = curr->next;\n}\n```",
+  "strength": "Strong",
+  "source": "Paul McKenney 9.5 (p. 143)"
+}

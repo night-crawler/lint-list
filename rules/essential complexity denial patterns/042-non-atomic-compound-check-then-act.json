@@ -1,0 +1,13 @@
+{
+  "id": 42,
+  "title": "Non-Atomic Compound Check-Then-Act",
+  "category": "Essential Complexity Denial Patterns",
+  "damaged_code": "```rust\n// Checking state and acting, expecting no other thread to intervene\nif !cache.contains_key(&key) {\n    cache.insert(key, fetch_value());\n}\n```",
+  "pattern": "A sequence where a thread reads shared state to verify a condition, then performs a write based on that condition, without acquiring an exclusive lock across both operations.",
+  "why_bad": "Between the check phase and the act phase, another thread can interleave and modify the shared state, rendering the initial check invalid and causing race conditions or duplicate insertions [24:211].",
+  "detection": "A check-then-act sequence performed on concurrent/synchronized collections or shared variables that does not reside within a single atomic lock guard or atomic compare-and-swap loop [24:211].",
+  "counterexample": "```rust\nlet mut cache_guard = cache.lock().unwrap();\nif !cache_guard.contains_key(&key) {\n    cache_guard.insert(key, fetch_value());\n}\n```",
+  "fix": "Enclose the check-then-act sequence within a mutual exclusion lock to guarantee atomicity [24:211].",
+  "strength": "Strong",
+  "source": "*Clean Code* (Martin), Chapter 13 [24:211]; *Code Complete* (McConnell), Chapter 8 [28:211]."
+}

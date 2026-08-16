@@ -1,0 +1,13 @@
+{
+  "id": 46,
+  "title": "Ignoring Thread Interruption / Cancellation Tokens",
+  "category": "Essential Complexity Denial Patterns",
+  "damaged_code": "```rust\n// Background thread running indefinitely without checking shutdown status\nthread::spawn(move || {\n    loop {\n        do_heavy_work();\n        thread::sleep(Duration::from_secs(1));\n    }\n});\n```",
+  "pattern": "A worker thread or background task executing an infinite loop or blocking operation without querying cooperative cancellation or shutdown state.",
+  "why_bad": "It prevents clean service shutdowns. When the system attempts to redeploy or terminate, these threads hang, refusing to release resources or flush logs, forcing the OS to issue a violent SIGKILL that risks data corruption [24:208].",
+  "detection": "Spawned tasks/threads containing infinite loop constructs that lack parameter dependencies on atomic cancellation flags, select/abort blocks, or cancellation futures [24:208].",
+  "counterexample": "```rust\nthread::spawn(move || {\n    while !SHUTDOWN.load(Ordering::Relaxed) {\n        do_heavy_work();\n        thread::sleep(Duration::from_secs(1));\n    }\n});\n```",
+  "fix": "Inject a cooperative cancellation mechanism (atomic boolean shutdown flag or async select loop) into the loop header [24:208].",
+  "strength": "Strong",
+  "source": "*Clean Code* (Martin), Chapter 13: Shutting Down [24:208]."
+}

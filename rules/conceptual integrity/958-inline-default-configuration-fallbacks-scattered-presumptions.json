@@ -1,0 +1,13 @@
+{
+  "id": 958,
+  "title": "Inline Default Configuration Fallbacks (Scattered Presumptions)",
+  "category": "Conceptual Integrity",
+  "damaged_code": "```rust\n// Component A\nlet port = env::var(\"PORT\").unwrap_or_else(|_| \"8080\".to_string());\n// Component B\nlet port = config.get(\"port\").unwrap_or(9000); // Conflicting default!\n```",
+  "pattern": "Specifying default fallback values inline at various deep call sites rather than using a centralized registry.",
+  "why_bad": "It introduces conflicting defaults across subsystems, causing the application to behave differently depending on which code path is initialized first.",
+  "detection": "Identify raw string lookups with inline defaults for the same keys in different files.",
+  "counterexample": "Isolated, component-specific defaults that are not part of global system properties.",
+  "fix": "Define a single, centralized configuration struct with a unified `Default` implementation.",
+  "strength": "Strong",
+  "source": "*Clean Code* by Robert C. Martin (2008), p. 306."
+}

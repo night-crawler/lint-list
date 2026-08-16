@@ -1,0 +1,13 @@
+{
+  "id": 832,
+  "title": "In-memory Database Cargo Culting",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Moving an OLAP workload strictly to an in-memory database assuming instant queries\nlet db = VoltDB::connect().await?;\nlet complex_report = db.execute(\"SELECT ... WHERE date > '2023-01-01'\").await?;\n```",
+  "pattern": "Moving an analytical or data-intensive workload to an in-memory database under the assumption that RAM access inherently eliminates query performance bottlenecks.",
+  "why_bad": "The performance advantage of in-memory databases is not due to avoiding disk reads (as disk-based databases cache active blocks anyway), but avoiding the overhead of serialization. If queries trigger massive full table scans, performance remains poor.",
+  "detection": "Migrating to in-memory storage engines for complex, unindexed search queries or multi-million record aggregates.",
+  "counterexample": "In-memory key-value caches using direct key lookup indexes.",
+  "fix": "Ensure transactional indexes are configured, or use a column-oriented storage engine designed for bulk scans.",
+  "strength": "Contextual",
+  "source": "*Designing Data-Intensive Applications (Kleppmann), Chapter 3, p. 95 [925]*"
+}

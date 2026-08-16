@@ -1,0 +1,13 @@
+{
+  "id": 731,
+  "title": "Line-Count Optimization Fallacy (Multi-Statement Jamming)",
+  "category": "Cleverness Obscurity",
+  "damaged_code": "```rust\n// Rust\nfor i in 0..10 { a[i] = i; b[i] = i * 2; } // Jamming statements onto one line\n```",
+  "pattern": "Formatting multiple independent statements or complex loop bodies onto a single line to reduce the physical file line count.",
+  "why_bad": "It does not improve compilation speed or execution performance. However, it severely degrades readability, forces horizontal scrolling, obscures compiler error line numbers, and prevents line-oriented debuggers from stepping through individual actions.",
+  "detection": "A single line containing multiple semicolons separating distinct, mutating statements within a block.",
+  "counterexample": "Empty loop bodies or trivial helper mappings such as `fn empty() {}` or simple unit test assertions. `Context-dependent`.",
+  "fix": "Place each statement on its own line to maintain structural clarity.\n```rust\nfor i in 0..10 {\n    a[i] = i;\n    b[i] = i * 2;\n}\n```",
+  "strength": "Strong",
+  "source": "*Code Complete*, Chapter 25, \"Old Wives' Tales\" (p. 609-610) / *The Art of Readable Code*, Chapter 13."
+}

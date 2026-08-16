@@ -1,0 +1,13 @@
+{
+  "id": 472,
+  "title": "Denormalized State Updates in Separate Transactions",
+  "category": "Distributed Systems Fallacies",
+  "damaged_code": "```rust\n// Updating denormalized counter in a separate database transaction\nasync fn handle_new_email(db: &Database, email: Email) {\n    // Transaction 1: Insert the raw email\n    let mut tx1 = db.begin().await.unwrap();\n    tx1.execute(\"INSERT INTO emails (id, body) VALUES ($1, $2)\", &[&email.id, &email.body]).await.unwrap();\n    tx1.commit().await.unwrap();\n    \n    // BUG: If client crashes or network drops here, the unread count is permanently broken!\n    \n    // Transaction 2: Increment unread counter\n    let mut tx2 = db.begin().await.unwrap();\n    tx2.execute(\"UPDATE mailboxes SET unread = unread + 1 WHERE user_id = $1\", &[&email.user_id]).await.unwrap();\n    tx2.commit().await.unwrap();\n}\n```",
+  "pattern": "Writing primary records to a database table and updating a corresponding denormalized field or aggregate counter in a separate database connection transaction.",
+  "why_bad": "Without atomic enforcement spanning both updates, any crash, timeout, or query failure that occurs between the two transactions leaves the database in a permanently inconsistent state (e.g., an email exists but the unread counter is 0) [134, 135]. This compromises database integrity and forces developers to write complex, slow reconciliation scripts to clean up mismatched states [134, 135].",
+  "detection": "Identify consecutive database transaction blocks inside a single function where the first writes or deletes a record and the second updates a denormalized counter or balance related to that exact record.",
+  "counterexample": "```rust\nasync fn handle_new_email_safe(db: &Database, email: Email) {\n    // Perform both writes inside a single atomic transaction\n    let mut tx = db.begin().await.unwrap();\n    tx.execute(\"INSERT INTO emails (id, body) VALUES ($1, $2)\", &[&email.id, &email.body]).await.unwrap();\n    tx.execute(\"UPDATE mailboxes SET unread = unread + 1 WHERE user_id = $1\", &[&email.user_id]).await.unwrap();\n    tx.commit().await.unwrap();\n}\n```",
+  "fix": "Combine both writes into a single, atomic database transaction so they either both succeed or both fail together, maintaining strict internal consistency [134, 135].",
+  "strength": "Strong",
+  "source": "Martin Kleppmann, *Designing Data-Intensive Applications*, Chapter 7 (Acid - Atomicity) / passages [134, 135]."
+}

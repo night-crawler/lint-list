@@ -1,0 +1,13 @@
+{
+  "id": 527,
+  "title": "Unnecessary String Allocations for Enum Representation",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\nstruct Transaction {\n    status: String, // String representation: \"pending\", \"success\", \"failed\"\n}\n```",
+  "pattern": "Using raw heap-allocated strings (`String`) to represent state categories, flags, or finite enum tags instead of proper compiler-checked Rust `enum` types.",
+  "why_bad": "Comparing and allocating strings requires costly heap allocations, memory hashing, and pointer dereferencing on every status change or lookup. Enums are represented as small integers (usually 1 byte) and compared in a single CPU cycle with full compiler safety [317, 350].",
+  "detection": "Fields named `status`, `kind`, `category`, or `state` typed as `String`, where strings like `\"success\"`, `\"error\"`, `\"active\"` are passed or compared regularly.",
+  "counterexample": "The statuses are dynamic, user-configured strings loaded from an external file at runtime that cannot be known at compile-time. `Context-dependent`.",
+  "fix": "```rust\nenum Status {\n    Pending,\n    Success,\n    Failed,\n}\nstruct Transaction {\n    status: Status,\n}\n```",
+  "strength": "Strong",
+  "source": "*A Philosophy of Software Design*, Chapter 20 (p. 317); *Code Complete*, Section 25.3 (p. 350)."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 870,
+  "title": "Incompatible Layout Assumptions on Cast Newtypes",
+  "category": "Correctness By Convention",
+  "damaged_code": "```rust\n// Rust\nstruct A { x: i32 }\nstruct NewA(A); // Wrapper\nunsafe {\n    let ptr_new_a: *mut NewA = get_ptr();\n    let ptr_a = ptr_new_a as *mut A; // BUG: Incompatible raw cast layout!\n}\n```",
+  "pattern": "Directly casting pointer addresses between a wrapper struct and its single underlying type, assuming identical memory layouts without representation annotation.",
+  "why_bad": "Without representation attributes like `#[repr(transparent)]` or `#[repr(C)]`, the compiler does not guarantee that wrapper types share the same memory layout or alignment, causing unsafe raw pointer dereferences to read garbage or trigger segment faults.",
+  "detection": "An unsafe raw pointer cast is performed between a generic single-field tuple struct (newtype) and its inner field type without standard representation annotations.",
+  "counterexample": "Annotating the newtype with `#[repr(transparent)]` to guarantee identical layout and alignment.",
+  "fix": "Apply the `#[repr(transparent)]` annotation to the wrapper struct definition.",
+  "strength": "Strong",
+  "source": "Rust For Rustaceans, Chapter 3 (repr(transparent)) [408]."
+}

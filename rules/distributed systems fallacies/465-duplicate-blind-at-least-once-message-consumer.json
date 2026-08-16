@@ -1,0 +1,13 @@
+{
+  "id": 465,
+  "title": "Duplicate-Blind \"At-Least-Once\" Message Consumer",
+  "category": "Distributed Systems Fallacies",
+  "damaged_code": "```rust\n// Processing a message queue event without application-level deduplication\nasync fn handle_payment_event(event: PaymentEvent, db: &Database) {\n    // BUG: If this message is delivered more than once, the user is charged multiple times!\n    let mut account = db.find_account(event.user_id).await.unwrap();\n    account.balance -= event.amount;\n    db.save_account(account).await.unwrap();\n}\n```",
+  "pattern": "An event stream or message queue handler function that modifies state or triggers side-effects directly based on the received payload, without performing a check against a local transaction/idempotency log or sequence record.",
+  "why_bad": "Real-world message brokers (e.g., RabbitMQ, Kafka, SQS) provide at-least-once delivery semantics [38, 234]. Due to consumer crashes, transient network drops, or dropped ACKs, the broker regularly redelivers messages [198, 234, 235]. If the consumer does not explicitly deduplicate incoming events, duplicate delivery results in duplicate processing, permanently corrupting database values, inflating logs, and triggering duplicate side-effects (e.g., double billing) [113, 235, 236].",
+  "detection": "Identify functions mapped as message listeners or event consumers (e.g., handling parameters like `KafkaMessage`, `SqsMessage`, `Event`) that execute write queries or side-effects (e.g., payments, email triggers) but lack any intermediate logic querying a unique message identifier against an idempotency database or log.",
+  "counterexample": "```rust\nasync fn handle_payment_event(event: PaymentEvent, db: &Database) {\n    // Query local database message tracker for duplicates first\n    if db.is_message_already_processed(&event.msg_id).await.unwrap_or(false) {\n        return; // Safe discard of duplicate message\n    }\n    \n    let mut account = db.find_account(event.user_id).await.unwrap();\n    account.balance -= event.amount;\n    db.save_and_mark_processed(account, &event.msg_id).await.unwrap();\n}\n```",
+  "fix": "Implement an idempotent receiver pattern by logging every processed message's unique ID in a local persistent storage table in an atomic transaction alongside the business state update, discarding any subsequent deliveries [33, 221, 237].",
+  "strength": "Strong",
+  "source": "Vaughn Vernon, *Implementing Domain-Driven Design*, Chapter 8 (Event De-duplication) / passages [221, 222, 234, 235, 237]; Alex Petrov, *Database Internals*, Chapter 8 / passages [32, 33]; Martin Kleppmann, *Designing Data-Intensive Applications*, Chapter 11 / passages [113, 198, 209]."
+}

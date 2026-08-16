@@ -1,0 +1,13 @@
+{
+  "id": 351,
+  "title": "Row-DTO Vocabulary Pollution",
+  "category": "Boundary Representation",
+  "damaged_code": "```rust\n// Domain entity uses database naming vocabulary\nstruct User {\n    usr_first_name_v2: String,\n    tbl_group_id: u64,\n}\n```",
+  "pattern": "Allowing database-specific naming conventions (such as snake_case column suffixes or prefix prefixes) to dictate the vocabulary of core domain layers.",
+  "why_bad": "It pollutes the Ubiquitous Language. It forces domain experts and developers to talk in terms of database constraints (column names) rather than actual business concepts.",
+  "detection": "Match struct fields or types inside domain packages containing database prefixes (`tbl_`, `row_`, `col_`) or matching specific SQL column styles.",
+  "counterexample": "Low-level ORM mapper modules where mappings are defined.",
+  "fix": "Transform naming conventions at the database boundary to ensure domain models are expressed in clean Ubiquitous Language.\n```rust\nstruct User {\n    first_name: String,\n    group_id: GroupId,\n}\n```",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design* by Vaughn Vernon (Chapter 6, p. 209); *Domain-Driven Design* by Eric Evans (Ubiquitous Language, p. 25)."
+}

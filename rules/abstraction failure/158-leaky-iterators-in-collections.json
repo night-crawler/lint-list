@@ -1,0 +1,13 @@
+{
+  "id": 158,
+  "title": "Leaky Iterators in Collections",
+  "category": "Abstraction Failure",
+  "damaged_code": "```rust\nstruct UserRegistry {\n    users: Vec<User>,\n}\n\nimpl UserRegistry {\n    // Exposes raw iterator directly to public callers\n    pub fn iter(&self) -> std::slice::Iter<'_, User> {\n        self.users.iter()\n    }\n}\n```",
+  "pattern": "A struct encapsulating a collection exposes raw iterators to public callers, letting them perform arbitrary traversals and filterings.",
+  "why_bad": "It makes the class shallower by failing to hide information. Instead of providing deep, optimized, named domain queries, it shifts the responsibility of filtering and finding data to the caller, violating encapsulation.",
+  "detection": "A domain struct whose public API contains generic iterator methods (e.g., returning `Iter<'_, T>`) instead of domain-specific search or retrieval methods.",
+  "counterexample": "Explicit collection utility classes where arbitrary iteration is the primary intended behavior of the type.",
+  "fix": "Keep the collection private, and expose only targeted, named query methods (e.g., `fn find_active_users(&self) -> Vec<&User>`).",
+  "strength": "Strong",
+  "source": "John K. Ousterhout, *A Philosophy of Software Design* (2018), Chapter 5 (\"Information Hiding\" / \" partielle information hiding also has value\")."
+}

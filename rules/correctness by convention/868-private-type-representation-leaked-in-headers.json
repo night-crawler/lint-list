@@ -1,0 +1,13 @@
+{
+  "id": 868,
+  "title": "Private Type Representation Leaked in Headers",
+  "category": "Correctness By Convention",
+  "damaged_code": "```rust\n// C++ Class Header\nclass Customer {\npublic:\n    String address; // BUG: Exposes internal string-based representation!\n};\n```",
+  "pattern": "Declaring private layout structures or low-level primitives in public class fields or header files, exposing internal representation details to clients.",
+  "why_bad": "Client code becomes tightly coupled to the specific container or representation (e.g., using String instead of an Address type). Changing the representation later breaks compile-compatibility for all clients.",
+  "detection": "A header file exposes low-level primitive types or private data fields in its public API contract instead of abstract interface wrappers.",
+  "counterexample": "Using private implementation pointer wrappers (the Pimpl idiom) or abstract interfaces to hide internal structure details.",
+  "fix": "Encapsulate the internal type using private variables and expose abstract interfaces or dedicated wrapper types.",
+  "strength": "Strong",
+  "source": "Steve McConnell, Code Complete, p. 546 [546, 554]."
+}

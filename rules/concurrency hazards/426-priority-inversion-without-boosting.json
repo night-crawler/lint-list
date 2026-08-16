@@ -1,0 +1,13 @@
+{
+  "id": 426,
+  "title": "Priority Inversion without Boosting",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```rust\n// Assume low-priority Thread L holds `resource_mutex`.\n// Thread M (medium-priority, CPU-bound) preempts Thread L.\n// Thread H (high-priority) blocks on `resource_mutex`.\n```",
+  "pattern": "A high-priority thread blocks on a lock held by a low-priority thread, while medium-priority, CPU-bound threads preempt the low-priority thread.",
+  "why_bad": "Because the medium-priority threads prevent the low-priority thread from running and releasing the lock, the high-priority thread is indirectly blocked by the medium-priority threads, violating the priority scheduling invariant.",
+  "detection": "A priority-based scheduling environment where locks are acquired across different thread priorities without priority inheritance protocols enabled on the mutex.",
+  "counterexample": "Using a mutex configured with Priority Inheritance (e.g., `pthread_mutexattr_setprotocol` with `PTHREAD_PRIO_INHERIT`).",
+  "fix": "Enable priority inheritance/boosting on the synchronization primitives.",
+  "strength": "Contextual",
+  "source": "Paul McKenney 17.2, Herlihy 18.1.1 (p. 179)"
+}

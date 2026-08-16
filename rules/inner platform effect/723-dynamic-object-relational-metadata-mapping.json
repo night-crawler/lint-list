@@ -1,0 +1,13 @@
+{
+  "id": 723,
+  "title": "Dynamic Object-Relational Metadata Mapping",
+  "category": "Inner Platform Effect",
+  "damaged_code": "```\n// Storing column mappings dynamically as in-memory metadata arrays\nstruct ColumnMap {\n    column_name: String,\n    field_name: String,\n    data_type: String,\n}\n\nstruct DataMap {\n    table_name: String,\n    columns: Vec<ColumnMap>,\n}\n\nfn load_row_via_metadata(map: &DataMap, row: &mysql::Row) -> HashMap<String, String> {\n    let mut obj = HashMap::new();\n    for col in &map.columns {\n        let value: String = row.get(&col.column_name[..]).unwrap();\n        obj.insert(col.field_name.clone(), value);\n    }\n    obj\n}\n```",
+  "pattern": "Reading columns, fields, and types dynamically from runtime configuration arrays, translating database values into generic key-value maps.",
+  "why_bad": "It is slow, thrashes performance via heavy reflective parsing, and bypasses static compiler guarantees. It forces developers to debug simple spelling errors at runtime.",
+  "detection": "The presence of metadata parsing logic and arrays of `ColumnMap` structs parsed dynamically.",
+  "counterexample": "`Context-dependent`. Generic, low-level object-relational mapping (ORM) libraries or database clients where mapping must work across arbitrary user tables.",
+  "fix": "Compile mapping structs directly to SQL bindings using compile-time checked mappers.\n\n```\n// Compile-time verified mapping structure\n#[derive(sqlx::FromRow)]\nstruct Person {\n    id: i64,\n    first_name: String,\n    last_name: String,\n}\n```",
+  "strength": "Strong",
+  "source": "[The Addison-Wesley signature series] Martin Fowler - _Patterns of Enterprise Application Architecture_ (2015_2002, Addison-Wesley Professional).pdf, Chapter 10 \"Metadata Mapping\"."
+}

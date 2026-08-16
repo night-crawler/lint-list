@@ -1,0 +1,13 @@
+{
+  "id": 645,
+  "title": "Coverage Theater (Chasing Statement Metrics)",
+  "category": "Test Smells",
+  "damaged_code": "```rust\n// Trivial entity helper tested with no meaningful assertions\npub struct Age(pub u32);\n\nimpl Age {\n    pub fn get_inner(&self) -> u32 { self.0 }\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn test_age_coverage() {\n        let age = Age(21);\n        // No real validation of logic or invariants; purely executing code to inflate coverage tools\n        let _val = age.get_inner(); \n    }\n}\n```",
+  "pattern": "Tests written solely to satisfy a strict percentage requirement of statement coverage, exercising trivial methods (like simple accessors, getters, setters) without meaningful asserts or logical checks.",
+  "why_bad": "Statement coverage is a blunt metric that does not guarantee correctness [7, 512]. It incentivizes \"coverage theater\" where developers write low-value tests for boilerplate code [513], which then become a maintenance drag when schemas or types change [671].",
+  "detection": "Tests with zero assertions, or testing auto-generated boilerplate, accessors, and compilers. High suite coverage metrics (~100%) but poor assertions or zero mutation validation [417].",
+  "counterexample": "`Context-dependent`. Standard basic coverage tracking is fine, but treating coverage as a target rather than a diagnostic tool is a smell [513].",
+  "fix": "Prioritize test completeness over raw line coverage; use mutation testing tools to verify that tests actually fail when logic is altered, and stop testing compiler-guaranteed accessors [29, 671].",
+  "strength": "Contextual",
+  "source": "*   *Composing Software*, \"What is test coverage?\" (p. 207-208) [3, 7, 375]\n*   *Software Engineering at Google*, \"A Note on Code Coverage\" (p. 222) [512, 513]\n*   *Fundamentals of Software Architecture*, \"Modularity / Testability\" (p. 47) [417]\n*   *The Art of Readable Code*, \"Going Too Far: Coverage\" (p. 151) [671]"
+}

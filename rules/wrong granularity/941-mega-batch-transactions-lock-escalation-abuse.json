@@ -1,0 +1,13 @@
+{
+  "id": 941,
+  "title": "Mega-Batch Transactions (Lock Escalation Abuse)",
+  "category": "Wrong Granularity",
+  "damaged_code": "```rust\nfn process_monthly_billing(db: &Database) -> Result<(), Error> {\n    let mut tx = db.begin_transaction()?;\n    // Modifies 1,000,000 rows in a single transactional write block!\n    tx.execute(\"UPDATE users SET balance = balance - 10 WHERE active = true\")?;\n    tx.commit()?;\n    Ok(())\n}\n```",
+  "pattern": "Bundling millions of unrelated row updates into a single colossal transaction, trying to achieve atomic processing at an excessive scale.",
+  "why_bad": "Forces lock escalation. The database escalates individual row-level locks to full table locks, freezing all concurrent reads and writes. A failure on row 999,999 aborts the entire transaction, forcing a massive, CPU-intensive roll-back of the write-ahead log.",
+  "detection": "Queries that perform state changes on millions of records (or open-ended tables) inside a single un-chunked transaction block.",
+  "counterexample": "Database structural migrations or schema changes where transactional completeness of the entire schema is mandatory.",
+  "fix": "Chunk the massive update process into small, manageable batched transactions.\n```rust\nfn process_monthly_billing_chunked(db: &Database) -> Result<(), Error> {\n    loop {\n        let mut tx = db.begin_transaction()?;\n        // Update 1,000 rows at a time\n        let modified = tx.execute(\"UPDATE users SET balance = balance - 10 WHERE active = true LIMIT 1000\")?;\n        tx.commit()?;\n        if modified == 0 { break; }\n    }\n    Ok(())\n}\n```",
+  "strength": "Strong",
+  "source": "*Martin Kleppmann - Designing Data-Intensive Applications (2017)*, Chapter 7, \"Transactions\" (Weak isolation levels / Lock escalation); *Alex Petrov - Database Internals (2019)*, Chapter 5."
+}

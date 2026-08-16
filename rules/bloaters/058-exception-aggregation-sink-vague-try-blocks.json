@@ -1,0 +1,13 @@
+{
+  "id": 58,
+  "title": "Exception-Aggregation Sink (Vague Try Blocks)",
+  "category": "Bloaters",
+  "damaged_code": "```rust\nfn load_and_verify_user(id: u64) -> Result<User, AppError> {\n    // A giant block catching any generic error\n    let result = || -> Result<User, anyhow::Error> {\n        let raw_json = std::fs::read_to_string(format!(\"/data/users/{}.json\", id))?;\n        let user: User = serde_json::from_str(&raw_json)?;\n        if user.is_banned {\n            anyhow::bail!(\"Banned\");\n        }\n        Ok(user)\n    }();\n\n    result.map_err(|_| AppError::GenericLoadError) // Discards exact cause!\n}\n```",
+  "pattern": "Aggregating highly distinct fallible operations (file system I/O, JSON parsing, business invariant verification) under a single, generic try-block or catch-all mapping that discards individual diagnostic contexts.",
+  "why_bad": "Destroys diagnostic precision. If the operation fails, the caller cannot programmatically distinguish between a missing file, a corrupted JSON schema, or a business rule violation. This forces downstream error handlers to treat all failures identically or parse fragile error-string details.",
+  "detection": "Look for functions where multiple different error-producing functions (returning different error types) are converted into a single vague error variant using a catch-all mapping (`map_err(|_| Error::Generic)` or `anyhow::Error` with no contextual enrichment).",
+  "counterexample": "`Context-dependent`. Scripting or prototyping where speed is prioritized over diagnostic reliability, and where all errors are simply dumped to the console.",
+  "fix": "Explicitly map and enrich each individual fallible step to its own distinct error variant, preserving the source error.",
+  "strength": "Strong",
+  "source": "*John K. Ousterhout - A Philosophy of Software Design (2018)*, Chapter 10, \"Define Errors Out of Existence\" (Exception Aggregation); *Robert C. Martin - Clean Code (2008)*, Chapter 7, \"Error Handling\"."
+}

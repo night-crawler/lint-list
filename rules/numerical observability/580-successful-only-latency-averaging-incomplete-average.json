@@ -1,0 +1,13 @@
+{
+  "id": 580,
+  "title": "Successful-Only Latency Averaging (Incomplete Average)",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\nfn average_latency(requests: &[Request]) -> f64 {\n    let mut total_time = 0.0;\n    let mut count = 0;\n    for r in requests {\n        if r.status == Status::Success {\n            total_time += r.duration_ms;\n            count += 1;\n        }\n    }\n    total_time / count as f64\n}\n```",
+  "pattern": "Excluding failed or timed-out transactions from the calculation of average latency.",
+  "why_bad": "When requests time out or fail, they represent the worst-case performance of the system (often waiting for a maximum timeout threshold). By excluding uncompleted or failed requests, the average latency is artificially skewed downwards, creating a false \"all-green\" dashboard while users experience infinite hangs.",
+  "detection": "Look for latency aggregation loops that check for successful status codes or filter out errors before summing the duration.",
+  "counterexample": "None. Failing to report/account for timeout latency in overall metrics is a major observability gap.",
+  "fix": "Incorporate timed-out requests as having the maximum timeout duration, or explicitly track and alert on the error/timeout rate separately.\n```rust\nfn average_latency_correct(requests: &[Request], timeout_ms: f64) -> f64 {\n    let total_time: f64 = requests.iter().map(|r| {\n        if r.status == Status::Timeout { timeout_ms } else { r.duration_ms }\n    }).sum();\n    total_time / requests.len() as f64\n}\n```",
+  "strength": "Strong` — structurally hides system degradation by omitting the slowest requests.",
+  "source": "Michael T. Nygard - *Release It!* (2007), Chapter 13, p. 212."
+}

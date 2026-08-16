@@ -1,0 +1,13 @@
+{
+  "id": 193,
+  "title": "Side-Effect Temporal Coupling in Logic Methods",
+  "category": "Couplers",
+  "damaged_code": "```rust\nstruct Session;\nstruct Authenticator {\n    session: Option<Session>,\n}\nimpl Authenticator {\n    // Hidden side effect: mutates state and creates a temporal ordering\n    fn check_password(&mut self, pass: &str) -> bool {\n        if pass == \"secret\" {\n            self.session = Some(Session);\n            true\n        } else {\n            false\n        }\n    }\n}\n```",
+  "pattern": "A boolean check or query method performs a hidden, unrelated mutation side effect that initializes subsystems, establishing a hidden temporal coupling.",
+  "why_bad": "It violates Command-Query Separation. Callers expect `check_password` to be safe and idempotent. If called out of order or multiple times, it silently overwrites or corrupts state.",
+  "detection": "Methods whose names indicate a query (e.g., `check_`, `is_`, `get_`) but modify fields of `self` or initialize global systems inside their bodies.",
+  "counterexample": "Lazy caching (memoization) where the mutated field is purely an internal performance optimization and does not change the semantic behavior of the object.",
+  "fix": "Separate the check from the mutation, making the state transition explicit.\n```rust\nimpl Authenticator {\n    fn is_password_valid(&self, pass: &str) -> bool {\n        pass == \"secret\"\n    }\n    fn initialize_session(&mut self) {\n        self.session = Some(Session);\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 3 (\"Side Effects\") and Chapter 17 (\"G31: Hidden Temporal Couplings\")."
+}

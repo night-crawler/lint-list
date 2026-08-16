@@ -1,0 +1,13 @@
+{
+  "id": 906,
+  "title": "Low-Level Configuration Knobs Instead of Dynamic Policies",
+  "category": "Policy Mechanism",
+  "damaged_code": "```rust\nstruct NetworkClient {\n    retry_interval_ms: u64, // Punts policy choice upward\n    max_retries: usize,\n}\n```",
+  "pattern": "An interface exports low-level, static configuration parameters (retry intervals, cache sizes, timeouts) to control behavior instead of determining it internally or computing it dynamically.",
+  "why_bad": "Moves complexity upwards instead of down, forcing administrators or high-level callers to understand low-level transport mechanisms to set appropriate values. These static values cannot adapt to real-time environment changes (e.g., variable network latency) and easily become out of date.",
+  "detection": "Definition of structs representing low-level mechanisms (network, cache, file I/O) that export primitive numeric fields intended for client tuning.",
+  "counterexample": "Valid user-defined high-level policies (like explicit priority classifications) passed to a scheduler are acceptable. Marked `Context-dependent`.",
+  "fix": "Have the low-level mechanism dynamically calculate values (e.g., estimating retry intervals via measured round-trip time) or use reasonable, tested defaults.\n```rust\nstruct NetworkClient {\n    rtt_estimator: RttEstimator, // Dynamic policy calculation\n}\n```",
+  "strength": "Contextual",
+  "source": "John Ousterhout, *A Philosophy of Software Design* (2018), Chapter 8, \"Example: configuration parameters\", p. 193, 446-447."
+}

@@ -1,0 +1,12 @@
+{
+  "id": 746,
+  "title": "Short-Circuiting Variable Assignment in Loop Condition",
+  "category": "Cleverness Obscurity",
+  "damaged_code": "```rust\n// Rust\nwhile { val = read_next(); val.is_some() } {\n    process(val.unwrap()); // Assignment inside evaluation\n}\n```",
+  "pattern": "Performing variable assignments and evaluations inside a block expression directly within the loop condition.",
+  "why_bad": "High cognitive complexity. Combining side-effects (variable assignments) and assertions (evaluation checking) inside loop conditions makes tracing execution paths highly counter-intuitive and prone to off-by-one errors.",
+  "detection": "A `while` condition block containing assignment statements followed by state checking.",
+  "fix": "Use Rust's idiomatic `while let` pattern to perform safe destructuring and condition checking simultaneously.\n```rust\nwhile let Some(val) = read_next() {\n    process(val);\n}\n```",
+  "strength": "Strong",
+  "source": "*Code Complete*, Chapter 16 / *The Art of Readable Code*, Chapter 7."
+}

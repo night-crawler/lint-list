@@ -1,0 +1,13 @@
+{
+  "id": 255,
+  "title": "Self-Interfering State Mutators (Unsynchronized Reentrancy)",
+  "category": "State Mutation",
+  "damaged_code": "```rust\nstruct Wire {\n    signal: bool,\n    actions: Vec<fn(&mut Wire)>,\n}\n\nimpl Wire {\n    pub fn set_signal(&mut self, new_val: bool) {\n        if self.signal != new_val {\n            self.signal = new_val;\n            // Infinite loop/reentrancy hazard if actions attempt to call set_signal back!\n            for action in &self.actions {\n                action(self);\n            }\n        }\n    }\n}\n```",
+  "pattern": "A struct mutator updates a state variable and then immediately executes a list of registered callback closures or event handlers while passing a mutable reference to `self`, allowing the callbacks to call the same mutator back recursively.",
+  "why_bad": "This creates a reentrancy defect (or unsynchronized recursive state modification). If a callback modifies the signal back, it creates an infinite recursive loop or corrupts the internal state because `self` is currently in the middle of transitioning, causing undefined behavior or stack overflow.",
+  "detection": "A method modifies a struct's state, and subsequently iterates over a list of callbacks/event-listeners, passing a mutable reference of `self` to those callbacks.",
+  "counterexample": "Deferring callback execution using a queue or utilizing a state variable to prevent reentrant execution:\n```rust\n// Guarding against reentrancy with a boolean execution lock or using an external event queue.\n```",
+  "fix": "Collect the callbacks or state changes and execute them only after the struct has reached a stable, consistent state, or guard against reentrancy using execution flags.\n```rust\nimpl Wire {\n    pub fn set_signal_deferred(&mut self, new_val: bool, queue: &mut EventQueue) {\n        if self.signal != new_val {\n            self.signal = new_val;\n            for action in &self.actions {\n                queue.push(*action); // Defer execution outside the state-transition lock\n            }\n        }\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Structure and Interpretation of Computer Programs* by Harold Abelson and Gerald Jay Sussman (Section 3.3.4, \"A Simulator for Digital Circuits\", \"Self-interfering state mutators\")."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 760,
+  "title": "Trivial Assemblers (Conversion-Only Classes)",
+  "category": "Ceremony Boilerplate",
+  "damaged_code": "```rust\nstruct UserAssembler;\nimpl UserAssembler {\n    pub fn to_dto(user: User) -> UserDto {\n        UserDto { id: user.id }\n    }\n}\n```",
+  "pattern": "Defining a dedicated class, struct, or service that contains no state and no behavior other than mapping fields between two types (typically Entity and DTO).",
+  "why_bad": "It adds useless class ceremony and indirection. Converting between types is an operation, not a standalone architectural component. Exposing this via a custom class forces developers to import and inject a useless helper rather than using language-native conversions.",
+  "detection": "A stateless struct or class containing only type mapping functions, with no other business responsibilities.",
+  "counterexample": "Assemblers that combine and parse complex data from multiple distinct systems (like aggregating user profiles, transaction logs, and security checks) to produce a unified API response.",
+  "fix": "```rust\n// Implement standard From/Into traits instead of custom assembler structures.\nimpl From<User> for UserDto {\n    fn from(user: User) -> Self {\n        UserDto { id: user.id }\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Patterns of Enterprise Application Architecture* (2002), p. 401."
+}

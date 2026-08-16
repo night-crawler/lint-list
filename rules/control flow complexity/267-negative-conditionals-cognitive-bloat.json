@@ -1,0 +1,13 @@
+{
+  "id": 267,
+  "title": "Negative Conditionals Cognitive Bloat",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```rust\nif !is_authorized {\n    show_error();\n} else {\n    render_dashboard();\n}\n```",
+  "pattern": "Placing a negated condition in the `if` block of an `if-else` statement.",
+  "why_bad": "Increases cognitive load. Humans are slower and more prone to error when reasoning about double-negatives (especially in the `else` block).",
+  "detection": "An `if-else` block where the `if` check starts with a logical negation operator.",
+  "counterexample": "A simple `if` block (no `else`) checking a negative condition.",
+  "fix": "Invert the conditional blocks to place the positive case first:\n```rust\nif is_authorized {\n    render_dashboard();\n} else {\n    show_error();\n}\n```",
+  "strength": "Strong",
+  "source": "Trevor Foucher & Dustin Boswell, *The Art of Readable Code*, Chapter 7; Robert C. Martin, *Clean Code*, Chapter 17 (G29)."
+}

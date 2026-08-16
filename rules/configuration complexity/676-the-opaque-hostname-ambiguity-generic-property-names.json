@@ -1,0 +1,13 @@
+{
+  "id": 676,
+  "title": "The Opaque \"Hostname\" Ambiguity (Generic Property Names)",
+  "category": "Configuration Complexity",
+  "damaged_code": "```yaml\n# Ambiguous configuration - what does this connect to?\nhostname: \"10.0.0.4\"\nport: 5432\n```",
+  "pattern": "Naming a configuration key or variable after its generic primitive data type (e.g. `hostname`, `ip_address`, `string`) rather than its architectural role.",
+  "why_bad": "Causes semantic ambiguity and severe operator error. It is unclear whether a generic key like `hostname` configures \"the authorized caller\", \"the host we call\", or \"our local bind address\".",
+  "detection": "The presence of generic configuration key fields (e.g., `hostname`, `ip`) in properties files or configuration structs.",
+  "counterexample": "```yaml\nauthentication_server_host: \"10.0.0.4\"\nauthentication_server_port: 5432\n```",
+  "fix": "Rename configuration fields to reflect their architectural role or function (such as `authentication_server` or `database_port`) rather than their generic type.",
+  "strength": "Strong",
+  "source": "[Pragmatic Programmers] Michael T. Nygard - *Release It!_ Design and Deploy Production-Ready Software* (2007, Pragmatic Bookshelf).pdf, Section 14.2."
+}

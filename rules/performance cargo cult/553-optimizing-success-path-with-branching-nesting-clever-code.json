@@ -1,0 +1,13 @@
+{
+  "id": 553,
+  "title": "Optimizing Success Path with Branching Nesting (Clever Code)",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\nfn process(input: Option<i32>) -> i32 {\n    if input.is_some() {\n        if input.unwrap() > 0 {\n            // Nesting success path to optimize branch evaluation\n            return input.unwrap() * 2;\n        }\n    }\n    0\n}\n```",
+  "pattern": "Nesting execution blocks inside complex deep conditionals to prioritize a hypothetical \"fast path\" branch.",
+  "why_bad": "Deeply nested code is highly unreadable and introduces \"mental speed bumps.\" Modern CPU branch predictors are highly sophisticated, and compiling nested code can easily degrade instruction layout and cause branch misprediction penalties [298, 432].",
+  "detection": "Nested `if` statements prioritizing a specific branch, rather than early exit guard clauses.",
+  "counterexample": "Parsing nested binary format trees where structural nested checking is required. `Context-dependent`.",
+  "fix": "```rust\nfn process(input: Option<i32>) -> i32 {\n    let val = input?;\n    if val <= 0 { return 0; }\n    val * 2\n}\n```",
+  "strength": "Strong",
+  "source": "*Refactoring*, Section 1.2 (p. 298); *The Art of Readable Code*, Chapter 1 (p. 432)."
+}

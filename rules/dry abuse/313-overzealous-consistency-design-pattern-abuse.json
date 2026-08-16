@@ -1,0 +1,13 @@
+{
+  "id": 313,
+  "title": "Overzealous Consistency / Design Pattern Abuse",
+  "category": "Dry Abuse",
+  "damaged_code": "```rust\ntrait GreetingStrategy {\n    fn greet(&self) -> String;\n}\n\nstruct DefaultGreeting;\nimpl GreetingStrategy for DefaultGreeting {\n    fn greet(&self) -> String { \"Hello\".to_string() }\n}\n\nstruct GreetingContext {\n    strategy: Box<dyn GreetingStrategy>,\n}\n```",
+  "pattern": "Applying heavy design patterns (like Strategy, Abstract Factory, or Decorator) to simple operations solely to make them consistent with other complex structures.",
+  "why_bad": "It focuses on consistency of form over functionality, inflating file count, boilerplate, and indirection. It increases the difficulty of understanding simple tasks without providing any technical value.",
+  "detection": "An implementation of a complex behavioral design pattern (like Strategy or State) wrapping a trivial, immutable operation (like returning a static string literal) with zero active runtime variation.",
+  "counterexample": "Complex polymorphic behavior where actual dynamic runtime selection is strictly required by business needs. Mark the rule `Context-dependent`.",
+  "fix": "Replace the overengineered design pattern with a simple, direct function or a static constant.\n```rust\nfn greet() -> &'static str {\n    \"Hello\"\n}\n```",
+  "strength": "Strong",
+  "source": "*A Philosophy of Software Design*, Chapter 17.3: \"Taking it too far\", p. 116, 512; Sandi Metz *POODR*, Chapter 1: \"Pattern Abuse\", p. 192."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 382,
+  "title": "Replacing Actual Flows with \"Clouds\" in Architecture",
+  "category": "Information Loss",
+  "damaged_code": "```rust\n// In a billing system, we track only successful deposits:\nfn log_deposit(amount: f64) {\n    db.insert_deposit(amount);\n    // Silent cloud: Where did this money come from? What are the liabilities?\n}\n```",
+  "pattern": "Failing to capture the origins, resources, and sinks (dependencies) of a data flow, modeling them as infinite or abstract boundaries (\"clouds\").",
+  "why_bad": "It creates system blind spots. By assuming a resource is infinitely available or that data goes \"away\" into a cloud, systems are easily broken when materials run out or backpressure overflows.",
+  "detection": "Models that register increments/decrements to stock values without tracing the supply pipeline or checking boundary limits.",
+  "counterexample": "System tracing that explicitly models bounds and limits:\n```rust\nfn transfer_funds(source: Account, dest: Account, amount: f64) { ... }\n```",
+  "fix": "Explicitly model the feedback loops, limits, and resource constraints of the system.\n```rust\nfn log_deposit(source_bank: BankRoute, amount: f64) {\n    assert!(source_bank.reserve_limit() >= amount);\n    db.insert_deposit(source_bank, amount);\n}\n```",
+  "strength": "Contextual",
+  "source": "*Thinking in Systems* by Donella H. Meadows (p. 38-39)."
+}

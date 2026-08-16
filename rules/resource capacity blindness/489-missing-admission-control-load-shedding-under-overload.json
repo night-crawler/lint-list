@@ -1,0 +1,13 @@
+{
+  "id": 489,
+  "title": "Missing Admission Control / Load Shedding under Overload",
+  "category": "Resource Capacity Blindness",
+  "damaged_code": "```rust\nfn process_incoming_queue(requests: Vec<Request>) {\n    for req in requests {\n        // Unbounded processing attempts on every request even under high load\n        execute_heavy_task(req); \n    }\n}\n```",
+  "pattern": "An incoming request processing loop that unconditionally accepts, queues, and attempts to execute every incoming request without checking current server load, queue depth limits, or system capacity thresholds.",
+  "why_bad": "When offered load exceeds processing capacity, the length of the processing queue grows linearly, which increases latency and wastes memory [53, 583]. Without load shedding or admission control, the completion time for all requests degrades rapidly, eventually crashing the process from memory exhaustion or leading to a system-wide hang as clients time out [583]. A resilient system must reject excess requests (\"TooBusy\") quickly [583].",
+  "detection": "Identify request-processing pathways that do not track queue depths, active request counts, or load indicators, and lack fail-fast rejection blocks.",
+  "counterexample": "```rust\nconst MAX_QUEUE_DEPTH: usize = 1000;\n\nfn process_incoming_queue(requests: Vec<Request>, current_depth: usize) {\n    if current_depth > MAX_QUEUE_DEPTH {\n        // Shed load quickly with error status\n        reject_with_too_busy(); \n        return;\n    }\n    for req in requests {\n        execute_heavy_task(req);\n    }\n}\n```",
+  "fix": "Implement active admission control by measuring queue depths or processing times, rejecting excess traffic with a \"Too Busy\" code to preserve capacity for existing transactions [583].",
+  "strength": "Contextual",
+  "source": "Richard L. Sites, *Understanding Software Dynamics*, Chapter 29 / passage [583]; Alex Petrov, *Database Internals*, Chapter 8 / passage [46]."
+}

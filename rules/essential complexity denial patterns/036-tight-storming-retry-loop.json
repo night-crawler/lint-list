@@ -1,0 +1,13 @@
+{
+  "id": 36,
+  "title": "Tight Storming Retry Loop",
+  "category": "Essential Complexity Denial Patterns",
+  "damaged_code": "```rust\n// Re-attempting failed API calls immediately in a tight loop\nfor _ in 0..3 {\n    if let Ok(res) = call_external_api().await {\n        return Ok(res);\n    }\n}\n```",
+  "pattern": "A loop that repeatedly invokes a failing network/IO dependency immediately after a failure without backoff delays.",
+  "why_bad": "If an external dependency is failing or overloaded, immediate retries act as a distributed denial-of-service attack from your own clients [39:50]. This amplifies server load, prevents recovery, and triggers a cascading meltdown of the downstream service [13:107].",
+  "detection": "A loop surrounding a network or database call that checks for errors and retries without invoking an adaptive or static wait mechanism between attempts [13:107].",
+  "counterexample": "```rust\nlet mut delay = Duration::from_millis(100);\nfor _ in 0..3 {\n    match call_external_api().await {\n        Ok(res) => return Ok(res),\n        Err(_) => {\n            tokio::time::sleep(delay).await;\n            delay *= 2; // Exponential backoff\n        }\n    }\n}\n```",
+  "fix": "Introduce exponential backoff with random jitter on all retry mechanisms to decouple client request bursts [39:51].",
+  "strength": "Strong",
+  "source": "*Database Internals* (Petrov), Part II: Distributed Systems; *Building Secure and Reliable Systems* (Adkins), Chapter 12 [39:50, 13:107]."
+}

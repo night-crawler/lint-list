@@ -1,0 +1,13 @@
+{
+  "id": 234,
+  "title": "Primitive Sentinels for Missing or Error States",
+  "category": "Primitive Obsession",
+  "damaged_code": "```rust\nfn get_discount(rate_id: i32) -> f64 {\n    if rate_id == -1 {\n        -1.0 // Sentinel representing error\n    } else {\n        0.1\n    }\n}\n```",
+  "pattern": "Returning or passing arbitrary magic values (e.g., `-1`, `0`, `\"N/A\"`, empty strings) to represent missing states or logical errors.",
+  "why_bad": "It relies on developer memory to check for the sentinel. If a developer forgets to write a check, the sentinel value is treated as a valid number, propagating corrupted calculations (e.g., calculating a negative tax rate) through the system.",
+  "detection": "Functions returning numeric types or string slices that hardcode specific fallback values like `-1`, `9999-12-31`, or `\"\"` representing anomalies.",
+  "counterexample": "Low-level UNIX/C system integrations where return codes are natively bound to negative integer representations.",
+  "fix": "Leverage the type system's native `Option` or `Result` types.\n```rust\nfn get_discount(rate_id: i32) -> Result<f64, DomainError> { ... }\n```",
+  "strength": "Strong",
+  "source": "*Type-driven Development with Idris* by Edwin Brady (p. 110); *Patterns of Enterprise Application Architecture* (p. 272)."
+}

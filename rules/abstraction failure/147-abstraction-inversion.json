@@ -1,0 +1,13 @@
+{
+  "id": 147,
+  "title": "Abstraction Inversion",
+  "category": "Abstraction Failure",
+  "damaged_code": "```rust\nstruct FileStream;\nimpl FileStream {\n    // Only exports low-level single byte read\n    pub fn read_byte(&self) -> u8 { /* ... */ 0 }\n}\n\n// Client is forced to implement string reads themselves\nfn read_line(stream: &FileStream) -> String {\n    let mut line = String::new();\n    while let byte = stream.read_byte() {\n        if byte == b'\\n' { break; }\n        line.push(byte as char);\n    }\n    line\n}\n```",
+  "pattern": "An interface exposes only extremely low-level, primitive methods, forcing all of its callers to build high-level common-case operations themselves, duplicating effort.",
+  "why_bad": "It turns the interface inside out. Instead of the abstraction hiding complexity, it forces the caller to write boilerplate wrapper loops, leading to duplicated and poorly optimized code.",
+  "detection": "Callers repeatedly implementing the same high-level helper functions using the exposed low-level primitives of an interface.",
+  "counterexample": "Extremely minimal hardware-level drivers where keeping the abstraction layer light is necessary for safety-critical memory budgets.",
+  "fix": "Build the common-case, high-level operations directly into the interface or a standard utility layer alongside the low-level API (e.g., providing `read_line` directly).",
+  "strength": "Contextual",
+  "source": "John K. Ousterhout, *A Philosophy of Software Design* (2018), Chapter 4 (\"Deep Modules\" / Abstraction Inversion); Benjamin C. Pierce, *Types and Programming Languages* (2002), Chapter 24."
+}

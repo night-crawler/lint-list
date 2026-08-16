@@ -1,0 +1,13 @@
+{
+  "id": 48,
+  "title": "Low-Level Exception Propagation",
+  "category": "Essential Complexity Denial Patterns",
+  "damaged_code": "```rust\n// Exposing internal DB implementation details to the caller\nfn get_user_name(&self, id: u32) -> Result<String, sqlx::Error> {\n    self.db.query(\"SELECT name FROM users WHERE id = ?\").bind(id).fetch_one()\n}\n```",
+  "pattern": "Propagating low-level, technology-specific errors (like `sqlx::Error` or `std::io::Error`) up to higher-level domain/business layers.",
+  "why_bad": "It breaks encapsulation. By passing lower-level errors upward, the higher-level caller becomes tightly coupled to the underlying database library or I/O engine, preventing modularity and refactoring [28:431].",
+  "detection": "Method signatures in domain models that leak driver-specific or system-specific error types in their return signatures [28:431].",
+  "counterexample": "```rust\nfn get_user_name(&self, id: u32) -> Result<String, DomainError> {\n    self.db.query(\"...\")\n        .bind(id)\n        .fetch_one()\n        .map_err(|_| DomainError::UserNotFound(id))\n}\n```",
+  "fix": "Catch the low-level exception and map it to a domain-specific error type that matches the abstraction level of the calling module [28:432].",
+  "strength": "Contextual",
+  "source": "*Code Complete* (McConnell), Chapter 8 [28:431]."
+}

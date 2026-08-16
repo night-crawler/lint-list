@@ -1,0 +1,13 @@
+{
+  "id": 384,
+  "title": "Conflating Incompatible Domain Contexts",
+  "category": "Information Loss",
+  "damaged_code": "```rust\n// Mixing Employee data with Person data inside a single database\nstruct Employee {\n    id: u64,\n    name: String,\n    country_of_birth: String, // Irrelevant to the payroll context!\n}\n```",
+  "pattern": "Carrying fields that are irrelevant to a specific processing context because of merging distinct conceptual scopes.",
+  "why_bad": "It causes ambiguity and context dilution. It degrades system cohesion, forces records to contain sparse data, and complicates indexing or performance because of irrelevant metadata.",
+  "detection": "Struct declarations containing a large mix of metadata fields that are unrelated to the core function of the system.",
+  "counterexample": "Decoupled contexts mapped to distinct entities:\n```rust\nstruct PayrollProfile { employee_id: u64, salary: Decimal }\nstruct CensusProfile { person_id: u64, birth_country: String }\n```",
+  "fix": "Divide domain records into explicit context scopes, mapping them only at boundary translation points.\n```rust\nstruct PayrollEmployee {\n    id: u64,\n    salary: Decimal,\n}\n```",
+  "strength": "Contextual",
+  "source": "*Data and Reality* by William Kent & Steve Hoberman (p. 55-56, 335)."
+}

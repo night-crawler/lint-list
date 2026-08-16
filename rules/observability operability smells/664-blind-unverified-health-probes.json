@@ -1,0 +1,13 @@
+{
+  "id": 664,
+  "title": "Blind / Unverified Health Probes",
+  "category": "Observability Operability Smells",
+  "damaged_code": "```rust\n// HTTP server endpoint used by Load Balancer for liveness/readiness\nfn handle_health_check() -> HttpResponse {\n    HttpResponse::Ok().body(\"OK\")\n}\n```",
+  "pattern": "Returning HTTP 200 / \"OK\" strictly because the server process is alive, without validating key dependencies or local resource pools.",
+  "why_bad": "The process is reported as healthy even when its local database connection pool is completely exhausted or its filesystems are write-blocked. The load balancer continues to send real user traffic to a \"zombie\" instance [247, 672, 683].",
+  "detection": "A liveness or readiness route handler that returns a static successful payload without evaluating any external resource handles.",
+  "counterexample": "```rust\nfn handle_health_check(db_pool: &Pool) -> HttpResponse {\n    if db_pool.is_exhausted() {\n        return HttpResponse::ServiceUnavailable();\n    }\n    HttpResponse::Ok().body(\"OK\")\n}\n```",
+  "fix": "Incorporate lightweight connectivity checks for critical, non-soft dependencies (such as local DB pools or storage access) directly into the readiness probe pathway.",
+  "strength": "Strong",
+  "source": "*Release It!*, page 247, 257 [247, 672, 683]."
+}

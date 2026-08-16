@@ -1,0 +1,13 @@
+{
+  "id": 16,
+  "title": "Hand-Rolled DTO Assembler Envy",
+  "category": "Feature Envy",
+  "damaged_code": "```rust\nstruct Track {\n    title: String,\n    duration: u32,\n}\nstruct Album {\n    title: String,\n    tracks: Vec<Track>,\n}\nstruct TrackDTO {\n    title: String,\n}\nstruct AlbumDTO {\n    title: String,\n    tracks: Vec<TrackDTO>,\n}\nstruct AlbumAssembler;\nimpl AlbumAssembler {\n    fn write_dto(&self, album: &Album) -> AlbumDTO {\n        let mut track_dtos = Vec::new();\n        for t in &album.tracks {\n            track_dtos.push(TrackDTO { title: t.title.clone() });\n        }\n        AlbumDTO {\n            title: album.title.clone(),\n            tracks: track_dtos,\n        }\n    }\n}\n```",
+  "pattern": "An assembler class copies values field-by-field from one data holder to another parallel structure, exhibiting intense interest in the internal representations of both types.",
+  "why_bad": "It leads to duplication and tight coupling between the domain class and the DTO representation. This mapping code is highly repetitive and fragile.",
+  "detection": "An assembler class that contains no business logic other than mapping fields directly between two structurally identical hierarchies.",
+  "counterexample": "`Context-dependent`. Centralized serializers that must handle complex protocol transformations or dynamic format versioning.",
+  "fix": "Implement a standard transformation trait (`From` or `Into`) on the target DTO type.\n```rust\nimpl From<&Track> for TrackDTO {\n    fn from(track: &Track) -> Self {\n        TrackDTO { title: track.title.clone() }\n    }\n}\nimpl From<&Album> for AlbumDTO {\n    fn from(album: &Album) -> Self {\n        AlbumDTO {\n            title: album.title.clone(),\n            tracks: album.tracks.iter().map(TrackDTO::from).collect(),\n        }\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Patterns of Enterprise Application Architecture* (2002), \"Data Transfer Object\"."
+}

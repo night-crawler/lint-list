@@ -1,0 +1,13 @@
+{
+  "id": 607,
+  "title": "Sanitization Cargo Cult (Blacklist-Based String Erasure)",
+  "category": "Security Boundary Failures",
+  "damaged_code": "```rust\nfn sanitize_input(input: &str) -> String {\n    input.replace(\"<script>\", \"\") // Naive blacklist erasure\n}\n```",
+  "pattern": "Attempting to neutralize dangerous input by stripping specific blacklisted substrings from raw strings prior to sink ingestion.",
+  "why_bad": "Blacklist sanitization is notoriously fragile; it fails to block nested exploits (e.g., `<scr<script>ipt>`), alternate encodings, or alternate payloads, creating a false sense of security while leaving injection vectors open.",
+  "detection": "The use of ad hoc string search-and-replace methods (`replace`, `replace_all`, regex filters) to scrub structured elements (like HTML tags or SQL syntax) inside input handling functions.",
+  "counterexample": "```rust\n// Rely on an established, well-tested parser and HTML sanitizer library\nfn sanitize_input(input: &str) -> String {\n    ammonia::clean(input)\n}\n```",
+  "fix": "Represent safe inputs via structured types (`SafeHtml`, `SafeUrl`) or process raw inputs with robust, parser-based sanitizers rather than manual substring-deletion rules.",
+  "strength": "Strong",
+  "source": "`Heather Adkins et al. - Building Secure and Reliable Systems (2020)`, Ch 6, p. 114-115; Ch 12, p. 252."
+}

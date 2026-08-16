@@ -1,0 +1,13 @@
+{
+  "id": 467,
+  "title": "Assuming TCP Guarantees span Multiple Connection Sessions",
+  "category": "Distributed Systems Fallacies",
+  "damaged_code": "```rust\n// Assuming a new TCP connection possesses exact sequence state of a dead session\nstruct MessageSender {\n    current_stream: TcpStream,\n}\n\nimpl MessageSender {\n    fn send_payload_raw(&mut self, data: &[u8]) {\n        if let Err(_) = self.current_stream.write_all(data) {\n            // Reconnect and resend directly, assuming TCP duplicate-detection persists\n            self.current_stream = TcpStream::connect(\"api:8080\").unwrap();\n            self.current_stream.write_all(data).unwrap(); // BUG: Duplicate payload risk!\n        }\n    }\n}\n```",
+  "pattern": "Re-establishing a broken TCP socket or streaming connection and resending unacknowledged data directly, under the assumption that the underlying network protocol's packet-level duplicate-detection and ordering guarantees span across distinct connection sessions.",
+  "why_bad": "TCP only guarantees ordered, duplicate-free packet delivery within the scope of a single, active socket session [37]. Once a connection is closed or reset, any subsequent socket connection is an entirely blank slate [37]. Resending unacknowledged data on a new session can easily lead to duplicate execution because the server may have processed the original packet but failed to return the TCP ACK before the socket broke [21, 31, 32].",
+  "detection": "Identify methods that catch errors on socket writes, instantiate a new socket/stream connection, and immediately retry the exact same raw payload write without appending application-level session recovery tokens, sequence IDs, or idempotency keys.",
+  "counterexample": "```rust\nstruct SafeMessageSender {\n    current_stream: TcpStream,\n    session_id: String,\n    msg_sequence: u64,\n}\n\nimpl SafeMessageSender {\n    fn send_payload_safe(&mut self, payload: &[u8]) {\n        // Must attach session_id and monotonic application-level sequence number \n        // to every payload to allow target-side deduplication across reconnections.\n    }\n}\n```",
+  "fix": "Do not treat TCP as an application-level exactly-once link across reconnections. Always embed application-level sequence numbers, epoch tokens, or transaction IDs inside resent payloads to let the recipient deduplicate writes [32, 33, 34].",
+  "strength": "Strong",
+  "source": "Alex Petrov, *Database Internals*, Chapter 8 (Perfect Links) / passages [36, 37]; Martin Kleppmann, *Designing Data-Intensive Applications*, Chapter 8 (Unreliable Networks) / passages [21, 31, 32]."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 921,
+  "title": "Hardcoding Environmental Constants inside Client/Service Code",
+  "category": "Policy Mechanism",
+  "damaged_code": "```rust\npub struct PaymentClient {\n    endpoint: &'static str,\n}\n\nimpl PaymentClient {\n    pub fn new() -> Self {\n        Self {\n            endpoint: \"https://api.paymentgateway.com/v3\", // Hardcoded volatile environment\n        }\n    }\n}\n```",
+  "pattern": "A service or library client hardcodes volatile environmental parameters (such as API endpoints, port configurations, or external credentials) directly inside the library source code.",
+  "why_bad": "Forces a rebuild or re-compilation of the application binary to deploy the code to a different environment (e.g., testing against a sandbox environment vs. staging or production).",
+  "detection": "Hardcoded URLs or IP address literals inside constructor functions or structs that do not allow overrides.",
+  "counterexample": "Universally immutable physical constants.",
+  "fix": "Parameterize the client to load and evaluate variables from external configurations (environment variables, YAML/JSON configuration files, or database tables).\n```rust\nimpl PaymentClient {\n    pub fn new(config: &Config) -> Self {\n        Self {\n            endpoint: &config.payment_endpoint,\n        }\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Andrew Hunt, David Thomas, *The Pragmatic Programmer* (2019), Topic 32, \"Configuration\", p. 581-582."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 47,
+  "title": "Discarding/Swallowing Errors",
+  "category": "Essential Complexity Denial Patterns",
+  "damaged_code": "```rust\n// Silently swallowing a filesystem error\nlet _ = std::fs::remove_file(\"temp.dat\");\n```",
+  "pattern": "Ignoring a returned `Result` or catching an exception with an empty block, bypassing error logging or propagation.",
+  "why_bad": "When things go wrong, swallowing the error masks structural failures (like out-of-disk space, access denied, or corrupted databases), leaving the application in an unpredictable, untriagable state [28:433].",
+  "detection": "Using `let _ = ...` or matching on `Err(_)` with an empty action block on functions that return I/O or database results [28:433].",
+  "counterexample": "```rust\nif let Err(e) = std::fs::remove_file(\"temp.dat\") {\n    log::error!(\"Failed to clean up temp file: {:?}\", e);\n}\n```",
+  "fix": "Always log, report, or propagate errors. Never let failures pass silently [28:433].",
+  "strength": "Strong",
+  "source": "*Code Complete* (McConnell), Chapter 8 [28:433]; *The Pragmatic Programmer* (Hunt & Thomas) [32:456]."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 481,
+  "title": "Unbounded Thread Creation (Missing Thread Pool)",
+  "category": "Resource Capacity Blindness",
+  "damaged_code": "```rust\nuse std::net::TcpListener;\nuse std::thread;\n\nfn listen_unbounded() {\n    let listener = TcpListener::bind(\"0.0.0.0:8080\").unwrap();\n    for stream in listener.incoming() {\n        if let Ok(s) = stream {\n            // Spawning a new thread per request without bounding thread count\n            thread::spawn(move || {\n                handle_client(s);\n            });\n        }\n    }\n}\n```",
+  "pattern": "A loop that accepts incoming network connections or external jobs and spawns an OS thread (`std::thread::spawn`) for each request without capping the total number of concurrently active threads.",
+  "why_bad": "OS threads are heavy resources, each consuming significant kernel/user-space memory (typically 2-8MB for stack space) and requiring scheduler context switching overhead [477]. Under a burst of traffic, unbounded thread spawning will rapidly exhaust system thread capacity limits (e.g., `/proc/sys/kernel/threads-max`), crashing the process with \"can't fork\" errors or inducing extreme memory pressure and OOM [393, 395].",
+  "detection": "Identify loop blocks that invoke `thread::spawn` or `std::thread::Builder::spawn` without consuming from a thread pool or using concurrency limiters like semaphores.",
+  "counterexample": "```rust\nuse threadpool::ThreadPool;\n\nfn listen_bounded() {\n    let pool = ThreadPool::new(64); // Fixed thread pool\n    let listener = std::net::TcpListener::bind(\"0.0.0.0:8080\").unwrap();\n    for stream in listener.incoming() {\n        if let Ok(s) = stream {\n            pool.execute(move || {\n                handle_client(s);\n            });\n        }\n    }\n}\n```",
+  "fix": "Process tasks using a pre-allocated, bounded thread pool (e.g., using the `threadpool` or `rayon` crates) to restrict maximum thread concurrency [393, 395].",
+  "strength": "Strong",
+  "source": "Brendan Gregg, *Systems Performance*, Chapter 13 (USE Method) & Appendix A / passages [393, 395]; Michael T. Nygard, *Release It!*, Chapter 4 / passage [588]."
+}

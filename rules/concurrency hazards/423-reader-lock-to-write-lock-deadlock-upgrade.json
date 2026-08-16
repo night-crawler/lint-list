@@ -1,0 +1,13 @@
+{
+  "id": 423,
+  "title": "Reader Lock-to-Write Lock Deadlock Upgrade",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```rust\nfn process(lock: &RwLock<State>) {\n    let read_guard = lock.read().unwrap();\n    if read_guard.needs_update() {\n        let _write_guard = lock.write().unwrap(); \n    }\n}\n```",
+  "pattern": "An active reader lock holder attempts to acquire a writer lock on the same `RwLock` without releasing the reader lock first.",
+  "why_bad": "If multiple threads attempt this upgrade concurrently, they will deadlock waiting for each other to release their reader locks, as writer acquisition requires zero active readers.",
+  "detection": "A write lock acquisition nested inside the scope of an active read lock on the same `RwLock` instance.",
+  "counterexample": "Context-dependent: Some specialized read-write locks support a safe `upgrade()` method which explicitly handles the upgrade step atomically or safely releases and re-acquires.",
+  "fix": "Explicitly drop the reader lock guard before requesting the writer lock, or use a lock type that supports safe upgradeability.\n```rust\nfn process(lock: &RwLock<State>) {\n    let needs_update = lock.read().unwrap().needs_update();\n    if needs_update {\n        let mut write_guard = lock.write().unwrap();\n        write_guard.update();\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Paul McKenney 9.5, Herlihy 8.2"
+}

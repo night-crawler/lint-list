@@ -1,0 +1,13 @@
+{
+  "id": 796,
+  "title": "The Speculative Generality \"Rewrite Sandbox\"",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```rust\n// Rewriting a simple 100-line legacy calculator but immediately introducing\n// async runtimes, microservices, gRPC, and custom abstract factory traits.\n```",
+  "pattern": "Using a legacy system rewrite as a sandbox to introduce trendy, unproven frameworks, programming languages, or highly complex abstractions before delivering basic functional equivalence.",
+  "why_bad": "It multiplies accidental complexity. Developers spend most of their time fighting the nuances of the new frameworks rather than solving the business problem, leading to delayed releases and eventually project cancelation [43, 100].",
+  "detection": "A rewritten codebase containing more architectural abstractions (interfaces, traits, factories) and third-party dependencies than the legacy codebase being replaced, while serving the same core requirements.",
+  "counterexample": "Valid for small experimental prototype projects intended to test the feasibility of a new technology stack (Spike).",
+  "fix": "Perform rewrites with an investment mindset: keep the rewritten system as simple and minimally abstract as possible, focusing purely on stable domain logic [83, 106, 218].",
+  "strength": "Strong",
+  "source": "Kill It with Fire, Chapter 1 & 4 [100, 105, 106, 562, 592]; Refactoring to Patterns, \"Over-Engineering\" [43]"
+}

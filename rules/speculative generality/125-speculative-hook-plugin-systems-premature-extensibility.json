@@ -1,0 +1,13 @@
+{
+  "id": 125,
+  "title": "Speculative Hook/Plugin Systems (Premature Extensibility)",
+  "category": "Speculative Generality",
+  "damaged_code": "```rust\nstruct EventRegistry {\n    handlers: Vec<Box<dyn Fn()>>,\n}\nimpl EventRegistry {\n    fn register(&mut self, f: Box<dyn Fn()>) { self.handlers.push(f); }\n    fn emit(&self) { for h in &self.handlers { h(); } }\n}\n```",
+  "pattern": "Defining plugin frameworks or generic callback systems before there is a concrete need for more than one hardcoded implementation.",
+  "why_bad": "Incurs high design debt and cognitive overhead for an integration point that may never be built, or will have completely different requirements.",
+  "detection": "Generics or closure registrations with zero concrete registrants or only one trivial test double.",
+  "counterexample": "Frameworks designed specifically for external pluggability.",
+  "fix": "Replace the hook/plugin mechanism with a direct concrete call.",
+  "strength": "Contextual",
+  "source": "Titus Winters et al., *Software Engineering at Google* (2020); Fowler, *Refactoring*, Chapter 3."
+}

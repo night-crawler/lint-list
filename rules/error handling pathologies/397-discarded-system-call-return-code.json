@@ -1,0 +1,12 @@
+{
+  "id": 397,
+  "title": "Discarded System Call Return Code",
+  "category": "Error Handling Pathologies",
+  "damaged_code": "```c\nwrite(fd, buffer, bytes_to_write); // If disk is full, we fail silently!\n```",
+  "pattern": "Invoking a system call (like `write`, `close`, `mkdir`) that returns an error code or status, but ignoring the returned value completely.",
+  "why_bad": "Breaks defensive programming. System failures (e.g., out of memory, disk full, connection closed) are discarded, and the program proceeds with the false assumption that the system call succeeded, leading to catastrophic corruptions later. [28, Section 8.3 & 8.4]",
+  "detection": "A system or standard library call returning a result or status code whose value is completely ignored (can be detected by lack of assignment, mapping, or compiler-level `#[must_use]` discard).",
+  "fix": "Always check the returned status code and handle the failure.\n```c\nif (write(fd, buffer, bytes) < 0) {\n    perror(\"Write failed\");\n    return -1;\n}\n```",
+  "strength": "Strong",
+  "source": "*Steve McConnell - Code Complete*, Section 8.3 & 8.4 (\"not checking system calls\") [28]"
+}

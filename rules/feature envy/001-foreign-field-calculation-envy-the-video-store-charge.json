@@ -1,0 +1,13 @@
+{
+  "id": 1,
+  "title": "Foreign-Field Calculation Envy (The Video Store Charge)",
+  "category": "Feature Envy",
+  "damaged_code": "```rust\nstruct Movie {\n    price_code: u32,\n}\nstruct Rental {\n    movie: Movie,\n    days_rented: u32,\n}\nstruct Customer {\n    rentals: Vec<Rental>,\n}\nimpl Customer {\n    fn statement(&self) -> String {\n        let mut total = 0.0;\n        for r in &self.rentals {\n            let mut amt = 0.0;\n            match r.movie.price_code {\n                0 => { // REGULAR\n                    amt += 2.0;\n                    if r.days_rented > 2 {\n                        amt += (r.days_rented - 2) as f64 * 1.5;\n                    }\n                }\n                1 => { // NEW_RELEASE\n                    amt += r.days_rented as f64 * 3.0;\n                }\n                _ => {}\n            }\n            total += amt;\n        }\n        format!(\"Amount owed: {}\", total)\n    }\n}\n```",
+  "pattern": "A method on a struct loops over or accesses an associated struct and computes a scalar value by querying multiple fields of the associated struct (e.g., `days_rented` and `movie.price_code`).",
+  "why_bad": "It violates encapsulation and increases coupling. If the pricing rules or classifications change, the containing class (`Customer`) must be modified, even though the change is conceptually about how a `Rental` or `Movie` computes its charges.",
+  "detection": "Identify methods that perform pattern matching or branching based on multiple accessor fields of an element type in a collection or referenced field, where the matching does not use any state from the host class.",
+  "counterexample": "`Context-dependent`. If the calculation requires state from `Customer` (e.g., customer loyalty discounts), it may be appropriate to coordinate at the `Customer` level, though delegation is still preferred.",
+  "fix": "Move the calculation logic into a method on the struct that owns the data.\n```rust\nimpl Rental {\n    fn charge(&self) -> f64 {\n        let mut amt = 0.0;\n        match self.movie.price_code {\n            0 => {\n                amt += 2.0;\n                if self.days_rented > 2 {\n                    amt += (self.days_rented - 2) as f64 * 1.5;\n                }\n            }\n            1 => amt += self.days_rented as f64 * 3.0,\n            _ => {}\n        }\n        amt\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Refactoring* (1999), Chapter 1 and Chapter 3 (\"Feature Envy\")."
+}

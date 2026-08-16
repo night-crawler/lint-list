@@ -1,0 +1,13 @@
+{
+  "id": 889,
+  "title": "Overexposed Getters/Setters (Information Leakage)",
+  "category": "Local Optimization",
+  "damaged_code": "```rust\npub struct EngineConfig {\n    timeout_ms: u64,\n}\n\nimpl EngineConfig {\n    pub fn get_timeout(&self) -> u64 {\n        self.timeout_ms\n    }\n    \n    pub fn set_timeout(&mut self, timeout: u64) {\n        self.timeout_ms = timeout;\n    }\n}\n```",
+  "pattern": "A struct marks its fields private but immediately exposes public, trivial getter and setter methods for every single field.",
+  "why_bad": "While locally appearing \"encapsulated\" because of the `private` keywords, the internal representation is completely leaked. It is a form of design theater. It forces callers to coordinate and manipulate the struct's private state from the outside, creating tight coupling and making it impossible to change the internal representation (e.g., changing `timeout_ms` to a `Duration`) without breaking all callers.",
+  "detection": "A struct where every single private field has a corresponding public `get_field` and `set_field` method that does nothing but return or assign the field directly.",
+  "counterexample": "Enforcing invariant validation inside a setter (e.g., `set_age` throwing on negative numbers) or exposing getters for read-only immutable configuration properties. Mark `Context-dependent`.",
+  "fix": "Remove getters/setters and move the operations that require those fields into the struct itself (Command Query Separation / \"Tell, Don't Ask\").\n```rust\npub struct EngineConfig {\n    timeout: std::time::Duration,\n}\n\nimpl EngineConfig {\n    pub fn apply_to_request(&self, req: &mut Request) {\n        req.set_timeout(self.timeout);\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "John K. Ousterhout, *A Philosophy of Software Design*, Chapter 5.1 / 5.8 \"Information Hiding (and Leakage)\" (p. 31, 36)."
+}

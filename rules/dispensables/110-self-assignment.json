@@ -1,0 +1,13 @@
+{
+  "id": 110,
+  "title": "Self-Assignment",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nx = x;\n```",
+  "pattern": "Assigning a variable directly to itself.",
+  "why_bad": "It is completely redundant and does absolutely nothing. It is usually left over as a bug or dead remnant of refactoring.",
+  "detection": "An assignment statement where the left-hand side and right-hand side parse trees are identical.",
+  "counterexample": "Context-dependent (never valid in production, but sometimes used in tests to trigger compiler warnings).",
+  "fix": "Delete the assignment statement.",
+  "strength": "Strong",
+  "source": "Fowler, *Refactoring*, Chapter 3 (\"Bad Smells - Dead Code\")."
+}

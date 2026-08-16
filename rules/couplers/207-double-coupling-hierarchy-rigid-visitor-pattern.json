@@ -1,0 +1,13 @@
+{
+  "id": 207,
+  "title": "Double-Coupling Hierarchy (Rigid Visitor Pattern)",
+  "category": "Couplers",
+  "damaged_code": "```rust\ntrait Visitor {\n    fn visit_circle(&self, c: &Circle);\n    fn visit_square(&self, s: &Square);\n}\ntrait Element {\n    fn accept(&self, v: &dyn Visitor);\n}\n```",
+  "pattern": "Using the object-oriented Visitor Pattern where the `Visitor` interface lists every concrete `Element` subclass, and every subclass implements `accept`.",
+  "why_bad": "It creates a double-coupling hierarchy. Adding a new `Element` (e.g., `Triangle`) requires modifying and recompiling the entire `Visitor` interface and all of its concrete implementations (e.g., `DrawVisitor`, `ExportVisitor`).",
+  "detection": "An interface containing specific methods for every concrete implementation in an associated trait hierarchy.",
+  "counterexample": "Highly static object graphs where elements never change, though enums are still safer in compiled languages.",
+  "fix": "In Rust, replace the rigid class hierarchy visitor with a single enum representing the variants, matched natively using compile-time checked `match`.\n```rust\nenum Shape {\n    Circle(Circle),\n    Square(Square),\n    Triangle(Triangle),\n}\n// Visitors are simply functions implementing pattern matching\n```",
+  "strength": "Strong",
+  "source": "Erich Gamma et al., *Design Patterns* (1994), Chapter 5 (\"Visitor\")."
+}

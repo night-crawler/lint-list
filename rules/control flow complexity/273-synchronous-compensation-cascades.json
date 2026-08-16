@@ -1,0 +1,13 @@
+{
+  "id": 273,
+  "title": "Synchronous compensation cascades",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```rust\nfn register_user(user: User) -> Result<()> {\n    create_db_record(&user)?;\n    if let Err(e) = send_welcome_email(&user) {\n        delete_db_record(&user)?;\n        return Err(e);\n    }\n    Ok(())\n}\n```",
+  "pattern": "Orchestrating complex fallback or rollback operations synchronously on the primary execution path.",
+  "why_bad": "Cascading failures. If the recovery action fails (e.g., delete fails due to DB down), the system is left in an inconsistent state and resources are exhausted.",
+  "detection": "Inline error-recovery blocks that perform synchronous database or remote mutations to undo previous steps.",
+  "counterexample": "Transactional database transactions that cleanly rollback automatically without manual code.",
+  "fix": "Decouple operations via transactional outboxes, asynchronous saga patterns, or background job queues.",
+  "strength": "Contextual",
+  "source": "Juval Löwy, *Righting Software*, Chapter 2."
+}

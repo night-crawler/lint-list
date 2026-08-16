@@ -1,0 +1,13 @@
+{
+  "id": 85,
+  "title": "Preamble Section-Header Banners",
+  "category": "Dispensables",
+  "damaged_code": "```rust\n// ==========================================\n//                 ACTIONS                   \n// ==========================================\nfn play() {}\n```",
+  "pattern": "Noisy, visual-heavy banner comments dividing a file into arbitrary sections like 'Actions', 'Getters', or 'Setters'.",
+  "why_bad": "Adds visual clutter that breaks scanning. It encourages files to grow too large by grouping unrelated tasks instead of splitting files.",
+  "detection": "Comments containing long lines of decorative characters (`// ===`, `// ***`, `// ---`) wrapping simple labels.",
+  "counterexample": "Minimal, non-decorative division comments in highly complex state-machine files.",
+  "fix": "Remove the banner comment entirely; structure the file cleanly and rely on IDE outlines.",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 4 (\"Comments - Position Markers\"), p. 67."
+}

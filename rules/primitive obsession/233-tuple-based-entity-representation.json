@@ -1,0 +1,13 @@
+{
+  "id": 233,
+  "title": "Tuple-based Entity Representation",
+  "category": "Primitive Obsession",
+  "damaged_code": "```type Address = (String, String, String, String);```",
+  "pattern": "Using nameless tuples or raw primitive arrays to represent structured, multi-field domain entities.",
+  "why_bad": "It obscures the structural meaning of each element (e.g., which string represents the city vs. the state). Developers must memorize position orders, and the compiler cannot detect swapped fields of the same type.",
+  "detection": "The use of primitive tuple aliases to represent structured domain definitions.",
+  "counterexample": "Mathematical vectors or coordinate points where indices represent a standard, uniform dimension sequence:\n```rust\nlet point_2d: (f64, f64) = (10.0, 20.0);\n```",
+  "fix": "Define a clear, named struct.\n```rust\nstruct Address {\n    street: String,\n    city: String,\n    state: String,\n    zip_code: String,\n}\n```",
+  "strength": "Strong",
+  "source": "*Domain Modeling made Functional* by Scott Wlaschin (p. 75); *Practical Object-oriented Design* (p. 84)."
+}

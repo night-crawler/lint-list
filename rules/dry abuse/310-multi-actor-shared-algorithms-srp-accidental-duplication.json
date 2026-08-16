@@ -1,0 +1,13 @@
+{
+  "id": 310,
+  "title": "Multi-Actor Shared Algorithms (SRP Accidental Duplication)",
+  "category": "Dry Abuse",
+  "damaged_code": "```rust\nstruct Employee {\n    hourly_rate: f64,\n}\n\nimpl Employee {\n    // Called by CFO (Accounting)\n    fn calculate_pay(&self, hours: f64) -> f64 {\n        self.regular_hours(hours) * self.hourly_rate\n    }\n\n    // Called by COO (HR Reports)\n    fn report_hours(&self, hours: f64) -> f64 {\n        self.regular_hours(hours)\n    }\n\n    // Unified to avoid duplication\n    fn regular_hours(&self, hours: f64) -> f64 {\n        hours.min(40.0)\n    }\n}\n```",
+  "pattern": "Sharing a common utility function between methods serving entirely different actors or departments to avoid writing duplicate code structures.",
+  "why_bad": "It couples distinct actors to each other's evolutionary paths. If the CFO's team decides that overtime calculation should change (e.g., regular hours capped at 37.5), a developer altering the shared `regular_hours` helper will silently corrupt the report numbers used by the COO's team, causing major reporting errors.",
+  "detection": "A private helper method called by multiple public methods that are specified by or responsible to different actors (e.g., different organizational roles).",
+  "counterexample": "Low-level algorithmic primitives (e.g., hashing or serialization) where the operation is fully technical and does not depend on organizational actor requirements.",
+  "fix": "Separate the data structures and functions, duplicating the logic initially if necessary so that each actor's path can vary independently.\n```rust\nstruct PayCalculator;\nimpl PayCalculator {\n    fn calculate_pay(hourly_rate: f64, hours: f64) -> f64 {\n        hours.min(40.0) * hourly_rate\n    }\n}\n\nstruct HourReporter;\nimpl HourReporter {\n    fn report_hours(hours: f64) -> f64 {\n        hours.min(40.0)\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Clean Architecture*, Chapter 7: \"Symptom 1: Accidental Duplication\", p. 63-65."
+}

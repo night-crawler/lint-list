@@ -1,0 +1,13 @@
+{
+  "id": 583,
+  "title": "Processing-Time Stream Rate Distortion (Restart Spike)",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\nfn process_incoming_stream(events: Vec<Event>) {\n    for event in events {\n        // Increment count bucket using current local processing time\n        let current_bucket = get_current_minute_bucket();\n        METRICS.increment(current_bucket); \n    }\n}\n```",
+  "pattern": "Aggregating stream request rates into time-windows using the processor's current local clock (processing time) rather than the event's embedded timestamp.",
+  "why_bad": "If the stream processor restarts or gets delayed, a backlog of events accumulates. When the backlog is processed, registering metrics by processing time creates an artificial, huge spike of traffic on the dashboard, even though the actual arrival of requests at the boundary was completely steady and normal.",
+  "detection": "Look for stream metric aggregations using `SystemTime::now()` or equivalent local clocks to bucket data, rather than referencing a field on the event struct.",
+  "counterexample": "`Context-dependent`. If the stream has absolute zero network delay and never buffers, processing-time is identical to event-time.",
+  "fix": "Always aggregate rates and windows using the timestamp embedded inside the event payload.\n```rust\nfn process_incoming_stream_correct(events: Vec<Event>) {\n    for event in events {\n        let event_bucket = get_bucket_from_timestamp(event.occurred_at);\n        METRICS.increment(event_bucket);\n    }\n}\n```",
+  "strength": "Strong` — guarantees incorrect spike reporting during any consumer delay or backlog recovery.",
+  "source": "Martin Kleppmann - *Designing Data-Intensive Applications* (2017), Chapter 11, p. 453."
+}

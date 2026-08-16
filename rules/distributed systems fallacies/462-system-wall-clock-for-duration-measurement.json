@@ -1,0 +1,13 @@
+{
+  "id": 462,
+  "title": "System Wall-Clock for Duration Measurement",
+  "category": "Distributed Systems Fallacies",
+  "damaged_code": "```rust\nuse std::time::SystemTime;\n\n// Using SystemTime to measure elapsed duration for timeouts\nfn run_with_timeout() {\n    let start = SystemTime::now();\n    loop {\n        do_work();\n        // BUG: SystemTime is non-monotonic! If NTP shifts clock backward,\n        // this can loop forever, or exit prematurely if clock jumps forward.\n        if start.elapsed().unwrap_or_default() > std::time::Duration::from_secs(10) {\n            break;\n        }\n    }\n}\n```",
+  "pattern": "Measuring elapsed time, timeouts, or interval durations using `std::time::SystemTime` or system real-time wall-clock timestamps (e.g., subtracting or calling `.elapsed()` on real-time).",
+  "why_bad": "`SystemTime` (time-of-day clock) is bound to the physical world and is synchronized continuously via Network Time Protocol (NTP) [144, 261]. NTP can adjust, reset, or skew the clock backward or forward at any time, causing elapsed time calculations to yield negative numbers, zero, or excessively large jumps [144, 145]. This can lead to infinite loops, premature timeout triggers, or application crashes [262].",
+  "detection": "Identify uses of `std::time::SystemTime::now()` or `.elapsed()` on a `SystemTime` instance where the resulting duration is used as a timeout, deadline, rate-limiting bucket window, or loop exit condition.",
+  "counterexample": "```rust\nuse std::time::Instant;\n\nfn run_with_timeout() {\n    let start = Instant::now();\n    loop {\n        do_work();\n        if start.elapsed() > std::time::Duration::from_secs(10) {\n            break;\n        }\n    }\n}\n```",
+  "fix": "Use a monotonic clock (e.g., `std::time::Instant::now()`) for measuring elapsed durations, timeouts, or rates, as monotonic clocks are guaranteed to never go backward and are unaffected by NTP wall-clock corrections [144, 251].",
+  "strength": "Strong",
+  "source": "Martin Kleppmann, *Designing Data-Intensive Applications*, Chapter 8 (Unreliable Clocks) / passages [144, 145, 262]; Brendan Gregg, *Systems Performance*, Clock Drift / passage [9, 261]."
+}

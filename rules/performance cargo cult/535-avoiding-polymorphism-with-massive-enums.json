@@ -1,0 +1,13 @@
+{
+  "id": 535,
+  "title": "Avoiding Polymorphism with Massive Enums",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\nenum NodeKind {\n    Element(ElementData),\n    Text(TextData),\n    Comment(CommentData),\n    // 20 more variants...\n}\n```",
+  "pattern": "Creating extremely large `enum` types with dozens of distinct variants containing heavy data blocks to avoid dynamic dispatch vtables (`dyn Trait`).",
+  "why_bad": "Enums are sized to their largest variant. A single giant enum variant forces all instances to allocate stack frame sizes of that largest variant. This leads to high memory copying costs on function calls and defeats compiler register optimization, running slower than clean dynamic dispatch [317, 320, 351].",
+  "detection": "Enums containing a large number of variants (> 10) where each variant contains distinct, heavy structures, rather than small primitive types.",
+  "counterexample": "Enums where all variants are small unit types (primitive flags) without associated data blocks. `Context-dependent`.",
+  "fix": "Use trait objects (`dyn Trait`) boxed on the heap (`Box<dyn Trait>`) to decouple types, restore object-oriented polymorphism, and restrict stack frame sizes.",
+  "strength": "Strong",
+  "source": "*A Philosophy of Software Design*, Chapter 20 (p. 317, 320); *Code Complete*, Section 25.3 (p. 351)."
+}

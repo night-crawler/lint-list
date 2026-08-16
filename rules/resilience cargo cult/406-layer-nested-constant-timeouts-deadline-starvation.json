@@ -1,0 +1,13 @@
+{
+  "id": 406,
+  "title": "Layer-Nested Constant Timeouts (Deadline Starvation)",
+  "category": "Resilience Cargo Cult",
+  "damaged_code": "```rust\n// Frontend Router: timeout set to 5 seconds\nlet res = timeout(Duration::from_secs(5), call_backend_service()).await;\n\n// Backend Service: timeout also set to 5 seconds\nlet db_res = timeout(Duration::from_secs(5), query_database()).await;\n```",
+  "pattern": "Configuring static, constant timeouts at every layer of a nested call tree (e.g., frontend, backend service, database client).",
+  "why_bad": "If a database query slows down to 4.5 seconds, the backend service completes in 4.5 seconds. However, if there are intermediate network hops, the frontend might have already timed out and abandoned the request after 5 seconds. Work is processed by the lower layers but the client has already given up, resulting in wasted CPU/memory and \"deadline starvation\" [48, 140].",
+  "detection": "Find static timeouts in outbound network calls across nested services that do not dynamically scale downward based on incoming request deadlines.",
+  "counterexample": "```rust\n// Backend Service: extracts remaining deadline from incoming RPC context\nlet remaining_deadline = rpc_context.get_remaining_time(); \nlet db_res = timeout(remaining_deadline, query_database()).await;\n```",
+  "fix": "Implement deadline propagation, where the remaining budget of the request is passed in headers and used to dynamically set timeouts for lower-level requests.",
+  "strength": "Contextual",
+  "source": "Heather Adkins et al., *Building Secure and Reliable Systems*, page 150 / passage [48]; Titus Winters et al., *Software Engineering at Google*, page 527 / passage [140]."
+}

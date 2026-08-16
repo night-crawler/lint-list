@@ -1,0 +1,13 @@
+{
+  "id": 278,
+  "title": "Ternary Operator Overuse",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```rust\nlet status = if is_active { if is_admin { \"admin\" } else { \"user\" } } else { \"inactive\" };\n```",
+  "pattern": "Nesting ternary or inline `if-else` operators within other inline operators.",
+  "why_bad": "Obscures the logic completely. The reader is forced to parse multi-line expressions containing complex logical conditions in a single sentence.",
+  "detection": "Multi-level nested ternary expressions or inline `if` statements.",
+  "counterexample": "A single-level, clean inline ternary mapping (e.g., `let val = if cond { 1 } else { 0 };`).",
+  "fix": "Expand to structured `if-else` blocks or match expressions.",
+  "strength": "Strong",
+  "source": "Trevor Foucher & Dustin Boswell, *The Art of Readable Code*, Chapter 7."
+}

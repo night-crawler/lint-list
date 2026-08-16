@@ -1,0 +1,13 @@
+{
+  "id": 657,
+  "title": "Global State Pollution (Missing Teardown Cleanups)",
+  "category": "Test Smells",
+  "damaged_code": "```rust\n#[test]\nfn test_set_database_url() {\n    std::env::set_var(\"DATABASE_URL\", \"postgres://test_db\");\n    let url = std::env::var(\"DATABASE_URL\").unwrap();\n    assert_eq!(url, \"postgres://test_db\");\n    // Missing teardown! The env var remains modified for subsequent tests\n}\n```",
+  "pattern": "A test that modifies system environment variables, local databases, or static singletons but fails to clean up or restore the original state in a corresponding teardown block.",
+  "why_bad": "It leaks state modifications across tests [657]. This causes subsequent unrelated tests in the suite to fail, creating hard-to-debug failures that are highly order-dependent [657, 658].",
+  "detection": "The test writes to global state (environment, shared files, static singletons) but has no matching restoration logic executed in a teardown or block wrapper.",
+  "counterexample": "Using scoped environment guards that automatically reset env values when the guard goes out of scope (using RAII patterns in Rust).",
+  "fix": "Ensure all modified global environments are restored cleanly in a `tearDown` or using an automated teardown wrapper block [376, 657, 658].",
+  "strength": "Strong",
+  "source": "*   *Working Effectively with Legacy Code*, \"Introduce Static Setter: Cleanup\" (p. 372-376) [657, 658]\n*   *Practical Object-Oriented Design*, \"Massimo Arnoldi on Singletons and Teardown\" (p. 397) [397]"
+}

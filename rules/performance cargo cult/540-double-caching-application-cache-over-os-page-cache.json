@@ -1,0 +1,13 @@
+{
+  "id": 540,
+  "title": "Double Caching (Application Cache over OS Page Cache)",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\n// Re-implementing a giant in-memory vector cache of raw text files\n```",
+  "pattern": "An application manually loading and caching entire raw files in heap-allocated strings or memory blocks to \"avoid disk reading latency.\"",
+  "why_bad": "Modern operating systems automatically cache files in the physical RAM page cache (buffer cache). Re-implementing this cache in application memory wastes physical RAM, triggers double memory copies, and bypasses OS-level page eviction algorithms (like LRU) [118, 140, 164].",
+  "detection": "A custom in-memory global vector or map holding the exact contents of static database files or text files on disk that are read repetitively.",
+  "counterexample": "Compilers or static site generators that read and compile source code to an AST in-memory structure once. `Context-dependent`.",
+  "fix": "Read the files directly using standard buffered I/O stream functions (`std::io::BufReader`) and let the OS page cache handle RAM caching.",
+  "strength": "Strong",
+  "source": "*Systems Performance*, Chapter 2, Section 2.3 (p. 118), Chapter 8 (p. 140), Chapter 12 (p. 164)."
+}

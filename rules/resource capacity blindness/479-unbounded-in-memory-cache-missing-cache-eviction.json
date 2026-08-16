@@ -1,0 +1,13 @@
+{
+  "id": 479,
+  "title": "Unbounded In-Memory Cache (Missing Cache Eviction)",
+  "category": "Resource Capacity Blindness",
+  "damaged_code": "```rust\nuse std::collections::HashMap;\n\nstruct AppCache {\n    // A cache map that grows forever without size limits or eviction policies\n    cache: HashMap<String, String>,\n}\n\nimpl AppCache {\n    fn insert(&mut self, key: String, val: String) {\n        self.cache.insert(key, val);\n    }\n}\n```",
+  "pattern": "Declaring an in-memory collection (such as `HashMap` or `BTreeMap`) acting as a cache that is written to without any associated capacity limit, expiration TTL, or eviction logic (such as LRU or TinyLFU).",
+  "why_bad": "Memory is a finite resource. A cache without maximum memory limits or an eviction policy will continuously grow as unique keys accumulate, eventually exhausting available RAM and causing OOM crashes [218, 233]. In-memory caches must be tightly bounded or rely on garbage-collector-friendly/SoftReference equivalents to avoid stability-killing degradation [218, 235].",
+  "detection": "Identify fields in long-lived structs that act as caches but lack size bounds, LRU algorithms, or periodic flush mechanisms.",
+  "counterexample": "```rust\nuse lru::LruCache; // Bounded cache with eviction policy\nuse std::num::NonZeroUsize;\n\nstruct AppCache {\n    cache: LruCache<String, String>,\n}\n```",
+  "fix": "Wrap the collection in a bounded cache structure (e.g., using `LruCache` or an eviction policy with a configured max size) [219, 233].",
+  "strength": "Contextual",
+  "source": "Michael T. Nygard, *Release It!*, Chapter 10 (Use Caching Carefully) / passages [218, 219, 233]; Alex Petrov, *Database Internals*, Chapter 4 (Buffer Management) / passage [44]."
+}

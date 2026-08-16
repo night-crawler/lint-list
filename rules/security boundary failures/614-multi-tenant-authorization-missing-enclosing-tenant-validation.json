@@ -1,0 +1,13 @@
+{
+  "id": 614,
+  "title": "Multi-Tenant Authorization Missing Enclosing Tenant Validation",
+  "category": "Security Boundary Failures",
+  "damaged_code": "```rust\nfn authenticate_user(tenant_id: &str, username: &str, secret: &str) -> Option<User> {\n    // Missing check to verify if the Tenant is active\n    let user = db::find_user(tenant_id, username);\n    if user.is_valid_pass(secret) {\n        return Some(user);\n    }\n    None\n}\n```",
+  "pattern": "Authenticating a user identity or checking its password without verifying whether the enclosing parent entity (the Tenant, subscription, or business domain) is currently active or enabled.",
+  "why_bad": "If an organization (Tenant) is suspended or deactivated (e.g., due to billing default or security quarantine), users belonging to that organization can still log in and run operations because parent verification is bypassed.",
+  "detection": "Authentication queries pulling a user profile by `username` and `tenant_id` that do not fetch and assert the `is_active` state of the parent `Tenant` structure.",
+  "counterexample": "```rust\nfn authenticate_user(tenant_id: &str, username: &str, secret: &str) -> Option<User> {\n    let tenant = db::find_tenant(tenant_id)?;\n    if tenant.is_active() {\n        let user = db::find_user(tenant_id, username)?;\n        if user.is_enabled() && user.is_valid_pass(secret) {\n            return Some(user);\n        }\n    }\n    None\n}\n```",
+  "fix": "Enforce hierarchical validation: first query the tenant and assert that it is active, and only then verify that the user within that tenant is enabled and has correct credentials.",
+  "strength": "Strong",
+  "source": "`Vaughn Vernon - Implementing Domain-Driven Design (2013)`, Ch 6."
+}

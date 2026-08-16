@@ -1,0 +1,13 @@
+{
+  "id": 702,
+  "title": "Pre-emptive Abstract Extension Configuration",
+  "category": "Configuration Complexity",
+  "damaged_code": "```rust\n// Extreme abstraction for a single internal registry\nstruct DatabasePluginFactory {\n    registry: HashMap<String, Box<dyn DatabaseConnector>>,\n}\n```",
+  "pattern": "Constructing elaborate abstract frameworks and plugin configuration wrappers for an library dependency that has only one implementation.",
+  "why_bad": "Adds heavy cognitive overhead, indirection, and maintenance costs without actual technical value. It increases structural complexity in pursuit of speculative generality.",
+  "detection": "The existence of extensive abstract factory structures, traits, and configurations that map to a single concrete operational target.",
+  "counterexample": "```rust\nstruct DatabaseConnector {\n    client: PostgresClient,\n}\n```",
+  "fix": "Code for the immediate requirement; use simple concrete types and inline logic, refactoring to decoupled abstractions only when a second implementation is introduced.",
+  "strength": "Context-dependent",
+  "source": "Sandi Metz - *Practical Object-oriented Design* (2019, Addison-Wesley).pdf, Chapter 3; Martin Fowler - *Refactoring* (1999, Addison-Wesley Professional).pdf, Chapter 3."
+}

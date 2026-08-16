@@ -1,0 +1,13 @@
+{
+  "id": 819,
+  "title": "Iterative Collection De-duplication (Ignoring Set Types)",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Wiping duplicates manually via nested loops over an array\npub fn unique_elements(items: Vec<i32>) -> Vec<i32> {\n    let mut unique = Vec::new();\n    for item in items {\n        if !unique.contains(&item) {\n            unique.push(item);\n        }\n    }\n    unique\n}\n```",
+  "pattern": "Manually traversing a list and checking for duplicates iteratively instead of leveraging built-in set data structures.",
+  "why_bad": "High algorithmic complexity. This nested loop approach operates in O(N^2) time, drastically penalizing performance on larger collections compared to O(N) set-based de-duplication.",
+  "detection": "A loop over a sequence checking for existence in a result container before appending, without using a `HashSet` or standard `dedup()__`.",
+  "counterexample": "De-duplicating a statically-bounded small array (e.g., 2-3 items) where a HashSet allocation overhead would exceed the O(N^2) search cost.",
+  "fix": "Convert the collection to a Set or utilize the standard collection's de-duplication traits.",
+  "strength": "Strong",
+  "source": "*The Art of Readable Code (Foucher & Boswell), Chapter 11, p. 115 [360]*"
+}

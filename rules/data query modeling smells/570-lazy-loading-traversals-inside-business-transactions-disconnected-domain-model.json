@@ -1,0 +1,13 @@
+{
+  "id": 570,
+  "title": "Lazy Loading Traversals inside Business Transactions (Disconnected Domain Model)",
+  "category": "Data Query Modeling Smells",
+  "damaged_code": "```rust\n// Accessing a lazy-loaded collection deep inside a business rule transaction\nlet backlog_item = repo.find(id)?;\n// Triggers secondary database queries implicitly\nfor task in backlog_item.tasks() {\n    total_hours += task.hours_remaining;\n}\n```",
+  "pattern": "Implicitly fetching child associations (lazy loading) while executing domain logic inside an active transactional boundary.",
+  "why_bad": "Extreme performance degradation and transaction timeouts. It forces multiple round-trips to the database inside a critical write transaction, holding database connection locks open longer, causing transaction retries or deadlocks under concurrent load [248, 536].",
+  "detection": "Chained property access on models (e.g., `entity.relation.sub_relation`) inside code marked as transactional.",
+  "counterexample": "Explicitly fetching a flat projection/summary of needed values up-front using a targeted repository query.",
+  "fix": "Query and load only the specific data (e.g., precomputed sum) needed for the business rule ahead of invoking the aggregate behavior.",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design (Vernon), p. 344, 471 [248, 536]*"
+}

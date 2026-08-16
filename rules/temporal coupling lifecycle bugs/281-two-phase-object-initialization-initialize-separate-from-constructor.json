@@ -1,0 +1,13 @@
+{
+  "id": 281,
+  "title": "Two-Phase Object Initialization (Initialize Separate from Constructor)",
+  "category": "Temporal Coupling Lifecycle Bugs",
+  "damaged_code": "```rust\n// Rust\nlet mut module = Module::new();\nmodule.routine(); // BUG: Panic or undefined behavior because initialize() was not called first!\n```",
+  "pattern": "An object's constructor leaves the instance in an invalid or incomplete state, requiring the caller to explicitly call a separate `.initialize()` or `.init()` routine before using it.",
+  "why_bad": "Exposes the system to uninitialized state bugs. A consumer might call a routine before initializing, violating class invariants and causing crashes, null-pointer dereferences, or logical errors.",
+  "detection": "The constructor returns an object containing uninitialized or default/null fields that must be populated by an explicit, secondary init routine before other member functions are valid.",
+  "counterexample": "Types representing lazy resources that connect/initialize transparently on first actual method invocation.",
+  "fix": "Perform all required initialization directly inside the constructor (`new`), returning a fully initialized, valid, ready-to-use object.",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete*, page 540 / passage [248, 540]."
+}

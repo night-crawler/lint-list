@@ -1,0 +1,13 @@
+{
+  "id": 602,
+  "title": "Lexical Layout Hacks for Binary/Textual Protocols (LEXICAL_LAYOUT_HACK)",
+  "category": "Protocol Parsing Serialization Smells",
+  "damaged_code": "```rust\nfn log_trace(timestamp: u64, event: &str) -> String {\n    // Brittle: Manual space padding and exact formatting to bypass parser logic\n    // Expects line sorting to keep events syntactically correct in a file.\n    format!(\"  {{\"time\": {}, \"evt\": \"{}\"}},\n\", timestamp, event)\n}\n```",
+  "pattern": "Constructing serialized messages by manually applying leading whitespace, bracket alignments, or hardcoded indentation offsets so that physical, byte-by-byte file operations (such as Unix `sort`) preserve syntactic or chronological correctness.",
+  "why_bad": "It forces syntax to depend on physical layout formatting. Any upgrade in downstream serializers or standard printer routines (e.g., compacting JSON) will completely invalidate the file layout, resulting in corrupted outputs or parsing crashes.",
+  "detection": "Look for hardcoded indentation, exact byte-padding, or prefix space adjustments embedded inside formatting strings of serializers or logging calls.",
+  "counterexample": "```rust\n// Valid: Generating raw records and using semantic sorting on deserialized entities\n#[derive(serde::Serialize, Eq, Ord, PartialEq, PartialOrd)]\nstruct LogEntry {\n    time: u64,\n    evt: String,\n}\n```",
+  "fix": "Decouple formatting from syntax. Produce standard unformatted records, and handle sorting or ordering semantically (using timestamp fields) inside application logic.",
+  "strength": "Strong",
+  "source": "*Richard L. Sites - Understanding Software Dynamics (2021)*, Chapter 18; *Eric Evans - Domain-Driven Design (2003)*, Chapter 14."
+}

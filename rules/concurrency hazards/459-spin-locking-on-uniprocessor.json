@@ -1,0 +1,13 @@
+{
+  "id": 459,
+  "title": "Spin-Locking on Uniprocessor",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```cpp\n// Running on single CPU core\nwhile (lock_held) {\n    // BUG: Spin loop consumes CPU! Lock holder cannot be scheduled \n    // to release the lock!\n}\n```",
+  "pattern": "Using a pure spinlock on a system with only a single CPU core (uniprocessor).",
+  "why_bad": "A thread spinning in a tight loop on a uniprocessor consumes 100% of the single CPU's resources. Because the thread holding the lock cannot get a scheduling quantum to execute and release the lock, the spinning thread wastes its entire scheduling slice, severely degrading performance.",
+  "detection": "Spinlocks used in a deployment target or system environment compiled for or limited to a single CPU core without yields.",
+  "counterexample": "The spinlock contains an explicit thread yield or sleep command, which immediately returns scheduling control to the OS.",
+  "fix": "Introduce scheduling yields inside the spin loop, or use thread-blocking mutexes.\n```cpp\nwhile (lock_held) {\n    std::this_thread::yield(); // Let other thread run to release\n}\n```",
+  "strength": "Strong",
+  "source": "Herlihy 7.4, Sites Ch 27"
+}

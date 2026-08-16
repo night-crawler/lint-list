@@ -1,0 +1,13 @@
+{
+  "id": 792,
+  "title": "Monolithic DB Schema Overload (Lazy Attribute Overloading)",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```sql\n-- Reusing an old string column to store serialized JSON migration configs\nUPDATE system_settings SET description_string = '{\"new_timeout\": 500, \"new_port\": 8080}' WHERE id = 1;\n```",
+  "pattern": "Packing unstructured data payloads (JSON, XML, or comma-separated lists) into existing generic columns (like `VARCHAR` or `TEXT`) to avoid executing a formal database schema migration.",
+  "why_bad": "It creates \"semantic pollution.\" The database can no longer validate types, enforce referential integrity, or index the unmapped fields. It forces the application code to handle complex parser logic and error states, leading to fragile code [377, 781].",
+  "detection": "Application code reading from a single column and immediately passing the raw string into a JSON/XML deserializer to populate domain-specific attributes.",
+  "counterexample": "`Context-dependent`. Valid for document-based columns explicitly designed and indexed as JSON fields in database engines that support native JSON querying (e.g., PostgreSQL JSONB) [619].",
+  "fix": "Execute a formal database schema update to add structured, typed columns [174, 621].\n```sql\nALTER TABLE system_settings ADD COLUMN new_timeout INT;\n```",
+  "strength": "Strong",
+  "source": "Release It!, \"Adaptable Enterprise Architecture\" [377, 781]; Designing Data-Intensive Applications, Chapter 2 [619]"
+}

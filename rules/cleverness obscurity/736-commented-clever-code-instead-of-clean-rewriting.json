@@ -1,0 +1,11 @@
+{
+  "id": 736,
+  "title": "Commented Clever Code instead of Clean Rewriting",
+  "category": "Cleverness Obscurity",
+  "damaged_code": "```rust\n// Rust\n// VERY IMPORTANT NOTE: The constructor takes a reference to pub_obj.\n// pub_obj MUST NOT BE DESTROYED before db_pub, otherwise the database\n// will cause a horrible segfault at runtime!\n```",
+  "pattern": "Writing a warning comment to document tricky, fragile, or temporally coupled code instead of refactoring the code structure to be obviously safe.",
+  "why_bad": "Comments are passive documentation; they do not prevent bugs. If the code is structurally fragile, it will eventually be broken by a future maintainer who neglects to read the warning comment.",
+  "fix": "Leverage Rust's static compiler lifetime checks (`'a`) to guarantee that the dependent database cannot outlive its publication reference.\n```rust\nstruct DatabasePublication<'a> {\n    pub_obj: &'a UiPublication,\n}\n```",
+  "strength": "Strong",
+  "source": "*Code Complete*, Chapter 32, \"Don't comment tricky code; rewrite it\" (p. 800) / *The Pragmatic Programmer*, Topic 10."
+}

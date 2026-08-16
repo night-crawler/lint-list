@@ -1,0 +1,13 @@
+{
+  "id": 640,
+  "title": "Unauthenticated Workload-to-Workload Communication",
+  "category": "Security Boundary Failures",
+  "damaged_code": "```rust\nfn connect_to_database() {\n    // Unencrypted, unauthenticated TCP connection to backend database\n    let stream = std::net::TcpStream::connect(\"10.0.1.5:3306\").unwrap();\n}\n```",
+  "pattern": "Establishing plain-text, unauthenticated socket connections between microservices on internal virtual networks or local cloud environments.",
+  "why_bad": "Relying on \"firewall-only\" protection assumes the internal network cannot be bypassed. If an adversary gains a foothold on a single container, they can sniff the unencrypted network wire, capture database credentials, and modify data in transit.",
+  "detection": "Workload connection methods initiating standard TCP/UDP socket connections without wrapping them in TLS or mutual authenticated RPCs (mTLS).",
+  "counterexample": "```rust\n// Establish connection wrapped in ALTS, Istio, or mutual TLS certificate validation\n```",
+  "fix": "Use mutually authenticated RPC frameworks (such as gRPC over mTLS or ALTS) to identify and cryptographically secure all workload connections.",
+  "strength": "Strong",
+  "source": "`Heather Adkins et al. - Building Secure and Reliable Systems (2020)`, Ch 6, p. 104."
+}

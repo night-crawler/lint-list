@@ -1,0 +1,13 @@
+{
+  "id": 358,
+  "title": "Anemic API Contracts Mirroring Relational Hierarchy",
+  "category": "Boundary Representation",
+  "damaged_code": "```rust\n// API Route exposes the database relational hierarchy\n// GET /api/v1/customers/{id}/orders/{id}/items/{id}\n```",
+  "pattern": "Designing API route hierarchies or response models to mirror the nested relational layout of database tables.",
+  "why_bad": "It exposes relational details and forces client applications to understand complex database join relationships. This results in chatty API communications (N+1 HTTP calls) and high coupling.",
+  "detection": "Nested REST route designs with 3 or more levels of sub-resources matching database primary-foreign key hierarchies.",
+  "counterexample": "Generic relational administration tools or SQL execution panels. Mark as `Context-dependent`.",
+  "fix": "Design use-case-driven APIs that present unified, flat resource boundaries aligned with business actions.\n```rust\n// GET /api/v1/order-checkout-details/{id}\n```",
+  "strength": "Contextual",
+  "source": "*Implementing Domain-Driven Design* by Vaughn Vernon (Chapter 14, p. 197-199)."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 89,
+  "title": "Forwarding Factories (Shallow Constructors)",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nstruct Session {\n    id: String,\n}\nfn create_session(id: String) -> Session {\n    Session { id }\n}\n```",
+  "pattern": "Standalone functions or methods that do nothing but call a public constructor with the exact same arguments.",
+  "why_bad": "Adds a redundant, shallow naming layer over standard construction, forcing maintainers to trace where the session is created.",
+  "detection": "A factory function whose signature matches the struct fields and whose body is exactly a direct, unadorned struct construction.",
+  "counterexample": "Constructors that enforce invariants, select variants of an enum, or hide complex private initialization details.",
+  "fix": "Remove the factory function and let callers construct the struct directly (or implement `Default`/`new`).",
+  "strength": "Contextual",
+  "source": "Joshua Kerievsky, *Refactoring to Patterns* (2004), Chapter 6 (\"Creation\"), p. 57."
+}

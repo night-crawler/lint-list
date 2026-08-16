@@ -1,0 +1,13 @@
+{
+  "id": 483,
+  "title": "Reading Entire Payload/File into Memory without Length Limit",
+  "category": "Resource Capacity Blindness",
+  "damaged_code": "```rust\nuse std::fs::File;\n\nfn read_user_data() -> Vec<u8> {\n    let mut file = File::open(\"uploaded_data.txt\").unwrap();\n    let mut buf = Vec::new();\n    // Reading file to end with no size checks\n    use std::io::Read;\n    file.read_to_end(&mut buf).unwrap(); \n    buf\n}\n```",
+  "pattern": "Reading raw streams or files into memory using unbounded read functions (such as `read_to_end`, `read_to_string`, `std::fs::read`) without enclosing the stream in a length-limiting wrapper.",
+  "why_bad": "Reading files or request streams of arbitrary size into memory exposes the server to resource starvation [59]. If a client uploads a extremely large file (e.g., tens of gigabytes), the read operation will exhaust host memory, degrading system-wide performance and causing OOM crashes [59]. Streams should always be bounded or chunk-processed [209].",
+  "detection": "Identify instances of `read_to_end` or `read_to_string` on socket streams, file handles, or multi-part upload objects without preceding length limits.",
+  "counterexample": "```rust\nuse std::fs::File;\nuse std::io::Read;\n\nfn read_user_data() -> Vec<u8> {\n    let file = File::open(\"uploaded_data.txt\").unwrap();\n    let mut buf = Vec::new();\n    // Wrap reader in a 10MB limit\n    let mut limited = file.take(10 * 1024 * 1024); \n    limited.read_to_end(&mut buf).unwrap();\n    buf\n}\n```",
+  "fix": "Limit the maximum amount of bytes that can be read by wrapping the reader in a size limiter using the `.take(limit)` method [209].",
+  "strength": "Strong",
+  "source": "Brendan Gregg, *Systems Performance*, Chapter 7 / passage [59]; Michael T. Nygard, *Release It!*, Chapter 9 (Unbounded Results) / passage [209]."
+}

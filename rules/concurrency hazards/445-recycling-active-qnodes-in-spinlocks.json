@@ -1,0 +1,13 @@
+{
+  "id": 445,
+  "title": "Recycling Active QNodes in Spinlocks",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```cpp\n// Broken MCS Lock unlock\nvoid unlock() {\n    QNode* q = myNode;\n    if (q->next == nullptr) {\n        if (tail.compare_exchange_strong(q, nullptr)) {\n            // BUG: Safe to recycle? No! A slow successor thread \n            // might have passed the check but not linked yet!\n            recycle(q); \n            return;\n        }\n    }\n}\n```",
+  "pattern": "Immediately recycling or freeing a thread's queue node (QNode) during a CLH or MCS spinlock release before verifying that no subsequent threads hold references to it.",
+  "why_bad": "A slow contending thread might have read the tail pointer and holds a reference to the releasing thread's QNode, but has not yet written the `next` link. Freeing the node immediately leads to a use-after-free and pointer corruption when the slow thread finally writes to `q->next`.",
+  "detection": "A queue-based spinlock (MCS or CLH) that recycles/frees nodes inside the unlock path without utilizing a reclamation delay, epoch, or successor hand-off check.",
+  "counterexample": "Spinning on the successor's arrival to guarantee it has completed its link before recycling.",
+  "fix": "Wait for the successor to link itself fully before finishing unlock and recycling.\n```cpp\nwhile (q->next == nullptr) {\n    // Spin waiting for successor to establish link\n}\nq->next->locked = false;\nrecycle(q);\n```",
+  "strength": "Strong",
+  "source": "Herlihy 7.4, MCSLock class notes"
+}

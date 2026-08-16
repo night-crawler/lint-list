@@ -1,0 +1,13 @@
+{
+  "id": 319,
+  "title": "Shared Database Tables for Different Domains (Single Table Inheritance Abuse)",
+  "category": "Dry Abuse",
+  "damaged_code": "```rust\n// A single DB model representing two totally distinct domain tables\n#[derive(DBTable)]\nstruct Party {\n    id: u64,\n    party_type: String, // \"Person\" or \"Company\"\n    first_name: Option<String>, // Null for Company\n    registration_number: Option<String>, // Null for Person\n}\n```",
+  "pattern": "Mapping entirely separate domain objects to a single shared table because they share some fields, leading to lots of null columns and conditional checks.",
+  "why_bad": "Couples separate concepts at the persistence level. Changes to Person attributes (e.g., adding middle name) pollute the Company record layout, making validation logic fragile.",
+  "detection": "A database schema mapping containing a high count of mutually exclusive nullable columns controlled by a \"type\" discriminator column.",
+  "counterexample": "Small tables with 95% overlapping fields where separation provides no performance or logical benefit.",
+  "fix": "Use Separate Table Inheritance, mapping Person and Company to separate physical database tables.\n```rust\nstruct Person {\n    id: u64,\n    first_name: String,\n}\n\nstruct Company {\n    id: u64,\n    registration_number: String,\n}\n```",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Patterns of Enterprise Application Architecture*, \"Single Table Inheritance\", p. 278."
+}

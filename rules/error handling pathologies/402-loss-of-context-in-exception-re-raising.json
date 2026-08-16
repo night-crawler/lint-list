@@ -1,0 +1,12 @@
+{
+  "id": 402,
+  "title": "Loss of Context in Exception Re-raising",
+  "category": "Error Handling Pathologies",
+  "damaged_code": "```java\ntry {\n    someQuery();\n} catch (SQLException e) {\n    throw new RuntimeException(\"Database error occurred!\"); // Lost the original cause 'e'!\n}\n```",
+  "pattern": "Catching an exception and throwing a new exception without attaching or referencing the original exception as the \"cause.\"",
+  "why_bad": "Mystery failure pathology. The original stack trace, error code, and precise line number of the failure (e.g., the SQLException root cause) are completely destroyed, leaving operations with a generic \"Database error occurred!\" message and no diagnostic trace. [28, Section 8.4]",
+  "detection": "An exception constructor invoked in a catch block that does not pass the caught exception object as an argument to the new exception's constructor.",
+  "fix": "Pass the caught exception as the cause parameter to the new exception's constructor.\n```java\ntry {\n    someQuery();\n} catch (SQLException e) {\n    throw new RuntimeException(\"Database error occurred!\", e);\n}\n```",
+  "strength": "Strong",
+  "source": "*Steve McConnell - Code Complete*, Section 8.4, p. 200 [28]"
+}

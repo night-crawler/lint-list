@@ -1,0 +1,13 @@
+{
+  "id": 861,
+  "title": "Moving Self-Referential Structs",
+  "category": "Correctness By Convention",
+  "damaged_code": "```rust\n// Rust\nstruct SelfReferential {\n    value: String,\n    ptr: *const String,\n}\nlet mut x = SelfReferential { value: \"hello\".into(), ptr: std::ptr::null() };\nx.ptr = &x.value;\nlet y = x; // BUG: 'y.ptr' now points to the old, invalid address of 'x'!\n```",
+  "pattern": "Moving (by value assignment or swapping) a self-referential struct after it has constructed internal raw pointers to its own fields.",
+  "why_bad": "Moving the struct changes its physical memory address. The internal pointers will continue to reference the old stack location, which is now invalid/garbage, leading to undefined behavior on dereference.",
+  "detection": "A struct with fields containing pointers to other fields of the same struct is reassigned or moved without being wrapped in Pin.",
+  "counterexample": "Using `Pin<&mut Self>` to guarantee that the self-referential struct can never be moved again in memory.",
+  "fix": "Wrap the self-referential struct in `Pin`: `fn poll(self: Pin<&mut Self>)` to prevent compile-safe moves.",
+  "strength": "Strong",
+  "source": "Rust For Rustaceans, Chapter 9 (Pin and Unpin) [456-457, 459]."
+}

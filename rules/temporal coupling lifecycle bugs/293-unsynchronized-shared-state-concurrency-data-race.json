@@ -1,0 +1,13 @@
+{
+  "id": 293,
+  "title": "Unsynchronized Shared State Concurrency (Data Race)",
+  "category": "Temporal Coupling Lifecycle Bugs",
+  "damaged_code": "```scheme\n;; Scheme\n(define x 10)\n(parallel-execute (lambda () (set! x (* x x)))\n                  (lambda () (set! x (+ x 1))))\n;; Interleaved execution can result in x = 11, 101, 121, etc.\n```",
+  "pattern": "Two concurrent processes/threads read and write a shared variable without synchronization or serialization.",
+  "why_bad": "The processes interleave their read-compute-write cycles arbitrarily, corrupting the shared state (e.g., losing increments or withdrawals).",
+  "detection": "Multiple concurrent threads/callbacks writing to the same memory location or shared struct field without synchronization primitives (like Mutex, Semaphore, or Atomic).",
+  "counterexample": "Read-only access to shared immutable data.",
+  "fix": "Wrap state mutations in serializing wrappers or acquire exclusive locks to guarantee atomic execution of critical sections.",
+  "strength": "Strong",
+  "source": "Abelson & Sussman, *Structure and Interpretation of Computer Programs* / passage [123, 412, 413]."
+}

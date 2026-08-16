@@ -1,0 +1,13 @@
+{
+  "id": 919,
+  "title": "Synchronous Remote Database Metadata Lookups at Admission Control/Deploy Time",
+  "category": "Policy Mechanism",
+  "damaged_code": "```rust\nimpl AdmissionController {\n    pub fn validate_deployment(&self, binary_hash: &str) -> Result<(), Error> {\n        // High latency remote database query blocking deploy admission pipeline\n        let record = self.remote_db.lookup_provenance(binary_hash)?;\n        if record.is_valid() { Ok(()) } else { Err(Error::InvalidProvenance) }\n    }\n}\n```",
+  "pattern": "An admission controller or deployment enforcement point performs synchronous, blocking network queries to an external, centralized database to verify artifact metadata or provenance based on a hash key.",
+  "why_bad": "The lookup creates a tight dependency on the availability of the external database at deploy time. If the database fails, the deployment system must fail-open (reducing security) or fail-closed (halting system recovery). It also dramatically increases validation latency, often exceeding SLOs.",
+  "detection": "An admission webhook or deployment validator issuing synchronous RPC or database network calls inside its verification loop.",
+  "counterexample": "Checking local file systems or caching layers with sensible fallback logic. Marked as `Contextual`.",
+  "fix": "Propagate the signed cryptographic provenance metadata inline with the artifact (e.g., as a build annotation or envelope signature) allowing hermetic, low-latency offline verification.\n```rust\nimpl AdmissionController {\n    pub fn validate_deployment(&self, request: &DeploymentRequest) -> Result<(), Error> {\n        // Hermetic local verification of inline signature\n        self.signature_verifier.verify(&request.binary, &request.inline_provenance_sig)\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Google SRE, *Building Secure and Reliable Systems* (2020), Chapter 14, \"Ensure Unambiguous Provenance\", p. 115-117."
+}

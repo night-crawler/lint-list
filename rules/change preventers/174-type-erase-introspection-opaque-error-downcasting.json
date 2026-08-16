@@ -1,0 +1,13 @@
+{
+  "id": 174,
+  "title": "Type-Erase Introspection (Opaque Error Downcasting)",
+  "category": "Change Preventers",
+  "damaged_code": "```rust\npub fn run_query() -> Result<(), Box<dyn std::error::Error>> { ... }\n\n// Client code attempting to react to specific failures\nfn handle_client() {\n    if let Err(e) = run_query() {\n        if let Some(io_err) = e.downcast_ref::<std::io::Error>() {\n            if io_err.kind() == std::io::ErrorKind::WouldBlock {\n                // Retry logic\n            }\n        }\n    }\n}\n```",
+  "pattern": "A public API returns an opaque, type-erased container (like `Box<dyn std::error::Error>` or `Any`) but expects consumers to perform runtime type introspection (downcasting) to handle specific business outcomes.",
+  "why_bad": "The compile-time safety check is bypassed. If the library author changes the underlying concrete error type returned (e.g., refactoring standard I/O calls to a custom error type), the code will compile successfully, but the caller's downcasting block will silently fail to execute at runtime.",
+  "detection": "APIs returning `dyn std::error::Error` combined with client code call sites that invoke `downcast_ref`, `downcast_mut`, or `is::<Type>()`.",
+  "counterexample": "Top-level application error boundaries or global logging middlewares that downcast to format stack traces, where the specific type of error does not alter execution control flow.",
+  "fix": "Define a public, strongly typed enum for the API response. Let the compiler guarantee that any change to the error variants is caught and checked at compile time.",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust for Rustaceans* (2021), Chapter 4 (\"Access to Downcasting\"), pp. 100-101."
+}

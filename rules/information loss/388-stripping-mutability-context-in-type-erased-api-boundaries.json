@@ -1,0 +1,13 @@
+{
+  "id": 388,
+  "title": "Stripping Mutability Context in Type-Erased API Boundaries",
+  "category": "Information Loss",
+  "damaged_code": "```rust\ntrait DataRecord {\n    fn view_fields(&self) -> HashMap<String, String>;\n    // Discards whether fields are mutable/read-only!\n}\n```",
+  "pattern": "Returning a generic, flat type-erased container from an interface, discarding the mutability invariants of the underlying fields.",
+  "why_bad": "It prevents the type system from enforcing write safety. Callers can mistakenly attempt to edit fields that are read-only, causing runtime exceptions.",
+  "detection": "Traits returning generic flat collections like maps or lists that strip variance and mutability tags of individual fields.",
+  "counterexample": "Strict type interfaces preserving mutability references:\n```rust\ntrait DataRecord {\n    fn get_mut_field(&mut self, key: &str) -> Option<&mut String>;\n}\n```",
+  "fix": "Use distinct type wrappers or explicit fields to preserve mutability constraints.\n```rust\nstruct Field {\n    value: String,\n    is_writable: bool,\n}\n```",
+  "strength": "Strong",
+  "source": "*Types and Programming Languages* by Benjamin C. Pierce (p. 204, Section 14.1 - variance/record mutability)."
+}

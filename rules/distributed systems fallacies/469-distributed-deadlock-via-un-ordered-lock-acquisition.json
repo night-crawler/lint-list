@@ -1,0 +1,13 @@
+{
+  "id": 469,
+  "title": "Distributed Deadlock via Un-Ordered Lock Acquisition",
+  "category": "Distributed Systems Fallacies",
+  "damaged_code": "```rust\n// Client 1 thread executing concurrent network lock acquisitions\nasync fn process_transfer_client1(node_a: &LockNode, node_b: &LockNode) {\n    // Acquires locks in arbitrary order\n    let _guard_a = node_a.acquire_lock(\"resource_1\").await;\n    let _guard_b = node_b.acquire_lock(\"resource_2\").await;\n}\n\n// Client 2 thread executing concurrent network lock acquisitions\nasync fn process_transfer_client2(node_a: &LockNode, node_b: &LockNode) {\n    // Deadlock hazard: locks acquired in reverse order!\n    let _guard_b = node_b.acquire_lock(\"resource_2\").await;\n    let _guard_a = node_a.acquire_lock(\"resource_1\").await;\n}\n```",
+  "pattern": "Acquiring multiple independent locks on separate remote database nodes or consensus services sequentially in an arbitrary, non-deterministic order across concurrent client operations.",
+  "why_bad": "In a distributed system, network latency and partial failures make lock-acquisition timings unpredictable [20]. If Client 1 acquires `Lock 1` and Client 2 simultaneously acquires `Lock 2`, both will block indefinitely attempting to acquire the remaining lock, creating a classic distributed deadlock [16]. Unlike single-node databases, distributed lock coordinators rarely have a global dependency graph to detect and abort deadlock cycles, leading to permanent resource exhaustion [65, 76].",
+  "detection": "Identify functions that instantiate or await multiple remote lock acquisition calls (e.g., `acquire_lock`, `lock_resource`) sequentially, where the lock identifiers are not sorted or ordered systematically prior to acquisition.",
+  "counterexample": "```rust\nasync fn process_transfer_safe(node_a: &LockNode, node_b: &LockNode) {\n    // Sort resource names lexicographically to enforce global acquisition order\n    let resources = if \"resource_1\" < \"resource_2\" {\n        (\"resource_1\", \"resource_2\")\n    } else {\n        (\"resource_2\", \"resource_1\")\n    };\n    \n    let _guard_1 = node_a.acquire_lock(resources.0).await;\n    let _guard_2 = node_b.acquire_lock(resources.1).await;\n}\n```",
+  "fix": "Sort all target resource identifiers lexicographically or numerically before initiating remote lock requests, ensuring every thread acquires locks in the exact same global order [65]. Alternatively, utilize a Coarse-Grained Lock on a single root coordinator [74].",
+  "strength": "Strong",
+  "source": "Alex Petrov, *Database Internals*, Chapter 13 / passages [65, 74, 76]."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 151,
+  "title": "Hardcoded Subclass Defaults in Traits",
+  "category": "Abstraction Failure",
+  "damaged_code": "```rust\ntrait Bicycle {\n    fn spares(&self) -> Vec<&str> {\n        // Hardcoded road-bike specific default in base trait\n        vec![\"chain\", \"tape_color\"]\n    }\n}\n```",
+  "pattern": "Providing default trait method implementations that are coupled to a specific implementer's requirements, forcing other implementers to override them or carry incorrect attributes.",
+  "why_bad": "It violates the Liskov Substitution Principle. The default behavior is concrete and specific, not abstract. A mountain bike implementer is forced to carry or override `tape_color`, making the hierarchy untrustworthy.",
+  "detection": "A trait method providing a default body that returns values or config details specific to only a subset of known implementers.",
+  "counterexample": "Truly universal defaults (like empty lists or standard mathematical constants) that are invariant across all possible implementers.",
+  "fix": "Do not provide a default implementation; force each implementer to define its own behavior, or separate the trait into cohesive sub-categories.",
+  "strength": "Strong",
+  "source": "Sandi Metz, *Practical Object-Oriented Design* (2019), Chapter 7 (\"Sharing Role Behavior... All code in an abstract superclass should apply to every class\")."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 942,
+  "title": "Field-Level Event Splintering (Micro-Events)",
+  "category": "Wrong Granularity",
+  "damaged_code": "```rust\n// Individual fine-grained events emitted sequentially for a single logical change\nstruct UserFirstNameUpdated { id: u64, name: String }\nstruct UserLastNameUpdated { id: u64, name: String }\nstruct UserEmailUpdated { id: u64, email: String }\n```",
+  "pattern": "Emitting individual fine-grained events for every mutated field instead of a cohesive semantic event for the overall business action.",
+  "why_bad": "Floods the event store and message broker with thousands of micro-events. Subscribers cannot validate domain invariants across fields easily because the data arrives splintered in separate event handlers. It also forces high coupling to specific structural fields instead of business intents.",
+  "detection": "Event structures containing only a single mutated attribute field coupled with a surrogate identifier, where multiple such events are emitted concurrently during a single domain command.",
+  "counterexample": "`Context-dependent`. Low-level reactive audit systems that explicitly track keystrokes or precise, individual cell edits in collaborative sheets.",
+  "fix": "Consolidate related attribute updates into a single cohesive, semantic domain event representing the business intention.\n```rust\nstruct UserContactDetailsChanged {\n    id: u64,\n    first_name: String,\n    last_name: String,\n    email: String,\n}\n```",
+  "strength": "Strong",
+  "source": "*Vaughn Vernon - Implementing Domain-Driven Design (2013)*, Chapter 8, \"Domain Events\" and Chapter 10, \"Aggregates\" (Refactoring large events, p. 302)."
+}

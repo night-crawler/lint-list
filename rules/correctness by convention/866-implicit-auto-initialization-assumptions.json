@@ -1,0 +1,13 @@
+{
+  "id": 866,
+  "title": "Implicit Auto-Initialization Assumptions",
+  "category": "Correctness By Convention",
+  "damaged_code": "```rust\n// C\nvoid initialize_and_use() {\n    int lock; // BUG: lock is initialized to garbage!\n    if (lock == 0) {\n        do_work();\n    }\n}\n```",
+  "pattern": "Allocating variables (especially locks or control state) on the stack and omitting explicit initialization, expecting the compiler to zero-initialize them.",
+  "why_bad": "Stack-allocated auto variables in languages like C/C++ are not initialized by default; they contain whatever random garbage was left on the stack, leading to highly unpredictable, non-deterministic bugs.",
+  "detection": "Declaring local (auto) variables in C/C++ without assigning an initial value or calling an explicit constructor.",
+  "counterexample": "Always explicitly initializing stack variables: `int lock = 0;`.",
+  "fix": "Always explicitly initialize local variables at the point of declaration: `int lock = 0;`.",
+  "strength": "Strong",
+  "source": "1701.00854v6, p. 513 (Quick Quiz 7.24) [46]."
+}

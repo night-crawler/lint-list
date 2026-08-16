@@ -1,0 +1,13 @@
+{
+  "id": 888,
+  "title": "Defensive Parameter Cloning to Evade Lifetimes",
+  "category": "Local Optimization",
+  "damaged_code": "```rust\npub struct DBClient {\n    connection_string: String,\n}\n\nimpl DBClient {\n    // Clones string inputs to avoid lifetime annotations on the struct.\n    pub fn new(conn: &str) -> Self {\n        Self {\n            connection_string: conn.to_string(),\n        }\n    }\n}\n```",
+  "pattern": "An API systematically accepts parameters by reference and calls `.to_string()`, `.to_owned()`, or `.clone()` internally to populate struct fields, in order to avoid putting lifetime parameters on the struct.",
+  "why_bad": "This is the inverse of the first pattern. To keep the API signature superficially \"clean\" (free of `'a` annotations), it forces a silent allocation cost on every call, even if the caller already owns a `String` and could have moved it. It strips the caller of control over allocation, making high-frequency loops or bulk operations highly inefficient.",
+  "detection": "Public constructors or builder methods that accept reference types (`&str`, `&[T]`) and immediately call `.clone()`, `.to_string()`, or `.to_vec()` on them to initialize struct fields, without providing an alternative owned consuming constructor.",
+  "counterexample": "Accepting references is valid when the struct must hold a borrow and lifetimes are intended to restrict its scope, or when the cost of cloning is demonstrably negligible and ergonomics is the overriding concern. Mark `Context-dependent`.",
+  "fix": "Accept owned types directly (`String`, `Vec<T>`), allowing callers who already own the data to move it without allocation, or use `impl Into<String>` / `Cow<'static, str>`.\n```rust\npub struct DBClient {\n    connection_string: String,\n}\n\nimpl DBClient {\n    pub fn new(conn: String) -> Self {\n        Self { connection_string: conn }\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust for Rustaceans*, Chapter 4, \"Ownership\" (p. 23, 26)."
+}

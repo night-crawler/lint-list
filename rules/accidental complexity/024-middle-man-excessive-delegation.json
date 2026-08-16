@@ -1,0 +1,13 @@
+{
+  "id": 24,
+  "title": "Middle Man / Excessive Delegation",
+  "category": "Accidental Complexity",
+  "damaged_code": "```rust\nstruct Department {\n    manager: String,\n}\nimpl Department {\n    pub fn manager(&self) -> &str { &self.manager }\n}\n\nstruct Employee {\n    department: Department,\n}\nimpl Employee {\n    pub fn manager(&self) -> &str {\n        self.department.manager()\n    }\n}\n```",
+  "pattern": "A class or struct whose entire public API or a vast majority of methods consist of delegating calls to another helper class without performing any domain logic of its own.",
+  "why_bad": "It introduces unnecessary indirection and boilerplate. Over-encapsulation results in a class that serves as an empty shell, obscuring the actual flow of control and making the execution path hard to trace.",
+  "detection": "A struct where most methods (e.g., greater than 80%) do nothing but forward their arguments and return values directly to an internal field object without transformation.",
+  "counterexample": "`Context-dependent`. A facade pattern designed to group and simplify access to a complex, multi-object subsystem, or a proxy/decorator adding dynamic concerns (e.g. logging/security).",
+  "fix": "Eliminate the middle man using the Remove Middle Man refactoring: let the caller access the underlying delegated objects directly.",
+  "strength": "Contextual",
+  "source": "Martin Fowler et al., *Refactoring: Improving the Design of Existing Code* (1999), Chapter 3 (\"Bad Smells in Code - Middle Man\"), pp. 110, 259–260; Steve McConnell, *Code Complete* (2004), Chapter 24."
+}

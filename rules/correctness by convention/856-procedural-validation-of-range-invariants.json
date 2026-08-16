@@ -1,0 +1,13 @@
+{
+  "id": 856,
+  "title": "Procedural Validation of Range Invariants",
+  "category": "Correctness By Convention",
+  "damaged_code": "```rust\n// Rust\nfn set_quantity(qty: i32) {\n    // BUG: Quantity range validation is purely procedural\n    if qty < 1 || qty > 1000 {\n        panic!(\"Invalid quantity\");\n    }\n}\n```",
+  "pattern": "A function signature accepts a wide primitive type (like i32) and relies on runtime procedural checks or panic assertions to enforce a sub-range invariant (e.g., 1..1000).",
+  "why_bad": "The type signature 'lies' by claiming to accept any i32. Callers must consult documentation or source code to know the valid range, leading to unexpected runtime panics.",
+  "detection": "A function accepts a primitive type and immediately executes standard range-checking assertions (e.g., `assert!(x > 0)`) without using a constrained type.",
+  "counterexample": "A function accepts a pre-validated custom type like `UnitQuantity` which statically guarantees the range invariant.",
+  "fix": "Create a smart constructor and a private-wrapped type: `struct UnitQuantity(i32);` that can only be created via a validating function.",
+  "strength": "Strong",
+  "source": "Scott Wlaschin, Domain Modeling Made Functional, p. 201-203 & 536 [201, 536-537]."
+}

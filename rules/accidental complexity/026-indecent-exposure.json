@@ -1,0 +1,13 @@
+{
+  "id": 26,
+  "title": "Indecent Exposure",
+  "category": "Accidental Complexity",
+  "damaged_code": "```rust\n// In a library crate:\npub struct EncryptionHelper; \n\nimpl EncryptionHelper {\n    pub fn decrypt_internal_payload(data: &[u8]) -> Vec<u8> {\n        // Only used internally by the crate, should not be public\n        data.iter().map(|x| x ^ 42).collect()\n    }\n}\n```",
+  "pattern": "Exposing internal structs, classes, or helper methods with public visibility when they are only important for internal execution.",
+  "why_bad": "It forces clients to understand and navigate internal implementation details, increasing cognitive load. It creates brittle external dependencies that prevent future internal refactoring because clients become coupled to the exposed details.",
+  "detection": "Structures, methods, or traits marked with public visibility (`pub` in Rust) that are only consumed by other modules within the same crate and are never intended for downstream public use.",
+  "counterexample": "`Context-dependent`. Public APIs and types that form the explicit, documented interface of a library or framework.",
+  "fix": "Restrict visibility using fine-grained access modifiers (such as `pub(crate)` or `pub(in crate::submodule)` in Rust).",
+  "strength": "Strong",
+  "source": "Joshua Kerievsky, *Refactoring to Patterns* (2004), Chapter on Smells (\"Indecent Exposure\"), pp. 85, 198."
+}

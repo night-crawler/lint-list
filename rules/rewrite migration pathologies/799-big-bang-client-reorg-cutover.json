@@ -1,0 +1,13 @@
+{
+  "id": 799,
+  "title": "Big-Bang Client Reorg Cutover",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```rust\n// Spec: \"On September 1st, we will sunset the legacy application, deploy the rewritten platform, and split the engineering team into 3 new regional DevOps groups.\"\n```",
+  "pattern": "Combining a major system technical cutover with a simultaneous structural reorganization of the engineering teams and their communication channels.",
+  "why_bad": "Organizational restructuring is highly traumatic and disrupts existing informal communication paths. Executing it concurrently with a critical system release makes it nearly impossible to coordinate incident response and debug initial production failures, causing prolonged outages [595, 609].",
+  "detection": "The scheduling of major team structural reorgs to occur concurrently with (or within the same sprint as) a major legacy technical cutover or database migration.",
+  "counterexample": "None. Coupling organizational trauma to critical technical releases violates basic operational safety principles.",
+  "fix": "Decouple the reorg from the release: stabilize the rewritten system in production first under the existing team structure, then gradually phase in the organizational reorg [595, 609].",
+  "strength": "Strong",
+  "source": "Kill It with Fire, \"Design as Destiny\" [149, 150, 595, 609]"
+}

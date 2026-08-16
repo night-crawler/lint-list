@@ -1,0 +1,13 @@
+{
+  "id": 135,
+  "title": "Speculative Abstraction over Multiple Databases",
+  "category": "Speculative Generality",
+  "damaged_code": "```rust\ntrait DatabaseEngine { fn execute(&self, query: &str); }\n```",
+  "pattern": "Defining database-agnostic interfaces when the application only has a single SQL database engine and will never change it.",
+  "why_bad": "Prevents utilizing engine-specific optimizations and adds massive interface boilerplate.",
+  "detection": "Database-agnostic traits with exactly one implementer.",
+  "counterexample": "Genuinely multi-database products.",
+  "fix": "Use the concrete database driver client directly.",
+  "strength": "Contextual",
+  "source": "Vaughn Vernon, *Implementing Domain-Driven Design* (2013); Juval Löwy, *Righting Software* (2019)."
+}

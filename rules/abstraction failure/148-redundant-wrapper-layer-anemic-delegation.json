@@ -1,0 +1,13 @@
+{
+  "id": 148,
+  "title": "Redundant Wrapper Layer (Anemic Delegation)",
+  "category": "Abstraction Failure",
+  "damaged_code": "```rust\nstruct Controller;\nimpl Controller {\n    pub fn handle_request(&self, req: Request) {\n        ServiceLayer::new().process(req);\n    }\n}\n\nstruct ServiceLayer;\nimpl ServiceLayer {\n    pub fn process(&self, req: Request) {\n        Repository::new().save(req);\n    }\n}\n```",
+  "pattern": "Creating adjacent layers of abstraction where intermediate layers do nothing but delegate to the next lower layer without transforming data, adding validation, or checking security.",
+  "why_bad": "It adds structural bloat, slows down compilation, and increases the surface area of code that must be maintained, without providing any decoupling or abstraction benefit.",
+  "detection": "A class or method in a multi-tier architecture whose implementation is a single-line call to a matching method in the adjacent lower layer.",
+  "counterexample": "Explicitly separated interfaces at physical deployment boundaries (like RPC gateways) where delegation is necessary for network dispatching.",
+  "fix": "Collapse the redundant layer, letting callers invoke the underlying service directly.",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Refactoring* (1999), Chapter 3 (\"Middle Man\"); John K. Ousterhout, *A Philosophy of Software Design* (2018), Chapter 7."
+}

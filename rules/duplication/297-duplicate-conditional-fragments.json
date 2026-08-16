@@ -1,0 +1,13 @@
+{
+  "id": 297,
+  "title": "Duplicate Conditional Fragments",
+  "category": "Duplication",
+  "damaged_code": "```rust\nif is_special_deal {\n    total = price * 0.95;\n    send(); // Duplicated side-effect call\n} else {\n    total = price * 0.98;\n    send(); // Duplicated side-effect call\n}\n```",
+  "pattern": "Placing identical statements/side effects in every branch of a conditional expression.",
+  "why_bad": "It leads to code bloat and increases modification risk. If the arguments or the invocation logic for `send()` change, it must be edited inside every branch.",
+  "detection": "The same expression/statement is executed as the first or last action within all distinct branches of an `if-else` block.",
+  "counterexample": "None.",
+  "fix": "Consolidate the duplicated expression outside the conditional block.\n```rust\nif is_special_deal {\n    total = price * 0.95;\n} else {\n    total = price * 0.98;\n}\nsend();\n```",
+  "strength": "Strong",
+  "source": "*Refactoring: Improving the Design of Existing Code* (1st Edition), \"Consolidate Duplicate Conditional Fragments\", p. 241, 286."
+}

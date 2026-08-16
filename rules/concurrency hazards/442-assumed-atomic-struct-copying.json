@@ -1,0 +1,13 @@
+{
+  "id": 442,
+  "title": "Assumed Atomic Struct Copying",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```cpp\nstruct Coords { int64_t x; int32_t y; };\nvolatile Coords global_coords;\n\n// Thread 1\nglobal_coords = { 10, 20 }; // Plain struct assignment\n\n// Thread 2\nCoords local = global_coords; // Can read a torn half-written value!\n```",
+  "pattern": "Writing or reading a non-primitive struct concurrently under the assumption that the assignment operation is atomic.",
+  "why_bad": "Plain assignments of structures exceeding the CPU's native word size (typically 64 bits) are compiled into multiple separate instructions. Concurrent threads can read half-written structs, resulting in torn reads and corrupt state.",
+  "detection": "Plain read/write assignments of multi-field structures or types larger than 64-bits across concurrent threads without locking or atomic wrappers.",
+  "counterexample": "The struct is wrapped in `std::atomic` (only if the platform supports Lock-Free atomic ops of that size) or guarded by a Mutex.",
+  "fix": "Protect the struct accesses with a Mutex.\n```cpp\nstd::mutex coords_mutex;\n// Thread 1\n{\n    std::lock_guard<std::mutex> lock(coords_mutex);\n    global_coords = { 10, 20 };\n}\n```",
+  "strength": "Strong",
+  "source": "Steve McConnell Ch 13, Richard Sites Ch 27"
+}

@@ -1,0 +1,13 @@
+{
+  "id": 449,
+  "title": "Unsynchronized Type-Safe Memory Slab Access",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```c\n// Thread 1 - Reader\nrcu_read_lock();\np = rcu_dereference(table[key]);\n// BUG: Believing existence guarantee implies data validity!\n// p may have been freed and re-allocated as a new element of same type!\ndo_something_with(p->data); \nrcu_read_unlock();\n```",
+  "pattern": "Accessing an object allocated from a type-safe memory slab (e.g. `SLAB_TYPESAFE_BY_RCU`) under RCU protection without re-verifying the object's key.",
+  "why_bad": "Type-safe memory guarantees that the slab memory will not be returned to the OS (preventing page faults), but it allows the object to be freed and re-allocated as a *new* object of the same type. Failing to re-verify the object's identity/key means acting on the wrong data.",
+  "detection": "RCU reader accessing a type-safe slab-allocated node without comparing its stored key/ID against the requested search key under lock.",
+  "counterexample": "Acquiring the per-element lock and verifying the key matches before acting.",
+  "fix": "Acquire the element lock and re-verify the key after dereferencing.\n```c\nrcu_read_lock();\np = rcu_dereference(table[key]);\nif (p) {\n    spin_lock(&p->lock);\n    if (p->key != key) { // Re-verify identity\n        spin_unlock(&p->lock);\n        p = NULL; // Recycled!\n    }\n}\nrcu_read_unlock();\n```",
+  "strength": "Strong",
+  "source": "Paul McKenney 9.5, Listing 9.18"
+}

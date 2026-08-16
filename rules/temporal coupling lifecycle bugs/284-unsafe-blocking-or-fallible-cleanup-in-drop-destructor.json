@@ -1,0 +1,13 @@
+{
+  "id": 284,
+  "title": "Unsafe Blocking or Fallible Cleanup in Drop/Destructor",
+  "category": "Temporal Coupling Lifecycle Bugs",
+  "damaged_code": "```rust\n// Rust\nstruct AsyncConnection {\n    socket: TcpStream,\n}\n\nimpl Drop for AsyncConnection {\n    fn drop(&mut self) {\n        self.socket.flush().unwrap(); // BUG: Can block or panic during cleanup!\n    }\n}\n```",
+  "pattern": "Placing fallible, blocking, or asynchronous network/disk cleanup operations (such as flushing writes or closing connections) inside a type's destructor (`Drop` implementation).",
+  "why_bad": "Destructors in compiled languages like Rust cannot safely propagate errors to the caller or register with asynchronous runtimes easily. If they fail, they are forced to either panic (causing double-panics during unwinding) or silently swallow errors.",
+  "detection": "A `Drop` or destructor implementation that performs I/O operations, blocks on locks, or flushes buffers without fallback error-handling.",
+  "counterexample": "Simple in-memory memory deallocations or non-blocking, infallible file closures.",
+  "fix": "Expose an explicit, fallible, consuming shutdown method (e.g., `fn close(self) -> Result<(), Error>`), leaving `Drop` as a silent, best-effort fallback.",
+  "strength": "Contextual",
+  "source": "Jon Gjengset, *Rust for Rustaceans*, Chapter 9 / passage [445]."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 927,
+  "title": "Lazy Structs (Structural Ghosts)",
+  "category": "Wrong Granularity",
+  "damaged_code": "```rust\nstruct TaxExemptVerifier;\n\nimpl TaxExemptVerifier {\n    pub fn is_exempt(&self, customer_id: u64) -> bool {\n        customer_id == 999\n    }\n}\n```",
+  "pattern": "A struct with no fields (or only static, unused dependencies) containing only a single simple method that could easily be implemented as a pure function.",
+  "why_bad": "Forces unnecessary instance creation, allocation, or dependency management merely to invoke a simple check. It clutters the workspace with structural boilerplate that does not pay for its maintenance costs.",
+  "detection": "Identify stateless structs containing no member fields that are instantiated at the call site solely to invoke a single non-generic method.",
+  "counterexample": "Helper structs implementing marker traits or serving as dispatch targets for generic trait boundaries (e.g., zero-sized types used in type-state pattern).",
+  "fix": "```rust\npub fn is_tax_exempt(customer_id: u64) -> bool {\n    customer_id == 999\n}\n```",
+  "strength": "Strong",
+  "source": "*Martin Fowler - Refactoring (1999)*, Chapter 3, \"Lazy Class\" (p. 68); *Steve McConnell - Code Complete (2004)*, Chapter 6, \"Working Classes\"."
+}

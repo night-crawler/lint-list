@@ -1,0 +1,13 @@
+{
+  "id": 765,
+  "title": "Consolidated Exemption API Backdoor (Legacy Conversion Bypass)",
+  "category": "Maintenance Fossils",
+  "damaged_code": "```rust\n// Consolidated backdoor allowing raw SQL queries to bypass safe input checks\npub fn execute_unsafe_legacy_query(raw_sql: &str) -> Result<Rows, Error> {\n    // Restricted API: only whitelisted legacy callers should invoke this\n    do_query(raw_sql)\n}\n```",
+  "pattern": "A dedicated function or wrapper designed to bypass safety or security boundaries, created to avoid rewriting legacy callers that do not conform to modern type/conformance constraints.",
+  "why_bad": "Permanent vulnerabilities. It consolidates \"escape hatches\" and serves as a permanent architectural backdoor. Unconstrained by automated linters, developers naturally default to utilizing these easy-to-use bypasses instead of undertaking the hard work of migrating callers to type-safe interfaces.",
+  "detection": "The linter must observe:\n1. A function containing bypass terminology (e.g., `unsafe_legacy`, `untrusted_sql`, `legacy_convert`) in its name.\n2. The function is invoked by newly added code paths or is not restricted by visibility rules (like build-system whitelists or restricted compiler annotations).",
+  "counterexample": "```rust\n// Valid: Restricted API annotated with compile-time whitelists\n#[restricted_api(whitelist = [\"legacy_module\"])]\npub fn execute_legacy_query(sql: &str) -> Result<Rows, Error> {\n    do_query(sql)\n}\n```",
+  "fix": "Eliminate the backdoor by migrating legacy callers to structured types (like `TrustedSqlString`) and deprecating the escape-hatch API.\n```rust\npub fn execute_query(sql: TrustedSqlString) -> Result<Rows, Error> {\n    do_query(sql.into_string())\n}\n```",
+  "strength": "Strong",
+  "source": "- Heather Adkins et al., *Building Secure and Reliable Systems* (2020) [32, 558]"
+}

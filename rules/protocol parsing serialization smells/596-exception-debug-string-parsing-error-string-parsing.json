@@ -1,0 +1,13 @@
+{
+  "id": 596,
+  "title": "Exception / Debug String Parsing (ERROR_STRING_PARSING)",
+  "category": "Protocol Parsing Serialization Smells",
+  "damaged_code": "```rust\nfn execute_transaction(amount: u64) -> Result<(), String> {\n    // ...\n    Err(\"Error [Code 401]: connection timed out\".to_string())\n}\n\nfn run_with_retry() {\n    let result = execute_transaction(100);\n    if let Err(err) = result {\n        // Brittle: Parsing unpromised debugging strings to drive control flow\n        if err.contains(\"Code 401\") || err.contains(\"timed out\") {\n            retry();\n        }\n    }\n}\n```",
+  "pattern": "An error handler reads or matches substring patterns inside raw exception or debug string outputs to dictate control flow.",
+  "why_bad": "According to Hyrum's Law, once a debug string is matched, it becomes an accidental public API contract. Any optimization, localization, or formatting update to the error message will silently break client-side execution, forcing developers to freeze internal diagnostics.",
+  "detection": "Look for substring matching methods (such as `.contains()`, `.starts_with()`, or string-based regexes) applied directly to errors, debug logs, or stack trace strings.",
+  "counterexample": "```rust\n// Valid: Structured error types using enums\n#[derive(Debug, PartialEq, Eq)]\nenum TransactionError {\n    Timeout,\n    Unauthorized,\n    InsufficientFunds,\n}\n\nfn execute_transaction(amount: u64) -> Result<(), TransactionError> {\n    Err(TransactionError::Timeout)\n}\n\nfn run_with_retry() {\n    if let Err(TransactionError::Timeout) = execute_transaction(100) {\n        retry();\n    }\n}\n```",
+  "fix": "Model errors as structured enums or exception class variants, segregating the machine-readable error payload from human-readable diagnostic display representations.",
+  "strength": "Strong",
+  "source": "*Benjamin C. Pierce - Types and Programming Languages (2002)*, Chapter 14; *Titus Winters et al. - Software Engineering at Google (2020)*, Chapter 1 (Hyrum's Law)."
+}

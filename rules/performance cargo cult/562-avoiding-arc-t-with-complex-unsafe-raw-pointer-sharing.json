@@ -1,0 +1,13 @@
+{
+  "id": 562,
+  "title": "Avoiding Arc<T> with Complex Unsafe Raw Pointer Sharing",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\nstruct SharedData {\n    ptr: *const i32, // Raw pointer to avoid Arc reference counting overhead\n}\n```",
+  "pattern": "Using unsafe raw pointers (`*const T`, `*mut T`) instead of safe thread-safe reference-counted pointers (`std::sync::Arc<T>`) to \"avoid atomic reference counting overhead.\"",
+  "why_bad": "Atomic reference increments only occur on pointer cloning. Bypassing `Arc` with raw pointers bypasses Rust's safety guarantees entirely, leading to catastrophic dangling pointers and data races, with zero profiled performance differences [317].",
+  "detection": "Replacing standard safe pointer structures with unsafe raw pointers in multithreaded sharing contexts under the guise of performance.",
+  "counterexample": "Extremely tight lock-free implementation internals where node pointers are reclaimed using proven epoch structures. `Contextual`.",
+  "fix": "Use the safe, atomic, thread-safe reference-counted pointer `std::sync::Arc<T>`.",
+  "strength": "Strong",
+  "source": "*A Philosophy of Software Design*, Chapter 20 (p. 317)."
+}

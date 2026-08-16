@@ -1,0 +1,13 @@
+{
+  "id": 783,
+  "title": "Flat Client Orchestration (Flat Two-Tier Bloat)",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```rust\n// Code running on the Client (e.g., Mobile App) orchestrating services\nfn checkout_flow(order_svc: &OrderSvc, payment_svc: &PaymentSvc, ship_svc: &ShipSvc) {\n    order_svc.create_order();\n    payment_svc.charge();\n    ship_svc.schedule_shipment(); // High client-to-service coupling\n}\n```",
+  "pattern": "Orchestrating multi-service sequences and state updates directly inside client code (mobile, web, CLI) rather than behind a server-side gateway or manager service.",
+  "why_bad": "The clients become tightly coupled to the internal service layout. If a backend service is updated or rewritten, all client applications must be updated and deployed concurrently. This causes client duplication and makes database/service migrations extremely risky [54, 55, 541].",
+  "detection": "Client-facing codebases performing multiple sequential write mutations across separate downstream service endpoints.",
+  "counterexample": "Valid for simple applications where only one client exists and backend services are stable. Mark as `Context-dependent`.",
+  "fix": "Introduce a backend Coordinator or Manager service that encapsulates the orchestration sequence, exposing a single unified endpoint to clients [54, 55].",
+  "strength": "Strong",
+  "source": "Righting Software, Chapter 2, \"Decomposition - Clients Bloat and Coupling\" [54, 55, 541]"
+}

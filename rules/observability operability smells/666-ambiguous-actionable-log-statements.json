@@ -1,0 +1,13 @@
+{
+  "id": 666,
+  "title": "Ambiguous Actionable Log Statements",
+  "category": "Observability Operability Smells",
+  "damaged_code": "```rust\nlog::info!(\"Data channel lifetime limit reached. Reset required.\");\n```",
+  "pattern": "Logging a message that commands or hints at an action (\"Reset required\") without explicitly declaring whether the action is executed automatically by the software or demands manual human intervention.",
+  "why_bad": "Trains operators to react with superstitions or \"witchcraft\" during outages (e.g. executing dangerous manual database failovers during peak hours because they misinterpret an automated system informational message) [698-700].",
+  "detection": "Presence of passive voice or ambiguous imperative commands inside diagnostic error strings without actor attribution.",
+  "counterexample": "```rust\nlog::info!(\"Data channel lifetime limit reached. Initiating automatic connection reset.\");\n```",
+  "fix": "Revise the wording to explicitly declare whether the system is currently executing the resolution step automatically.",
+  "strength": "Contextual",
+  "source": "*Release It!*, page 280-281 [698-700]."
+}

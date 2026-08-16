@@ -1,0 +1,13 @@
+{
+  "id": 964,
+  "title": "Ad-Hoc Split of Validation Responsibilities",
+  "category": "Conceptual Integrity",
+  "damaged_code": "```rust\n// In Entity A: Self-validation via smart constructors\nimpl Product {\n    fn new(qty: i32) -> Result<Self, Error> { ... }\n}\n// In Entity B: Relying on separate validator class\nstruct ProductValidator;\n```",
+  "pattern": "Splitting validation responsibilities inconsistently, where some domain objects validate themselves via constructors and others rely on external validator classes.",
+  "why_bad": "It breaks model self-consistency. Developers can no longer trust their intuition on whether an entity is safe to use upon instantiation, leading to unvalidated invalid states bypassing boundaries.",
+  "detection": "Look for a mixture of self-validating constructors and external validation classes within the same domain model package.",
+  "counterexample": "Validation frameworks designed specifically to perform multi-entity, workflow-level validations. Marked `Context-dependent`.",
+  "fix": "Enforce consistent validation architecture (e.g., standardizing on smart constructors for all domain entities).",
+  "strength": "Contextual",
+  "source": "*Implementing Domain-Driven Design* by Vaughn Vernon (2013), p. 208-211, 286."
+}

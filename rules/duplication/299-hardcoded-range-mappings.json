@@ -1,0 +1,13 @@
+{
+  "id": 299,
+  "title": "Hardcoded Range Mappings",
+  "category": "Duplication",
+  "damaged_code": "```rust\nfn base_charge(usage: i32) -> f64 {\n    let mut result = 0.0;\n    if usage > 0 {\n        result += (usage.min(100) - 0) as f64 * 0.03;\n    }\n    if usage > 100 {\n        result += (usage.min(200) - 100) as f64 * 0.05;\n    }\n    if usage > 200 {\n        result += (usage - 200) as f64 * 0.07;\n    }\n    result\n}\n```",
+  "pattern": "Writing multiple sequential conditional calculations containing hardcoded logical bounds and parallel arithmetic formulas.",
+  "why_bad": "A change to range boundaries or pricing rates requires tracing and carefully altering several intertwined boundary checks, creating high maintenance overhead.",
+  "detection": "A series of `if` statements or arithmetic steps executing similar segment boundary extraction on a variable using literal constants.",
+  "counterexample": "None.",
+  "fix": "Parameterize the range boundary checking into a dedicated utility function or dynamic rate table.\n```rust\nfn usage_in_range(usage: i32, start: i32, end: i32) -> i32 {\n    if usage > start {\n        usage.min(end) - start\n    } else {\n        0\n    }\n}\n\nfn base_charge(usage: i32) -> f64 {\n    let mut result = usage_in_range(usage, 0, 100) as f64 * 0.03;\n    result += usage_in_range(usage, 100, 200) as f64 * 0.05;\n    result += usage_in_range(usage, 200, i32::MAX) as f64 * 0.07;\n    result\n}\n```",
+  "strength": "Strong",
+  "source": "*Refactoring: Improving the Design of Existing Code* (1st Edition), \"Extract Method\" / \"Substitute Algorithm\", p. 110."
+}

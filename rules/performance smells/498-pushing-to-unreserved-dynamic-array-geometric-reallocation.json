@@ -1,0 +1,13 @@
+{
+  "id": 498,
+  "title": "Pushing to Unreserved Dynamic Array (Geometric Reallocation)",
+  "category": "Performance Smells",
+  "damaged_code": "```rust\nlet mut vs = Vec::new();\nfor i in 0..1000 {\n    vs.push(i); // Triggers multiple reallocations\n}\n```",
+  "pattern": "Instantiating a dynamic array/vector with zero initial capacity and appending a predictable number of elements inside a loop.",
+  "why_bad": "Triggers multiple logarithmic array resizing operations, requiring the allocator to find new heap space and copy all existing elements to the new physical location.",
+  "detection": "Iterative insertion (`push`, `insert`, `extend`) into a dynamic array that was initialized without an explicit capacity hint (`Vec::new()`, `String::new()`).",
+  "counterexample": "The total element count is highly unpredictable and typically stays very small (e.g., < 4 elements). `Contextual`.",
+  "fix": "Instantiate the vector using `Vec::with_capacity(expected_size)` before inserting elements.",
+  "strength": "Strong",
+  "source": "*Rust For Rustaceans*, Chapter 7, \"Compiler Optimizations\" (p. 439-441)."
+}

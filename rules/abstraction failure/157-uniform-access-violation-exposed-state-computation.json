@@ -1,0 +1,13 @@
+{
+  "id": 157,
+  "title": "Uniform Access Violation (Exposed State Computation)",
+  "category": "Abstraction Failure",
+  "damaged_code": "```rust\nstruct Account {\n    // State is exposed directly as a public attribute\n    pub balance: f64,\n}\n```",
+  "pattern": "Exposing a field directly in a public API, forcing callers to modify how they access the value if the field must later be changed to a dynamically computed calculation.",
+  "why_bad": "It betrays whether a service is implemented through storage or computation. If `balance` must later be calculated dynamically (e.g., by summing transaction histories for security), every client call site must be rewritten, violating Uniform Access.",
+  "detection": "Public fields on a struct accessed directly by external modules, where the field's value could logically require computation in the future.",
+  "counterexample": "Flat configuration structs or pure coordinates where there is zero logical probability of the value becoming a dynamic computation.",
+  "fix": "Expose the value strictly through a getter method (e.g., `fn balance(&self) -> f64`), encapsulating whether the result is stored or calculated.",
+  "strength": "Strong",
+  "source": "Andrew Hunt & David Thomas, *The Pragmatic Programmer* (2019), Topic 23 (\"Design by Contract\" / Uniform Access principle)."
+}

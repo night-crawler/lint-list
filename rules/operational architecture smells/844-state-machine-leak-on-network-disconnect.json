@@ -1,0 +1,13 @@
+{
+  "id": 844,
+  "title": "State Machine Leak on Network Disconnect",
+  "category": "Operational Architecture Smells",
+  "damaged_code": "```rust\n// Custom network state:\nint rtrg_status; // If connection fails, status is left in CLOSING forever\n```",
+  "pattern": "Handcrafting low-level network state transitions without binding resource deallocation to connection teardown events.",
+  "why_bad": "If a client disconnects abruptly, the internal state machine remains in an intermediate state, keeping allocated memory, ports, or handles open indefinitely, leading to resource exhaustion.",
+  "detection": "State variables mutated in network callback paths without a corresponding cleanup callback on socket drop.",
+  "counterexample": "Standard futures-based or event-driven frameworks where dropping the connection wrapper automatically drops and cancels the inner state.",
+  "fix": "Associate the lifecycle of the state machine directly with the lifetime of the underlying network connection using RAII, ensuring state teardown occurs when the socket drops.",
+  "strength": "Strong",
+  "source": "*1701.00854v6.pdf*, p. 284."
+}

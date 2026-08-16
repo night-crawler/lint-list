@@ -1,0 +1,13 @@
+{
+  "id": 443,
+  "title": "Help-Free Dequeue-Tail Divergence",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```cpp\n// Broken Lock-Free Queue: Dequeue does not help tail\nNode* deq() {\n    Node* h = head.load();\n    Node* t = tail.load();\n    Node* next = h->next;\n    if (h == t) {\n        // Queue is empty, or tail is lagging\n        return nullptr; // BUG: fails to help advance tail!\n    }\n    head.store(next);\n    return next;\n}\n```",
+  "pattern": "A lock-free queue dequeue operation that fails to \"help\" advance a lagging `tail` pointer when `head` and `tail` are found to be equal but the queue has elements.",
+  "why_bad": "It violates the lock-free liveness invariant. If an enqueuer thread is suspended after updating `next` but before swinging `tail`, the queue becomes structurally inconsistent. Dequeuers will permanently spin or report an empty queue unless they actively help swing the lagging `tail` pointer.",
+  "detection": "A lock-free queue implementation where the dequeue method does not contain a CAS operation to help advance the tail pointer when it lags.",
+  "counterexample": "The standard Michael-Scott queue where dequeuers actively help advance the tail.",
+  "fix": "Add helping logic to swing the tail when head and tail are equal but `next` is not null.\n```cpp\nif (h == t) {\n    if (next != nullptr) {\n        // Tail is lagging, help advance it\n        tail.compare_exchange_strong(t, next);\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Herlihy 10.6, Herlihy Figure 10.13"
+}

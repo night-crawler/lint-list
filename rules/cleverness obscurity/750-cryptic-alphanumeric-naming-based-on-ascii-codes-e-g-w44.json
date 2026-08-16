@@ -1,0 +1,12 @@
+{
+  "id": 750,
+  "title": "Cryptic Alphanumeric Naming based on ASCII codes (e.g. `w44`)",
+  "category": "Cleverness Obscurity",
+  "damaged_code": "```rust\n// Rust\nfn w44(val: f64) -> String { ... } // w stands for \"with\", 44 is ASCII for comma\n```",
+  "pattern": "Naming functions or types with cryptic combinations of letters and numbers representing raw ASCII values.",
+  "why_bad": "It is completely non-obvious and relies on obscure, tribal trivia. A developer is forced to look up an ASCII chart to deduce that `44` represents a comma, creating an unnecessary hurdle for comprehension.",
+  "detection": "Function or struct names combining characters and digits that map directly to common punctuation ASCII characters.",
+  "fix": "Rename the function to a descriptive term expressing the domain formatting action.\n```rust\nfn format_with_commas(val: f64) -> String { ... }\n```",
+  "strength": "Strong",
+  "source": "*Refactoring to Patterns*, Chapter 4 / *The Art of Readable Code*."
+}

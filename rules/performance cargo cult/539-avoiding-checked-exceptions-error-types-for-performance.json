@@ -1,0 +1,13 @@
+{
+  "id": 539,
+  "title": "Avoiding Checked Exceptions / Error Types for Performance",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\n// Returning a raw untyped integer -1 or 0 to represent errors to \"avoid result type allocation overhead\"\nfn process_transaction(id: i32) -> i32 {\n    if id < 0 { return -1; }\n    0\n}\n```",
+  "pattern": "Bypassing structured, type-safe error handling (like Rust's `Result<T, E>` or C++ standard exception handlers) to \"save runtime allocation or stack unwind overhead.\"",
+  "why_bad": "Structured error handling compiles into extremely fast CPU branch statements or zero-cost unwind tables in modern compilers. Bypassing them for primitive error codes destroys type-safety, introduces catastrophic correctness bugs, and makes the API impossible to comprehend [106, 305].",
+  "detection": "Functions that return raw sentinel integers (like `-1` or `9999`) or null pointers instead of proper Rust `Option` or `Result` types under the guise of performance.",
+  "counterexample": "Strict compiler or embedded platform libraries without standard library support (`no_std`) where stack unwinding is completely disabled. `Contextual`.",
+  "fix": "Use proper type-safe errors (`Result` or `Option`).",
+  "strength": "Strong",
+  "source": "*Clean Code*, Chapter 11 (p. 106); *Clean Code*, Primal Conundrum (p. 305)."
+}

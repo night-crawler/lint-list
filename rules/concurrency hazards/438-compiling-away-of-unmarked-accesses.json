@@ -1,0 +1,13 @@
+{
+  "id": 438,
+  "title": "Compiling-Away of Unmarked Accesses",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```c\nvoid monitor() {\n    while (stop_flag == 0) {\n        // Plain load loop\n    }\n}\n```",
+  "pattern": "Reading a plain non-atomic shared variable in a tight loop to wait for a state transition.",
+  "why_bad": "Since the compiler assumes single-threaded execution for plain variables, it detects that `stop_flag` is not modified within the loop body. It optimizes the code by loading the variable once into a register, transforming the loop into an infinite loop if `stop_flag` was initially zero.",
+  "detection": "A loop condition reading a plain, non-volatile, non-atomic variable that is modified concurrently by other threads.",
+  "counterexample": "The variable is explicitly marked `volatile` or read using marked primitives like `READ_ONCE()`.",
+  "fix": "Use atomic marked loads.\n```c\nvoid monitor() {\n    while (READ_ONCE(stop_flag) == 0) {\n        // Safe from compiler optimization\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Paul McKenney Appendix C.3, Appendix E.15"
+}

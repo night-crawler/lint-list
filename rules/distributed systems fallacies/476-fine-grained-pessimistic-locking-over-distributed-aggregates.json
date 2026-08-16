@@ -1,0 +1,13 @@
+{
+  "id": 476,
+  "title": "Fine-Grained Pessimistic Locking over Distributed Aggregates",
+  "category": "Distributed Systems Fallacies",
+  "damaged_code": "```rust\n// Pessimistically locking multiple child objects across remote nodes individually\nasync fn update_cargo_shipment(cargo_node: &LockNode, delivery_node: &LockNode, event_node: &LockNode) {\n    // BUG: Multiple sequential network locks cause massive latency and deadlock hazards!\n    let _g1 = cargo_node.acquire_lock(\"cargo_101\").await;\n    let _g2 = delivery_node.acquire_lock(\"delivery_history_101\").await;\n    let _g3 = event_node.acquire_lock(\"handling_event_101\").await;\n    \n    // Perform updates...\n}\n```",
+  "pattern": "Acquiring separate pessimistic locks on multiple individual child components of a single domain aggregate across separate database shards or remote nodes, instead of acquiring a single lock on the aggregate root.",
+  "why_bad": "Distributed locking is extremely expensive, introducing network round-trip overhead and disk forces (fsync) for each lock [185, 301]. Locking child entities individually increases network traffic, amplifies transaction latency, and dramatically raises the probability of concurrent lock contention and distributed deadlock [87, 88]. It also exposes the child entities to inconsistent partial updates if any lock acquisition fails mid-way [87, 296].",
+  "detection": "Identify consecutive remote lock acquisitions or updates directed to different logical tables that are causally nested within a single Domain-Driven Design aggregate (e.g., Cargo, Delivery History, Handling Events), where the updates are not encapsulated under a single transaction root.",
+  "counterexample": "```rust\nasync fn update_cargo_shipment_safe(cargo_root_node: &LockNode) {\n    // Acquire a single, coarse-grained lock on the Aggregate Root\n    let _g = cargo_root_node.acquire_lock(\"cargo_aggregate_101\").await;\n    // Mutate and apply updates to children inside the single lock boundary\n}\n```",
+  "fix": "Structure data around clean Aggregate boundaries. Enforce a single Coarse-Grained Lock on the Aggregate Root or represent child updates as a single, atomic document update on a single shard [74, 88].",
+  "strength": "Strong",
+  "source": "Eric Evans, *Domain-Driven Design*, Chapter 7 (Aggregates) / passages [87, 88]; Martin Kleppmann, *Designing Data-Intensive Applications*, Chapter 9 / passage [185]; Martin Fowler, *Patterns of Enterprise Application Architecture*, Chapters 7 & 16 / passage [296, 301]."
+}

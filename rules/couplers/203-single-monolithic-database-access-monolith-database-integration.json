@@ -1,0 +1,13 @@
+{
+  "id": 203,
+  "title": "Single Monolithic Database Access (Monolith Database Integration)",
+  "category": "Couplers",
+  "damaged_code": "```rust\n// Entire application shares a single connection pool with direct read/write access to all tables\nfn process_payment(db: &Database) {\n    db.execute(\"UPDATE billing_accounts SET balance = balance - 100\");\n}\nfn delete_user(db: &Database) {\n    db.execute(\"DELETE FROM users WHERE id = 123\");\n}\n```",
+  "pattern": "All application sub-modules and classes share a single database connection instance with unrestricted, unsegmented SQL read and write permissions to the entire database schema.",
+  "why_bad": "Encapsulation is completely broken. Payment modules can accidentally modify unrelated user records. A bug in one module can corrupt the database of another, leading to a catastrophic blast radius.",
+  "detection": "All modules within a large codebase importing and executing raw SQL transactions against arbitrary tables from a single database client reference.",
+  "counterexample": "Small CRUD systems where database access controls do not add architectural value.",
+  "fix": "Logically partition the database into schemas and restrict the database credentials utilized by different modules or services to their specific domains.\n```rust\n// PaymentModule holds restricted connection to payment schema only\n```",
+  "strength": "Strong",
+  "source": "Heather Adkins et al., *Building Secure and Reliable Systems* (2020), Chapter 6 (\"Example Architecture of a monolithic web app\"); Martin Kleppmann, *Designing Data-Intensive Applications* (2017), Chapter 11 (\"Replication and Consistency\")."
+}

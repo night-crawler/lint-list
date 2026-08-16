@@ -1,0 +1,13 @@
+{
+  "id": 364,
+  "title": "Database-Specific Field Types in Domain Model",
+  "category": "Boundary Representation",
+  "damaged_code": "```rust\n// Core domain entity\nstruct Order {\n    id: u64,\n    created_at: diesel::pg::types::sql_types::Timestamptz, // DB type in domain\n}\n```",
+  "pattern": "Using database driver-specific or ORM-specific structural types to represent basic fields inside core domain entities.",
+  "why_bad": "It ruins portability and breaks persistence ignorance. If you migrate from PostgreSQL to SQLite or a Document DB, your entire core domain codebase must be re-written due to type system dependencies.",
+  "detection": "Match fields of structs in non-infrastructure folders that are typed with database-driver specific namespaces (e.g., `diesel::pg`, `postgres::types`, `mongodb::bson`).",
+  "counterexample": "A dedicated adapter module whose explicit purpose is converting driver types to standard types.",
+  "fix": "Use standard platform types or clean abstraction wrappers in the domain layer, and map them to database-specific types at the infrastructure boundary.\n```rust\nstruct Order {\n    id: u64,\n    created_at: chrono::DateTime<chrono::Utc>, // Standard library type\n}\n```",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design* by Vaughn Vernon (Chapter 6, p. 209); *The Pragmatic Programmer* (Tip 53, \"Delegate to Services\")."
+}

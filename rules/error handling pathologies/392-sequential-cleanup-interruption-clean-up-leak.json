@@ -1,0 +1,13 @@
+{
+  "id": 392,
+  "title": "Sequential Cleanup Interruption (Clean-up Leak)",
+  "category": "Error Handling Pathologies",
+  "damaged_code": "```java\nfinally {\n    if (stmt != null) {\n        stmt.close(); // Throws SQLException, next lines are skipped!\n    }\n    if (conn != null) {\n        conn.close();\n    }\n}\n```",
+  "pattern": "Multiple fallible resource release calls (e.g., `.close()`, `.flush()`) executed sequentially in a single cleanup block, where an exception thrown by an earlier release halts the execution of subsequent releases.",
+  "why_bad": "Resource leak. An exception trying to close the statement (e.g., due to a socket error) aborts the cleanup block, preventing the underlying connection from being returned to the pool or closed. [34, p. 30]",
+  "detection": "A `finally` or cleanup block containing sequential method calls known to throw checked exceptions, where prior calls are not isolated in their own try-catch scopes.",
+  "counterexample": "Cleanups where resources are managed via automatic RAII (such as Rust's automatic dropping) or modern Java `try-with-resources`.",
+  "fix": "Isolate each fallible cleanup call in its own try-catch block, ensuring subsequent calls execute.\n```java\nfinally {\n    if (stmt != null) {\n        try { stmt.close(); } catch (SQLException e) { /* log */ }\n    }\n    if (conn != null) {\n        try { conn.close(); } catch (SQLException e) { /* log */ }\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Michael T. Nygard - Release It!*, Section 2.5, p. 30 [34]"
+}

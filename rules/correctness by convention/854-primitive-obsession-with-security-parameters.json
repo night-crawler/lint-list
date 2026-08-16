@@ -1,0 +1,13 @@
+{
+  "id": 854,
+  "title": "Primitive Obsession with Security Parameters",
+  "category": "Correctness By Convention",
+  "damaged_code": "```rust\n// Java-like\nvoid execute_query(String sql) {\n    // BUG: Senders just 'have to know' to pass sanitized SQL\n    db.raw_query(sql);\n}\n```",
+  "pattern": "Accepting a raw string parameter representing SQL, HTML, or system commands, and relying on callers or manual code review to ensure it is sanitized.",
+  "why_bad": "The security invariant exists only in developers' heads. A developer can easily pass unsanitized user input, introducing catastrophic SQL injection or XSS vulnerabilities.",
+  "detection": "A database or HTML-generation method accepts raw string parameters and directly executes or interpolates them without validating them via a compile-time constant checker.",
+  "counterexample": "Using a strong wrapper type like `TrustedSqlString` which can only be constructed from secure, compile-time constants.",
+  "fix": "Require a wrapper type: `void execute_query(TrustedSqlString sql)` to guarantee the compile-time safety contract.",
+  "strength": "Strong",
+  "source": "Heather Adkins, Building Secure and Reliable Systems, p. 252 [367, 370-371]."
+}

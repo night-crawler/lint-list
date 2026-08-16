@@ -1,0 +1,13 @@
+{
+  "id": 791,
+  "title": "Enums Lacking Non-Exhaustive Annotation",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```rust\n// Inside library v1.0.0\npub enum TaskStatus {\n    Pending,\n    Running,\n    Completed,\n}\n```",
+  "pattern": "Exposing a public `enum` in a library API that is intended to grow during future feature migrations, without annotating it with the `#[non_exhaustive]` attribute.",
+  "why_bad": "When the library author adds a new variant (e.g., `Failed`) in a minor version v1.1.0 update, all downstream users' code containing `match` statements over this enum will immediately fail to compile because their matches are no longer exhaustive, breaking backwards compatibility [536].",
+  "detection": "A public `enum` lacking `#[non_exhaustive]` that is matched on by external crates, combined with minor version additions of new variants.",
+  "counterexample": "Valid for stable, closed enums that are mathematically guaranteed to never acquire new variants (e.g., `enum Direction { North, South, East, West }`).",
+  "fix": "Mark all public enums that are subject to future migration or expansion as `#[non_exhaustive]` [536].\n```rust\n#[non_exhaustive]\npub enum TaskStatus {\n    Pending,\n    Running,\n    Completed,\n    Failed, // Safe addition\n}\n```",
+  "strength": "Strong",
+  "source": "Rust for Rustaceans, Chapter 8, \"API Design\" [536]"
+}

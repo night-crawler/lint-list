@@ -1,0 +1,13 @@
+{
+  "id": 38,
+  "title": "System-Time Dependency for Leases or Ordering",
+  "category": "Essential Complexity Denial Patterns",
+  "damaged_code": "```rust\n// Relying on absolute wall-clock time to check if a lease is still valid\nif SystemTime::now() < lease_expiry {\n    process_write_request();\n}\n```",
+  "pattern": "Comparison of absolute system clock times (`SystemTime::now()` or similar wall-clock APIs) to make logical correctness decisions, such as lock expiration, transaction serialization, or lease validity.",
+  "why_bad": "Wall clocks drift, can jump backward or forward due to NTP synchronization, or experience pauses during virtualization/garbage collection sweeps [23:287]. If the system clock is adjusted backward, or if the thread is paused for 15 seconds, the lease may have expired while the code still believes it is valid, leading to silent data corruption [23:287].",
+  "detection": "Using elapsed system time (non-monotonic clocks) to validate time-bound locks, leases, or to establish the causal order of distributed writes [23:287].",
+  "counterexample": "```rust\n// Using a monotonic clock for duration-based lease measurements\nif Instant::now() < lease_local_expiry {\n    process_write_request();\n}\n```",
+  "fix": "Use monotonic clocks (`Instant` in Rust) for local elapsed time and intervals, and logical clocks (Lamport, Vector) or database-provided MVCC tokens for ordering across nodes [23:287].",
+  "strength": "Strong",
+  "source": "*Designing Data-Intensive Applications* (Kleppmann), Chapter 8: Unreliable Clocks [23:287]."
+}

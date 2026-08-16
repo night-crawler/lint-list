@@ -1,0 +1,13 @@
+{
+  "id": 675,
+  "title": "Structural Plumbing Mixed with Environment Configuration",
+  "category": "Configuration Complexity",
+  "damaged_code": "```yaml\n# application_wiring_and_secrets.yaml\ndatabase_connection:\n  driver_name: \"org.postgresql.Driver\" # Changing this breaks class-loading invariants\n  pool_size: 15\n  username: \"prod_user\"\n  password: \"highly_secret_password\" # Operators must edit this file live to rotate keys\n```",
+  "pattern": "Mixing structural system wiring metadata (like dependency injection beans or class bindings) with mutable environment configuration values (like passwords and hostnames) in a single file.",
+  "why_bad": "Forces operators to edit giant XML/YAML files containing complex application internals just to update an environmental variable (like a database password). A typo in non-variable sections turns structural plumbing into active production landmines, causing opaque runtime crashes.",
+  "detection": "Configuration schemas containing class names, serialization rules, or object graphs alongside secret credentials or network hostnames.",
+  "counterexample": "```yaml\n# application_secrets.yaml - isolated and strictly access-controlled\ndatabase_password: \"highly_secret_password\"\n```",
+  "fix": "Isolate production properties from basic plumbing definitions; store secret parameters and hostnames in dedicated properties files or environments separate from dependency injections.",
+  "strength": "Strong",
+  "source": "[Pragmatic Programmers] Michael T. Nygard - *Release It!_ Design and Deploy Production-Ready Software* (2007, Pragmatic Bookshelf).pdf, Section 14.2."
+}

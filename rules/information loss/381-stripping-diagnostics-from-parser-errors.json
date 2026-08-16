@@ -1,0 +1,13 @@
+{
+  "id": 381,
+  "title": "Stripping Diagnostics from Parser Errors",
+  "category": "Information Loss",
+  "damaged_code": "```rust\nfn parse_json(input: &str) -> Result<Value, String> {\n    if !input.starts_with('{') {\n        return Err(\"Invalid JSON\".into());\n    }\n    ...\n}\n```",
+  "pattern": "Throwing an error with only a textual description while discarding the physical location (span, line number, or index) where the parsing failure occurred.",
+  "why_bad": "It destroys debug context. Developers and operators cannot determine where in the file or input payload the syntax error happened, forcing painful and slow manual analysis.",
+  "detection": "Parsing logic returning an error type that lacks index, span, or position fields.",
+  "counterexample": "Errors where physical position has no meaning:\n```rust\nfn divide(a: i32, b: i32) -> Result<i32, DivByZeroError> { ... }\n```",
+  "fix": "Return a structured error that carries the exact span or file location of the fault.\n```rust\nstruct ParseError {\n    message: String,\n    line: usize,\n    column: usize,\n}\n```",
+  "strength": "Strong",
+  "source": "*Types and Programming Languages* by Benjamin C. Pierce (p. 13, info parameter); *Rust for Rustaceans* by Jon Gjengset (p. 142-143, spans)."
+}

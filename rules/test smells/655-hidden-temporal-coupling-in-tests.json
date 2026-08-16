@@ -1,0 +1,13 @@
+{
+  "id": 655,
+  "title": "Hidden Temporal Coupling in Tests",
+  "category": "Test Smells",
+  "damaged_code": "```rust\nstatic mut PREFIX_INDEX: usize = 0;\n\n#[test]\nfn test_a_finds_prefix() {\n    unsafe {\n        PREFIX_INDEX = find_common_prefix();\n    }\n}\n\n#[test]\nfn test_b_uses_prefix() {\n    // FAILS if test_a did not execute first!\n    let suffix = unsafe { find_common_suffix(PREFIX_INDEX) };\n    assert_eq!(suffix, 3);\n}\n```",
+  "pattern": "A test case that relies on a preceding test case running first to compute or initialize shared mutable state.",
+  "why_bad": "It makes tests highly fragile and non-deterministic [450]. If the test runner executes tests in a parallel or randomized order, the tests will fail arbitrarily [421, 450].",
+  "detection": "Test suites containing global mutable storage where one test writes state and another reads it without resetting in between.",
+  "counterexample": "Explicit end-to-end integration scenario steps wrapped inside a single test method that runs strictly sequentially.",
+  "fix": "Decouple the methods by passing parameters explicitly instead of relying on hidden global shared state [450]. Ensure every test is self-contained [421].",
+  "strength": "Strong",
+  "source": "*   *Clean Code*, \"Hidden Temporal Coupling\" (p. 258) [450]\n*   *Refactoring*, \"JUnit internals: Test isolation\" (p. 421) [421]"
+}

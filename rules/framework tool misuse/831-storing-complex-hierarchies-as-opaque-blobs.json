@@ -1,0 +1,13 @@
+{
+  "id": 831,
+  "title": "Storing Complex Hierarchies as Opaque Blobs",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Serializing a complex domain aggregate to a JSON blob in a single database column\nlet serialized = serde_json::to_string(&aggregate)?;\nsqlx::query(\"INSERT INTO aggregates (id, data) VALUES ($1, $2)\", id, serialized).await?;\n```",
+  "pattern": "Serializing complex domain entities or value collections into opaque text or binary blobs (JSON, XML, BLOB) inside a single database column.",
+  "why_bad": "It prevents the database from performing targeted queries, indexing internal attributes, or enforcing referential integrity on the nested fields, forcing the application to perform full table scans and deserialize entire hierarchies to retrieve a single nested field.",
+  "detection": "Relational table columns mapped to unstructured text types containing serialized JSON or XML structures.",
+  "counterexample": "Storing small, self-contained key-value configurations that are never used as query filters.",
+  "fix": "Map attributes to structured database columns or leverage database native JSON types with GIN indexing.",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design (Vernon), Chapter 6, p. 225 [225]*"
+}

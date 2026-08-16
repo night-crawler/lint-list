@@ -1,0 +1,13 @@
+{
+  "id": 744,
+  "title": "The Mystery Test (Implicit Test Setup and Assertions)",
+  "category": "Cleverness Obscurity",
+  "damaged_code": "```rust\n// Rust\n#[test]\nfn test_order_calculation() {\n    let mut calc = setup_test_calc(); // Hidden initial setup values\n    calc.process();\n    assert_eq!(calc.total, 42); // Where did 42 come from?\n}\n```",
+  "pattern": "Hiding critical test inputs, parameters, and assertions in distant, shared helper functions, leaving the test body obscure and non-descriptive.",
+  "why_bad": "It creates a \"mystery test.\" A developer reading the test cannot understand why the value `42` is expected without navigating to, reading, and parsing the helper methods, which increases maintenance overhead.",
+  "detection": "A unit test containing hardcoded assertion literals that are not directly derivable from any input variables declared inside the test body.",
+  "counterexample": "Highly complex integration test suites with heavy infrastructure configurations that are shared across files. `Context-dependent`.",
+  "fix": "Inline the critical input parameters and assertions so the test is fully self-contained.\n```rust\n#[test]\nfn test_order_calculation() {\n    let mut calc = Calculator::new(10.0, 32.0); // 10 + 32 = 42\n    calc.process();\n    assert_eq!(calc.total, 42);\n}\n```",
+  "strength": "Strong",
+  "source": "*Refactoring*, Chapter 3, \"Test Smells\" / *The Art of Readable Code*, Chapter 14."
+}

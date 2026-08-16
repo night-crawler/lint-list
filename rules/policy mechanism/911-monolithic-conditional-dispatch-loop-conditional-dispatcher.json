@@ -1,0 +1,13 @@
+{
+  "id": 911,
+  "title": "Monolithic Conditional Dispatch Loop (Conditional Dispatcher)",
+  "category": "Policy Mechanism",
+  "damaged_code": "```rust\nimpl CatalogApp {\n    pub fn handle_request(&self, req: Request) -> Response {\n        // Monolithic dispatcher combining routing with action execution\n        match req.action.as_str() {\n            \"view\" => { self.render_catalog() }\n            \"add_item\" => { self.add_to_catalog(req.data) }\n            \"delete_item\" => { self.delete_from_catalog(req.id) }\n            _ => Response::error(404),\n        }\n    }\n}\n```",
+  "pattern": "A dispatcher executes actions directly within a monolithic conditional structure (match/switch statement) branching on a string, enum, or command identifier.",
+  "why_bad": "Violates the Open-Closed Principle. Adding, removing, or changing an action requires modifying the central dispatcher class, raising cognitive load and introducing risks of regression in unrelated action pathways.",
+  "detection": "A control handler contains a single large match or switch statement routing requests to localized business logic blocks.",
+  "counterexample": "Simple, localized routing in minor internal components or simple parser command mapping where action implementations are delegating to external classes directly without holding business state. Marked `Context-dependent`.",
+  "fix": "Replace the conditional block by storing command objects in a map (Command pattern) and calling them polymorphically.\n```rust\npub trait Command {\n    fn execute(&self, data: RequestData) -> Response;\n}\n\nstruct CatalogApp {\n    commands: HashMap<String, Box<dyn Command>>,\n}\n\nimpl CatalogApp {\n    pub fn handle_request(&self, req: Request) -> Response {\n        if let Some(cmd) = self.commands.get(&req.action) {\n            cmd.execute(req.data)\n        } else {\n            Response::error(404)\n        }\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Joshua Kerievsky, *Refactoring to Patterns* (2004), Chapter 6, \"Replace Conditional Dispatcher with Command\", p. 376-377."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 692,
+  "title": "Performance Tuning via Guesswork (\"Streetlight Tuning\")",
+  "category": "Configuration Complexity",
+  "damaged_code": "```ini\n# /etc/sysctl.conf\n# Copied blindly from a general forum post:\nvm.swappiness = 0\nvm.dirty_background_ratio = 5\n```",
+  "pattern": "Adjusting system metrics or runtime parameters (such as caching thresholds, page scan rates, or networking backlogs) based on trial-and-error internet recommendations.",
+  "why_bad": "Can severely cripple actual performance. Advice valid for one system or kernel version may be completely inappropriate for another, or mask fixed bugs with permanent performance regressions.",
+  "detection": "Arbitrary non-default values in system or database config files without documentation of corresponding baseline benchmarks, profiles, or workload assessments.",
+  "counterexample": "Systematically benchmarking configurations sequentially, validating metrics after each change to verify impact.",
+  "fix": "Establish a deliberate methodology: analyze performance, measure baselines, and test a limited set of parameters under exact target workloads.",
+  "strength": "Context-dependent",
+  "source": "Gregg, Brendan - *Systems Performance_ Enterprise and the Cloud* (2013, Pearson Education Limited (US titles)_Prentice Hall).pdf, Chapter 2."
+}

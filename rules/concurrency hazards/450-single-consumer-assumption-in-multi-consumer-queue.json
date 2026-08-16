@@ -1,0 +1,13 @@
+{
+  "id": 450,
+  "title": "Single-Consumer Assumption in Multi-Consumer Queue",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```rust\n// Queue designed only for SPSC (Single Producer Single Consumer)\nfn dequeue(&self) -> Option<T> {\n    let head = self.head.load(Ordering::Relaxed);\n    let next = unsafe { (*head).next }; // Torn pointer if multi-consumer!\n    self.head.store(next, Ordering::Relaxed);\n    Some(unsafe { (*head).value })\n}\n```",
+  "pattern": "Using a single-producer/single-consumer (SPSC) queue or stack implementation with multiple concurrent consumers.",
+  "why_bad": "SPSC algorithms omit atomic serialization (like CAS) on the dequeue/enqueue paths to maximize performance. If multiple consumers access the dequeue path concurrently, they will execute overlapping instructions, resulting in torn pointers, lost elements, and severe memory corruption.",
+  "detection": "A non-atomic collection dequeue method accessed concurrently by multiple threads without an external coordinating lock.",
+  "counterexample": "Guarding the SPSC queue with a Mutex when using it in a multi-consumer context.",
+  "fix": "Wrap SPSC queue accesses in a lock, or use a Multi-Producer Multi-Consumer (MPMC) queue.",
+  "strength": "Strong",
+  "source": "Herlihy 3.1"
+}

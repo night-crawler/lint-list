@@ -1,0 +1,13 @@
+{
+  "id": 373,
+  "title": "Collapsing Structural/Validation Failures to Booleans",
+  "category": "Information Loss",
+  "damaged_code": "```rust\nfn validate_address(addr: &UnvalidatedAddress) -> bool {\n    if addr.street.is_empty() { return false; }\n    if addr.postal_code.len() != 5 { return false; }\n    true\n}\n```",
+  "pattern": "Returning a simple `bool` from a validation or typing function instead of a rich error type explaining *what* failed and *where*.",
+  "why_bad": "It throws away all diagnostic information. Downstream UI forms or logs cannot report whether the street was missing or the postal code was of incorrect length; they only know that \"something\" failed.",
+  "detection": "Functions with names containing `validate`, `verify`, or `check` that accept domain inputs and return `bool`.",
+  "counterexample": "Simple mathematical predicate checks with single distinct failure paths:\n```rust\nfn is_even(n: i32) -> bool {\n    n % 2 == 0\n}\n```",
+  "fix": "Return a `Result<(), ValidationError>` or a structured struct detailing the exact failure path and message.\n```rust\nenum AddressError {\n    MissingStreet,\n    InvalidPostalCodeLength,\n}\n\nfn validate_address(addr: &UnvalidatedAddress) -> Result<(), AddressError> {\n    if addr.street.is_empty() { return Err(AddressError::MissingStreet); }\n    if addr.postal_code.len() != 5 { return Err(AddressError::InvalidPostalCodeLength); }\n    Ok(())\n}\n```",
+  "strength": "Strong",
+  "source": "*Types and Programming Languages* by Benjamin C. Pierce (p. 204, Section 14.1)."
+}

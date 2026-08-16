@@ -1,0 +1,13 @@
+{
+  "id": 781,
+  "title": "Immediate Referential Integrity Rollout",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```sql\n-- Deployed directly during rolling release\nALTER TABLE orders ADD CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id);\n```",
+  "pattern": "Adding foreign key or referential integrity constraints to a database during the initial expansion phase of a rolling upgrade.",
+  "why_bad": "Older versions of the application code still running in the cluster may write records that violate this constraint (e.g., writing orphaned keys or uninitialized relations), immediately triggering query failures and interrupting service [793].",
+  "detection": "The presence of `ADD CONSTRAINT` or `FOREIGN KEY` declarations in database migration scripts deployed concurrently with live application rolling upgrades.",
+  "counterexample": "Valid if the application is completely shut down during the migration (Big Bang migration), though this incurs planned downtime.",
+  "fix": "Add the columns as unconstrained nullable fields in the expansion phase, upgrade the application code to populate the references, and apply the foreign key constraints in a cleanup phase after verification [793, 794].",
+  "strength": "Strong",
+  "source": "Release It!, \"Adaptable Enterprise Architecture - Zero-Downtime Deployment\" [383, 384, 793, 794]"
+}

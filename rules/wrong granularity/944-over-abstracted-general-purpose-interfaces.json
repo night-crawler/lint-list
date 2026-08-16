@@ -1,0 +1,13 @@
+{
+  "id": 944,
+  "title": "Over-abstracted General-Purpose Interfaces",
+  "category": "Wrong Granularity",
+  "damaged_code": "```rust\n// A \"generic query object\" interface trying to handle all possible CRUD lookups\ntrait GenericQueryService {\n    fn query(&self, table: &str, select_clause: &str, filter_clause: &str) -> Vec<Row>;\n}\n```",
+  "pattern": "Designing interfaces to be so abstract and generic (\"astronaut abstraction\") that they fail to hide any implementation details or express any domain intent.",
+  "why_bad": "Shifts 100% of the cognitive complexity onto the user of the interface. Since the interface hides nothing, users must manually build and write SQL query clauses, leaking internal database layouts across the entire codebase. It prevents any local optimizations (like index tuning or caching) inside the module.",
+  "detection": "Identify interfaces whose method parameters expose raw execution details (like SQL strings, raw JSON query fields, or open-ended dynamic string dictionaries) to accommodate \"any future requirement.\"",
+  "counterexample": "Core generic database drivers or object-relational mapping (ORM) libraries where generic query compilation is the primary business requirement.",
+  "fix": "Design specific, intention-revealing interfaces that capture actual domain operations and encapsulate implementation details.\n```rust\ntrait CustomerLookup {\n    fn find_active_vip_customers(&self) -> Vec<Customer>;\n}\n```",
+  "strength": "Strong",
+  "source": "*John K. Ousterhout - A Philosophy of Software Design (2018)*, Chapter 6, \"General-Purpose Modules are Deeper\" (Avoid astronaut abstractions / False abstractions, p. 39 & Chapter 4, p. 25)."
+}

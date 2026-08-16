@@ -1,0 +1,13 @@
+{
+  "id": 217,
+  "title": "Mixed Abstraction Level Routine",
+  "category": "Low Cohesion",
+  "damaged_code": "```rust\nstruct PageParser;\n\nimpl PageParser {\n    fn parse_and_process(&self, raw_html: &str) {\n        // High-level business step\n        self.log_parsing_start();\n\n        // Low-level bit/byte parsing details mixed in the same function\n        let mut clean = String::new();\n        for c in raw_html.chars() {\n            if c != '\\r' && c != '\\t' {\n                clean.push(c);\n            }\n        }\n\n        // High-level logical step\n        self.dispatch_cleaned_text(&clean);\n    }\n}\n```",
+  "pattern": "A single function mixes high-level coordination calls (e.g., dispatch events, log phases) directly with low-level details (e.g., raw byte manipulation, string splitting, or mathematical formulas).",
+  "why_bad": "It violates the Composed Method pattern. Combining levels of detail makes it incredibly difficult for a reader to understand the function's core intent, as the high-level policy is obscured by noise.",
+  "detection": "A function contains both calls to high-level domain methods and raw low-level operations (loops, string cleaners, raw regexes).",
+  "counterexample": "Extremely small functions (less than 10 lines) where low-level implementation is the entire purpose of the routine.",
+  "fix": "Extract the low-level logic into helper functions, keeping the main routine at a single, consistent level of abstraction.\n```impl PageParser {\n    fn parse_and_process(&self, raw_html: &str) {\n        self.log_parsing_start();\n        let clean = self.sanitize_whitespace(raw_html);\n        self.dispatch_cleaned_text(&clean);\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Robert C. Martin - Clean Code, Chapter 3 (Functions), Section \"One Level of Abstraction per Function\"*"
+}

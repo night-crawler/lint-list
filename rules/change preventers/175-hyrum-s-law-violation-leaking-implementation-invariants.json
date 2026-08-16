@@ -1,0 +1,13 @@
+{
+  "id": 175,
+  "title": "Hyrum's Law Violation (Leaking Implementation Invariants)",
+  "category": "Change Preventers",
+  "damaged_code": "```rust\n// Library module exposing raw collection\npub struct UserRegistry {\n    pub users: std::collections::HashMap<String, User>,\n}\n```",
+  "pattern": "Exposing raw, implementation-specific structures (like a standard `HashMap` or a private sorting order) directly in a public API, allowing callers to depend on undocumented behavioral side-effects (like the exact hashing or iteration order).",
+  "why_bad": "The library's internal behavior becomes locked. Any attempt to optimize performance (e.g., swapping `HashMap` for an index map or updating a compiler version that alters the hashing seed) breaks downstream callers who implicitly depended on the undocumented behavioral order.",
+  "detection": "Public fields or API return signatures that expose raw collection types (`HashMap`, `HashSet`) rather than encapsulated opaque iterators or wrapper types.",
+  "counterexample": "Internal-only structures or simple, raw data-transfer structs (DTOs) whose sole purpose is to act as dumb data holders.",
+  "fix": "Encapsulate the collection. Expose custom, stable accessor methods (like `pub fn get_user(&self, id: &str) -> Option<&User>`) and hide the underlying storage collection behind a private visibility modifier.",
+  "strength": "Strong",
+  "source": "Titus Winters, Tom Manshreck, Hyrum Wright, *Software Engineering at Google* (2020), Chapter 1 (\"Time and Change: Hyrum's Law\"), p. 7."
+}

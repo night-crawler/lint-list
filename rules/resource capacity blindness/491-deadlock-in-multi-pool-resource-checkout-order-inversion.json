@@ -1,0 +1,13 @@
+{
+  "id": 491,
+  "title": "Deadlock in Multi-Pool Resource Checkout (Order Inversion)",
+  "category": "Resource Capacity Blindness",
+  "damaged_code": "```rust\nfn run_create_transaction() {\n    // Acquiring resources from two different pools in inconsistent order\n    let _conn_db = db_pool.get_connection();\n    let _conn_repo = repo_pool.get_connection();\n}\n\nfn run_update_transaction() {\n    let _conn_repo = repo_pool.get_connection();\n    let _conn_db = db_pool.get_connection();\n}\n```",
+  "pattern": "Different threads or functions attempting to checkout resources from multiple distinct pools (such as a database connection pool and a messaging/master-repo connection pool) in different relative order.",
+  "why_bad": "If Thread A calls `run_create_transaction` and acquires DB connection, while Thread B calls `run_update_transaction` and acquires Master Repo connection, they block each other [151]. Under high load, DB pool connections are depleted by `create` threads and Repo connections are depleted by `update` threads [151]. This results in a deadlocked state where no thread can progress, hanging the system indefinitely [151].",
+  "detection": "Identify functions that acquire locks or checkout resources from multiple pools/mutexes concurrently, and verify if the order of acquisition is inconsistent across different paths.",
+  "counterexample": "```rust\nfn run_create_transaction() {\n    // Strict, consistent checkout ordering across all paths\n    let _conn_db = db_pool.get_connection();\n    let _conn_repo = repo_pool.get_connection();\n}\n\nfn run_update_transaction() {\n    let _conn_db = db_pool.get_connection();\n    let _conn_repo = repo_pool.get_connection();\n}\n```",
+  "fix": "Enforce a strict, uniform ordering constraint for acquiring resources across all execution pathways in the codebase [151].",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code*, Chapter 16 / passage [151]; Michael T. Nygard, *Release It!*, Chapter 10 / passage [231]."
+}

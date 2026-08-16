@@ -1,0 +1,13 @@
+{
+  "id": 686,
+  "title": "Global Configuration Data Structure Passing",
+  "category": "Configuration Complexity",
+  "damaged_code": "```rust\n// Entire system coupled directly to the raw configuration representation\npub static mut GLOBAL_CONFIG: Option<AppConfig> = None;\n```",
+  "pattern": "Making the parsed configuration data structure globally accessible across the entire application.",
+  "why_bad": "Couples every low-level module to the representation details of the configuration file. Changing the file format or schema structure requires refactoring fields across the entire program.",
+  "detection": "Direct raw field access of a global configuration static variable in multiple decoupled modules.",
+  "counterexample": "```rust\n// Expose configuration properties behind a thin API\ntrait ConfigService {\n    fn get_port(&self) -> u16;\n}\n```",
+  "fix": "Wrap the configuration data structure behind a thin API or trait, decoupling the application code from details of configuration parsing.",
+  "strength": "Strong",
+  "source": "[2nd] Andrew Hunt_ David Hurst Thomas - *The Pragmatic Programmer_ Your Journey to Mastery*, 20th Anniversary Edition (2019, Addison-Wesley Professional).pdf, Topic 32."
+}

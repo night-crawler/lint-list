@@ -1,0 +1,13 @@
+{
+  "id": 205,
+  "title": "Excessive Lifetime Contagion (Borrow Coupling)",
+  "category": "Couplers",
+  "damaged_code": "```rust\n// A chain of references that couples struct lifetimes all the way up\nstruct FileRef<'a> { content: &'a str }\nstruct Parser<'a> { file: FileRef<'a> }\nstruct Compiler<'a> { parser: Parser<'a> }\n```",
+  "pattern": "Structs store short-lived borrow references (`&'a T`) instead of taking ownership, forcing every struct up the dependency chain to inherit and carry the lifetime parameter `'a`.",
+  "why_bad": "It couples the lifetimes of all structs to the short-lived stack frame of the original source data. The structs can never be placed in background threads, event buses, or stored long-term.",
+  "detection": "A struct hierarchy where multiple layers of structs all contain lifetime parameters matching the innermost primitive reference.",
+  "counterexample": "Highly specialized local zero-copy parsers designed strictly for immediate, high-performance in-place parsing.",
+  "fix": "Clones the short-lived data or use thread-safe shared references like `Arc<str>` or `String` to take explicit ownership.\n```rust\nstruct FileData { content: String }\nstruct Parser { file: FileData }\nstruct Compiler { parser: Parser }\n```",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust for Rustaceans* (2021), Chapter 1 (\"Lifetimes\")."
+}

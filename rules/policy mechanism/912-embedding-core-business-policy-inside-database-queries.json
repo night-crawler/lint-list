@@ -1,0 +1,13 @@
+{
+  "id": 912,
+  "title": "Embedding Core Business Policy Inside Database Queries",
+  "category": "Policy Mechanism",
+  "damaged_code": "```rust\n// SQL query embedding business policy defining \"high-value customer\"\nlet query = \"SELECT * FROM orders WHERE total_price > 1000.0 AND status = 'COMPLETED'\";\n```",
+  "pattern": "Core domain definitions and policies are embedded directly inside data queries, filters, or repository queries instead of being evaluated in pure memory-safe code.",
+  "why_bad": "Violates persistence ignorance. Changes to business criteria (e.g., lowering the high-value threshold to $500) require modifying database queries, SQL views, or repository methods. Domain experts cannot easily verify or read code hidden in SQL queries.",
+  "detection": "Complex filtering expressions (`WHERE` clauses with multiple business criteria) built directly in database layers or SQL string literals.",
+  "counterexample": "Simple primary key lookups or simple status indexing. Marked `Context-dependent` if loading the entire record to evaluate in memory would cause severe performance problems.",
+  "fix": "Query the entity state simply, and evaluate the business rule on the entity itself.\n```rust\nimpl Customer {\n    pub fn is_high_value(&self) -> bool {\n        self.total_purchases > 1000.0\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Scott Wlaschin, *Domain Modeling made Functional* (2017), Chapter 10, \"Persistence Ignorance\", p. 211, 471."
+}

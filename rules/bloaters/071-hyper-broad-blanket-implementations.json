@@ -1,0 +1,13 @@
+{
+  "id": 71,
+  "title": "Hyper-Broad Blanket Implementations",
+  "category": "Bloaters",
+  "damaged_code": "```rust\ntrait Loggable {\n    fn to_log_string(&self) -> String;\n}\n\n// Giant blanket implementation targeting too many types\nimpl<T> Loggable for T\nwhere\n    T: std::fmt::Debug,\n{\n    fn to_log_string(&self) -> String {\n        format!(\"{:?}\", self)\n    }\n}\n```",
+  "pattern": "Implementing a custom trait for all types `T` that match a highly broad, generic constraint (like `T: Debug` or `T: Clone`), capturing almost the entire type universe in a single block.",
+  "why_bad": "Triggers severe compiler orphan-rule blocks. Once this broad implementation is declared, neither you nor downstream consumer crates can implement `Loggable` specifically for any type that already implements `Debug`. It locks the trait's dispatch structure and prevents localized, custom implementations.",
+  "detection": "Look for `impl<T> CustomTrait for T` blocks where the `where` constraints rely on highly ubiquitous standard library traits (like `Debug`, `Display`, `Clone`, or `Send`).",
+  "counterexample": "Standard library traits designed explicitly as marker properties or dynamic conversions (like `From` or `Into`), which require general blanket implementations.",
+  "fix": "Narrow the scope of the implementation. Implement the trait specifically for your target structs, or introduce a unique marker trait to opt-in selectively.",
+  "strength": "Strong",
+  "source": "*Jon Gjengset - Rust for Rustaceans (2021)*, Chapter 2, \"Types\" (Blanket Implementations)."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 405,
+  "title": "Exponential Backoff Retries without Random Jitter",
+  "category": "Resilience Cargo Cult",
+  "damaged_code": "```rust\nlet mut backoff = Duration::from_secs(1);\nfor _ in 0..3 {\n    if make_rpc_call().is_ok() { break; }\n    tokio::time::sleep(backoff).await; // Exponential backoff but NO jitter\n    backoff *= 2;\n}\n```",
+  "pattern": "Executing retries with exponential backoff where the delay calculation is completely deterministic and lacks a random factor (jitter).",
+  "why_bad": "When a system outage occurs, all disconnected clients fail at roughly the same time and begin retrying. Without jitter, their retry intervals synchronize, causing massive periodic \"spikes\" or \"bursts\" of traffic that repeatedly slam the server at exact intervals, preventing recovery [15, 68].",
+  "detection": "Check if the retry delay interval is calculated strictly deterministically (e.g., `backoff * 2`) without any addition of random variables or a `jitter()` function call.",
+  "counterexample": "```rust\nuse rand::Rng;\nlet mut backoff = Duration::from_secs(1);\nfor _ in 0..3 {\n    if make_rpc_call().is_ok() { break; }\n    let jitter = rand::thread_rng().gen_range(0..100);\n    tokio::time::sleep(backoff + Duration::from_millis(jitter)).await;\n    backoff *= 2;\n}\n```",
+  "fix": "Add a random jitter factor to the backoff delay calculation to de-synchronize retrying clients.",
+  "strength": "Strong",
+  "source": "Alex Petrov, *Database Internals*, page 180 / passage [15] or Heather Adkins et al., *Building Secure and Reliable Systems*, page 210 / passage [68]."
+}

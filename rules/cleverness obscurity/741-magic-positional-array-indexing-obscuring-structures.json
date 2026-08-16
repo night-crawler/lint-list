@@ -1,0 +1,13 @@
+{
+  "id": 741,
+  "title": "Magic Positional Array Indexing (Obscuring Structures)",
+  "category": "Cleverness Obscurity",
+  "damaged_code": "```rust\n// Rust\nfn diameters(data: &[[f64; 2]]) -> Vec<f64> {\n    data.iter().map(|cell| cell[0] + (cell[1] * 2.0)).collect() // Index 0 and 1 represent rim and tire\n}\n```",
+  "pattern": "Using raw arrays or tuples and accessing elements by magic hardcoded numeric indexes to represent structured data entities with distinct sub-attributes.",
+  "why_bad": "The knowledge of positional layout is duplicated everywhere the collection is processed. If the array layout changes, all lookup points must be updated, risking silent data corruption.",
+  "detection": "Multiple expressions indexing numeric literals (e.g., `cell[0]`, `cell[1]`) on a raw homogeneous array to perform semantic computations.",
+  "counterexample": "Mathematical matrices, coordinate planes, or standard linear geometry vectors where indices directly represent mathematical dimensions. `Context-dependent`.",
+  "fix": "Define a clear, named structure or domain entity representing the attributes.\n```rust\nstruct Wheel {\n    rim: f64,\n    tire: f64,\n}\nfn diameters(wheels: &[Wheel]) -> Vec<f64> {\n    wheels.iter().map(|w| w.rim + (w.tire * 2.0)).collect()\n}\n```",
+  "strength": "Strong",
+  "source": "*Practical Object-Oriented Design in Ruby*, Chapter 2, \"Obscuring References\" (p. 24)."
+}

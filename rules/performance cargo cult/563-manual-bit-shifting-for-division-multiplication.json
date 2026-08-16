@@ -1,0 +1,13 @@
+{
+  "id": 563,
+  "title": "Manual Bit-Shifting for Division / Multiplication",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\nlet x = 100;\nlet doubled = x << 1; // Bit-shifting to multiply by 2\nlet quarter = x >> 2; // Bit-shifting to divide by 4\n```",
+  "pattern": "Using bit-shift operators (`<<`, `>>`) instead of normal multiplication/division operators (`*`, `/`) by powers of two to \"speed up math.\"",
+  "why_bad": "Modern optimizing compilers automatically convert multiplication and division by powers of two to optimal bit-shift assembly instructions. Manual bit-shifting severely degrades code readability and obscures mathematical intentions for zero performance gain [348, 430].",
+  "detection": "Bit-shift operations on integers where standard mathematical multiplication or division operators are semantically intended.",
+  "counterexample": "Explicit low-level bit manipulation protocols, cryptographic hashing, or packet parsing. `Context-dependent`.",
+  "fix": "```rust\nlet doubled = x * 2;\nlet quarter = x / 4;\n```",
+  "strength": "Strong",
+  "source": "*Code Complete*, Section 25.3 (p. 348); *The Art of Readable Code*, Chapter 1 (p. 430)."
+}

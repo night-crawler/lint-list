@@ -1,0 +1,13 @@
+{
+  "id": 938,
+  "title": "Interactive Transaction Bloat (Long-Running Locks)",
+  "category": "Wrong Granularity",
+  "damaged_code": "```rust\nfn handle_checkout(db: &Database, cart_id: u64) -> Result<(), Error> {\n    let mut tx = db.begin_transaction()?;\n    let cart = tx.query_cart(cart_id)?;\n    \n    // Blocking external HTTP call inside the transaction!\n    let payment_success = http::call_stripe_api(cart.total)?; \n    \n    if payment_success {\n        tx.mark_as_paid(cart_id)?;\n        tx.commit()?;\n    }\n    Ok(())\n}\n```",
+  "pattern": "Holding a database transaction open while executing non-database tasks (like network calls, file writing, or interactive client-side wait steps).",
+  "why_bad": "The database transaction locks records (or tables) to ensure isolation. Blocking on network I/O (which can take hundreds of milliseconds or seconds) keeps database locks open excessively, freezing other concurrent transactions and causing lock escalation, timeouts, and severe tail latency.",
+  "detection": "Look for calls to network I/O, heavy computational helper blocks, or non-database API methods executed between the statements starting and ending a database transaction.",
+  "counterexample": "`Too subjective`. When working with highly restricted, low-concurrency internal administration databases where simplicity outweighs throughput.",
+  "fix": "Keep database transactions short by preparing all data and performing external network calls before opening the transaction.\n```rust\nfn handle_checkout(db: &Database, cart_id: u64) -> Result<(), Error> {\n    let cart = db.get_cart_read_only(cart_id)?;\n    let payment_success = http::call_stripe_api(cart.total)?; // Done outside transaction\n    \n    if payment_success {\n        let mut tx = db.begin_transaction()?;\n        tx.mark_as_paid(cart_id)?; // Database write is short and fast\n        tx.commit()?;\n    }\n    Ok(())\n}\n```",
+  "strength": "Strong",
+  "source": "*Martin Kleppmann - Designing Data-Intensive Applications (2017)*, Chapter 7, \"Transactions\" (Interactive multi-statement transactions, p. 244)."
+}

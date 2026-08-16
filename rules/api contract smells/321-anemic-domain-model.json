@@ -1,0 +1,13 @@
+{
+  "id": 321,
+  "title": "Anemic Domain Model",
+  "category": "Api Contract Smells",
+  "damaged_code": "```rust\n// Domain entity is a passive data bucket\nstruct Invoice {\n    pub id: u64,\n    pub amount: f64,\n    pub is_paid: bool,\n}\n\n// Business rules are scattered in external services\nstruct PaymentService;\nimpl PaymentService {\n    pub fn pay(&self, invoice: &mut Invoice) {\n        if invoice.amount > 0.0 {\n            invoice.is_paid = true;\n        }\n    }\n}\n```",
+  "pattern": "Structs representing domain concepts are designed as passive data containers with public fields and no behavior, while all validation and business rules are placed in stateless services.",
+  "why_bad": "It defeats the primary benefit of object-oriented/module encapsulation. Business invariants cannot be protected because any caller can mutate the entity's fields directly into invalid states, leaving the code prone to inconsistency.",
+  "detection": "Domain structs containing only public fields and zero impl blocks, while business logic resides entirely in separate helper/service classes.",
+  "counterexample": "Pure data structures (like standard DTOs or config structs) that do not represent complex business entities with invariants.",
+  "fix": "Keep fields private, and encapsulate mutation operations inside methods on the domain struct itself (e.g., `invoice.pay()`), ensuring invariants are verified.",
+  "strength": "Contextual",
+  "source": "Eric Evans, *Domain-Driven Design* (2003), Chapter 4 (\"Isolating the Domain\"); Vaughn Vernon, *Implementing Domain-Driven Design* (2013), Chapter 10."
+}

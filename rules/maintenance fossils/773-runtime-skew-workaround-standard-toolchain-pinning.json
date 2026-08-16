@@ -1,0 +1,13 @@
+{
+  "id": 773,
+  "title": "Runtime Skew Workaround (Standard Toolchain Pinning)",
+  "category": "Maintenance Fossils",
+  "damaged_code": "```rust\n// Workaround for AppEngine 32-bit Python standard library compatibility\npub fn format_id(id: u64) -> String {\n    if cfg!(target_pointer_width = \"32\") {\n        // Compatibility fallback path kept for years for a specific customer\n        (id as u32).to_string()\n    } else {\n        id.to_string()\n    }\n}\n```",
+  "pattern": "Hardcoding target-skew, pointer-width, or compiler-version compatibility fallbacks in core, transitively-shared libraries to appease a tiny handful of legacy clients who refuse to upgrade their runtimes.",
+  "why_bad": "System-wide stagnation. Tying core, fleet-wide shared libraries to legacy runtime constraints blocks performance optimizations, delays standard compiler upgrades, and spreads target-specific complexity to completely unrelated systems.",
+  "detection": "The linter must observe:\n1. Low-level platform checks (e.g., pointer-width, archaic target OS flags) embedded in high-level business logic.\n2. The check exists solely to accommodate a specific, outdated deployment target.",
+  "counterexample": "`Context-dependent`\n```rust\n// Valid: Legitimate multi-platform support in a hardware-abstracting library\n```",
+  "fix": "Bifurcate the legacy client onto an isolated deployment branch, and clean up the shared mainline library to leverage modern compiler and standard target properties.\n```rust\npub fn format_id(id: u64) -> String {\n    id.to_string()\n}\n```",
+  "strength": "Contextual",
+  "source": "- Titus Winters et al., *Software Engineering at Google* (2020) [348]"
+}

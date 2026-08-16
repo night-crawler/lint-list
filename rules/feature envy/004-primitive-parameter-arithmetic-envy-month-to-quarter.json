@@ -1,0 +1,13 @@
+{
+  "id": 4,
+  "title": "Primitive-Parameter Arithmetic Envy (Month to Quarter)",
+  "category": "Feature Envy",
+  "damaged_code": "```rust\nstruct DateUtil;\nimpl DateUtil {\n    fn month_code_to_quarter(month: u32) -> u32 {\n        1 + (month - 1) / 3\n    }\n}\n```",
+  "pattern": "A static utility method performs a calculation using exclusively a primitive integer argument representing a distinct domain concept (like a month).",
+  "why_bad": "It exposes primitive obsession. The month concept is represented as a raw integer, and arithmetic operations are scattered in static utilities rather than being bound to a cohesive domain type.",
+  "detection": "Utility methods that accept a primitive argument and calculate a value that belongs to that primitive's domain (e.g., quarter of a month, or weekend status of a day-of-week).",
+  "counterexample": "Purely mathematical helper methods like `abs()` or general algorithms like `clamp()`.",
+  "fix": "Encapsulate the month as an enum or struct and place the behavior on it.\n```rust\n#[derive(Clone, Copy)]\nenum Month {\n    January = 1,\n    February = 2,\n    // ...\n}\nimpl Month {\n    fn quarter(self) -> u32 {\n        1 + (self as u32 - 1) / 3\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 16 (page 278)."
+}

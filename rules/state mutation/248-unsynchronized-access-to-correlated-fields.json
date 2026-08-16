@@ -1,0 +1,13 @@
+{
+  "id": 248,
+  "title": "Unsynchronized Access to Correlated Fields",
+  "category": "State Mutation",
+  "damaged_code": "```rust\nstruct SchrödingerAnimal {\n    meas_1: f64,\n    meas_2: f64,\n    meas_3: f64,\n}\n\nimpl SchrödingerAnimal {\n    pub fn update_measurements(&mut self, m1: f64, m2: f64, m3: f64) {\n        self.meas_1 = m1;\n        self.meas_2 = m2;\n        self.meas_3 = m3;\n    }\n}\n```",
+  "pattern": "Multiple struct fields that are tightly correlated (represent a single atomic update) are written to and read from as separate, independent primitive fields without a synchronization lock or transactional barrier.",
+  "why_bad": "Concurrency hazard. A reader thread can read the fields while an update is in progress, observing an inconsistent partial snapshot (e.g. a new `meas_1` but old `meas_2` and `meas_3`). This leads to \"fatally confused\" threads and invariant violations.",
+  "detection": "A set of fields in a struct are modified together in a write routine but are accessed individually by other threads without a lock, atomic snapshot, or RCU boundary.",
+  "counterexample": "Grouping the correlated fields in an immutable struct and swapping them atomically:\n```rust\nstruct CoordinatedMeasurement {\n    meas_1: f64,\n    meas_2: f64,\n    meas_3: f64,\n}\n\nstruct CleanAnimal {\n    measurement: Arc<CoordinatedMeasurement>,\n}\n```",
+  "fix": "Group correlated fields into a single nested immutable struct, and update them atomically using an atomic pointer swap or a Mutex guard.\n```rust\nimpl CleanAnimal {\n    pub fn update_measurements(&mut self, m: CoordinatedMeasurement) {\n        // Swap Arc pointer or write under a Mutex guard\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*1701.00854v6.pdf* by Paul McKenney (Section 13.5.4, \"Correlated Fields\")."
+}

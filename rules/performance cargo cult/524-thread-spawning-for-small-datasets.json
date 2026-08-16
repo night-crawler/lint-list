@@ -1,0 +1,13 @@
+{
+  "id": 524,
+  "title": "Thread Spawning for Small Datasets",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\nuse std::thread;\nfn process_small_dataset(data: Vec<i32>) -> Vec<i32> {\n    // Spawning 4 threads to process 10 integers\n    let mut handles = vec![];\n    for chunk in data.chunks(3) {\n        let chunk = chunk.to_vec();\n        handles.push(thread::spawn(move || {\n            chunk.iter().map(|&x| x * 2).collect::<Vec<_>>()\n        }));\n    }\n    handles.into_iter().flat_map(|h| h.join().unwrap()).collect()\n}\n```",
+  "pattern": "Splitting a tiny dataset or trivial task across multiple operating system threads or parallel iterators without measuring the workload size.",
+  "why_bad": "The overhead of thread creation, OS scheduling, memory allocation, and joining is massive (~10–100 µs) compared to executing a simple loop (~1–10 ns) on a single thread. This results in negative speedup where parallel code runs much slower than optimal sequential code [2, 13, 23, 234].",
+  "detection": "Spawning threads (`std::thread::spawn`) or using parallel frameworks (such as `rayon` parallel iterators) for loops with a constant, small number of iterations (e.g., < 1000 items) or trivial calculations.",
+  "counterexample": "The tasks performed in parallel are highly blocking I/O operations (such as fetching 5 distinct web pages) rather than simple calculations. `Context-dependent`.",
+  "fix": "Process the small dataset sequentially on a single thread.",
+  "strength": "Strong",
+  "source": "*1701.00854v6.pdf*, Section 2.3 (p. 2), Section 6.5 (p. 13, 23); *Rust For Rustaceans*, Chapter 11 (p. 234)."
+}

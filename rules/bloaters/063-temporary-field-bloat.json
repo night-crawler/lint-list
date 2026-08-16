@@ -1,0 +1,13 @@
+{
+  "id": 63,
+  "title": "Temporary Field Bloat",
+  "category": "Bloaters",
+  "damaged_code": "```rust\nstruct MathSolver {\n    inputs: Vec<f64>,\n    // Temporary calculations fields, only valid during solve()\n    normalized_inputs: Option<Vec<f64>>,\n    matrix_determinant: Option<f64>,\n    solution: Option<Vec<f64>>,\n}\n\nimpl MathSolver {\n    fn solve(&mut self) -> Vec<f64> {\n        self.normalize();\n        self.calc_determinant();\n        self.compute_roots();\n        self.solution.clone().unwrap()\n    }\n    // ...\n}\n```",
+  "pattern": "Exposing fields on a struct that are only used or populated temporarily during a specific computation or method call, remaining `None` or in a dummy state during the rest of the struct's lifecycle.",
+  "why_bad": "Severely degrades spatial cohesion and class readability. Downstream readers are confused about whether these fields are safe to read at any given time. The struct represents an invalid state most of its life, requiring manual initialization checks and option unwrapping throughout its methods.",
+  "detection": "Observe a struct containing multiple `Option` fields that are only written and read inside a single, complex method block and are never used by other public methods.",
+  "counterexample": "`Context-dependent`. Standard caching fields or lazily initialized variables that act purely as transparent performance optimizations and do not affect business logic.",
+  "fix": "Apply \"Replace Method with Method Object\". Extract the computation into a temporary, short-lived struct where all calculation parameters are required positional fields in the constructor.",
+  "strength": "Strong",
+  "source": "*Martin Fowler - Refactoring (1999)*, Chapter 3, \"Temporary Field\"; *Martin Fowler - Refactoring (1999)*, Chapter 6, \"Replace Method with Method Object\"."
+}

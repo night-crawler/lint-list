@@ -1,0 +1,13 @@
+{
+  "id": 317,
+  "title": "Subtype Mixing via Shared Struct Fields",
+  "category": "Dry Abuse",
+  "damaged_code": "```rust\nstruct Bicycle {\n    is_mountain: bool,\n    is_recumbent: bool,\n    suspension_travel: Option<f64>,\n    seat_angle: Option<f64>,\n}\n```",
+  "pattern": "Representing distinct concrete subtypes by merging their separate field attributes together under a single type using conditional flags.",
+  "why_bad": "It prevents extending the system when a new type represents a mixture of existing types (e.g., a recumbent mountain bike). It forces developers to write complex conditional checks inside every operation, leading to fragile state mutations.",
+  "detection": "A single class/struct containing multiple optional fields that are only ever valid under mutually exclusive boolean flags.",
+  "counterexample": "Standard Option fields representing independent, non-exclusionary attributes (e.g., an optional nickname).",
+  "fix": "Use traits and composition to encapsulate variant behavior, isolating subtype logic.\n```rust\ntrait BicycleBehavior {\n    fn ride(&self);\n}\n\nstruct MountainBike {\n    suspension_travel: f64,\n}\n\nstruct RecumbentBike {\n    seat_angle: f64,\n}\n```",
+  "strength": "Strong",
+  "source": "Sandi Metz *POODR*, Chapter 7: \"Insist on the Abstraction\", p. 158, 197."
+}

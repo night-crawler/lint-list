@@ -1,0 +1,13 @@
+{
+  "id": 812,
+  "title": "Missing Unit of Work in Key-Value / Fabric Cache Persistence",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Individual updates on a Key-Value/Fabric cache with no transactional boundaries\nfor mut user in users_to_update {\n    user.status = \"Active\".to_string();\n    cache_store.put(user.id, user); // Individual transaction and write per item\n}\n```",
+  "pattern": "Modifying multiple distinct entries in a key-value store or distributed cache sequentially without a transaction orchestrator (Unit of Work).",
+  "why_bad": "It forces every single `.put()` operation to act as an individual write transaction across the network, leading to high write latency and leaving the data store in a partially-updated state if one write fails.",
+  "detection": "Successive calls to a distributed cache's `.put()` or `.set()` method in a loop over a collection, without a wrapping transaction manager or batch write.",
+  "counterexample": "Writing to a local in-memory thread-safe map.",
+  "fix": "Use batch operations (e.g. `put_all()`) or a Unit of Work boundary to flush all dirty changes in a single batch transaction.",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design (Vernon), Chapter 6, p. 232 [674]*"
+}

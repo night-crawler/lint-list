@@ -1,0 +1,13 @@
+{
+  "id": 734,
+  "title": "Semantic Punning (Artificial Method Consistency)",
+  "category": "Cleverness Obscurity",
+  "damaged_code": "```rust\n// Rust\nimpl Cart {\n    pub fn add(&mut self, item: Item) { self.items.push(item); }\n}\nimpl Calculator {\n    pub fn add(&mut self, val: f64) { self.sum += val; } // Mathematically different from inserting!\n}\n```",
+  "pattern": "Using the exact same method name (e.g., `add`) for fundamentally different mathematical or collection operations simply to maintain superficial consistency.",
+  "why_bad": "It creates a semantic pun. Callers expect methods sharing a name to behave similarly. Using `add` for \"insert into a collection\" and \"mathematical sum\" misleads developers regarding side-effects, computational complexity, and mathematical invariants.",
+  "detection": "A method named `add` that inserts or appends items to a collection instead of performing mathematical accumulation, while other modules use `add` for mathematical summation.",
+  "counterexample": "Standard library traits (like `std::ops::Add`) where the implementation strictly obeys the mathematical properties of addition.",
+  "fix": "Rename the collection-based method to represent its action accurately, such as `insert` or `append`.\n```rust\nimpl Cart {\n    pub fn append(&mut self, item: Item) { self.items.push(item); }\n}\n```",
+  "strength": "Strong",
+  "source": "*Clean Code*, Chapter 2, \"Don't Pun\" (p. 26-27)."
+}

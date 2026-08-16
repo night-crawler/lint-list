@@ -1,0 +1,13 @@
+{
+  "id": 425,
+  "title": "Livelock via Uncoordinated Retry Backoff",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```rust\nloop {\n    if lock_a.try_lock().is_ok() {\n        if lock_b.try_lock().is_ok() {\n            break; \n        }\n    }\n    thread::sleep(Duration::from_micros(10)); \n}\n```",
+  "pattern": "Multiple threads attempt to acquire multiple resources via lock-free or try-lock loops, and upon failure, sleep or backoff by a deterministic, identical duration.",
+  "why_bad": "Threads will lockstep, repeating the collision and backoff cycles in resonance indefinitely (livelock), wasting CPU cycles without making forward progress.",
+  "detection": "A retry loop using deterministic backoff intervals (constants) across competing tasks without random jitter.",
+  "counterexample": "Adding randomized jitter to the backoff interval to break the lockstep resonance.",
+  "fix": "Introduce randomized exponential backoff.\n```rust\nlet mut delay = 10;\nloop {\n    if lock_a.try_lock().is_ok() && lock_b.try_lock().is_ok() {\n        break;\n    }\n    let jitter = rand::random::<u64>() % delay;\n    thread::sleep(Duration::from_micros(jitter));\n    delay = (delay * 2).min(1000);\n}\n```",
+  "strength": "Contextual",
+  "source": "Clean Code Ch 13 (p. 185), Herlihy 7.4"
+}

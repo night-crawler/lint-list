@@ -1,0 +1,13 @@
+{
+  "id": 137,
+  "title": "Class Interface with Mixed Levels of Abstraction",
+  "category": "Abstraction Failure",
+  "damaged_code": "```rust\nstruct EmployeeCensus {\n    employees: Vec<Employee>,\n}\n\nimpl EmployeeCensus {\n    pub fn add_employee(&mut self, emp: Employee) { self.employees.push(emp); }\n    pub fn remove_employee(&mut self, emp: &Employee) { /* ... */ }\n    \n    // Low-level container leak\n    pub fn first_item(&self) -> Option<&Employee> { self.employees.first() }\n    pub fn next_item(&self, current: usize) -> Option<&Employee> { self.employees.get(current + 1) }\n}\n```",
+  "pattern": "A high-level business domain struct exposes low-level container, iteration, or collection-style primitive methods in its public API.",
+  "why_bad": "It presents an inconsistent, hodgepodge interface that mixes high-level concepts with raw data-structure traversal mechanics. It breaks encapsulation by leaking the fact that the underlying implementation uses a linear list or vector.",
+  "detection": "A struct whose public API contains both domain-specific methods (e.g., `add_employee`) and collection-generic methods (e.g., `next_item`, `first_item`, `get_index`).",
+  "counterexample": "Custom iterator structs designed intentionally to implement the standard library `Iterator` trait as a separate, distinct type.",
+  "fix": "Hide the container implementation entirely, and expose only high-level domain services or provide a dedicated, separate iterator type.",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 6, Section 6.2 (\"C++ Example of a Class Interface with Mixed Levels of Abstraction\")."
+}

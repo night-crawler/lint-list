@@ -1,0 +1,13 @@
+{
+  "id": 863,
+  "title": "Unsafe Manual Destruction of Fields",
+  "category": "Correctness By Convention",
+  "damaged_code": "```rust\n// Rust\nstruct MyStruct {\n    field: ManuallyDrop<Resource>,\n}\nimpl Drop for MyStruct {\n    fn drop(&mut self) {\n        unsafe {\n            ManuallyDrop::drop(&mut self.field); // BUG: Panics during drop cause double drops!\n        }\n    }\n}\n```",
+  "pattern": "Manually calling unsafe destructors on individual fields within a `Drop` implementation without safe wrappers.",
+  "why_bad": "If a panic occurs midway through the drop execution, some fields might be left partially deallocated and then dropped again, or duplicate drops can occur, leading to double-free undefined behavior.",
+  "detection": "Calling `ManuallyDrop::drop` or raw pointer destruction on struct fields within a custom `Drop::drop` method without panic-safe tracking.",
+  "counterexample": "Using safe option wrappers (`Option::take`) or safe standard library destructors to deallocate.",
+  "fix": "Use panic-safe Option taking to cleanly extract the value: `self.field.take()` replacing it with `None`.",
+  "strength": "Strong",
+  "source": "Rust For Rustaceans, Chapter 4 (Wrapper Types / ManuallyDrop) [425-427]."
+}

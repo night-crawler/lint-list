@@ -1,0 +1,13 @@
+{
+  "id": 73,
+  "title": "Monolithic Prelude Modules",
+  "category": "Bloaters",
+  "damaged_code": "```rust\n// In crate::prelude\npub use crate::db::PgPool;\npub use crate::models::*;\npub use crate::helpers::string_utils::*;\npub use crate::config::AppConfig;\npub use crate::services::auth::AuthService;\npub use crate::utils::logger::*;\n// Exposes hundreds of internal utilities in a single import!\n```",
+  "pattern": "Creating a single, massive `prelude` module that re-exports almost every utility, trait, helper, and struct in the entire codebase, and importing it wholesale (`use crate::prelude::*;`) in every file.",
+  "why_bad": "Massive compile-time overhead and complete loss of dependency clarity. Developers can no longer identify where a specific type or trait is imported from, turning the codebase into a spaghettified dependency mess where any file can access any internal detail.",
+  "detection": "Look for a `prelude.rs` module that exports more than 30 distinct types from disjoint modules, combined with wildcards (`*`) importing that prelude across almost every source file.",
+  "counterexample": "Cohesive library preludes that export a small, tightly curated set of vital traits (like the standard library prelude or a serialization library's core traits).",
+  "fix": "Use targeted imports. Export only highly omnipresent, fundamental traits in preludes, and force explicit module paths or imports for concrete types.",
+  "strength": "Strong",
+  "source": "*Steve McConnell - Code Complete (2004)*, Chapter 6; *Titus Winters et al. - Software Engineering at Google (2020)*, Chapter 15, \"Dependency Management\"."
+}

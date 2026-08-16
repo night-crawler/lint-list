@@ -1,0 +1,13 @@
+{
+  "id": 54,
+  "title": "Mutable Value Objects",
+  "category": "Essential Complexity Denial Patterns",
+  "damaged_code": "```rust\n// Value objects that can mutate their internal fields directly\nstruct Money {\n    pub amount: u32,\n    pub currency: String,\n}\nfn apply_raise(salary: &mut Money) {\n    salary.amount += 1000;\n}\n```",
+  "pattern": "A class/struct representing a descriptive aspect of the domain (no conceptual identity) designed with public mutable setters or in-place modifiers.",
+  "why_bad": "If value objects are mutable, sharing them across entities can lead to side-effects where updating one reference silently corrupts another entity's state, violating model invariants [385:385].",
+  "detection": "Types classified as Value Objects (e.g., Money, Dimensions, Addresses) that expose public mutable fields or methods that mutate self-state instead of returning a new instance [385:385].",
+  "counterexample": "```rust\nstruct Money {\n    amount: u32,\n    currency: String,\n}\nimpl Money {\n    pub fn add(&self, other: u32) -> Self {\n        Money { amount: self.amount + other, currency: self.currency.clone() }\n    }\n}\n```",
+  "fix": "Design Value Objects as completely immutable. Modify state solely by replacing the entire instance [385:385].",
+  "strength": "Strong",
+  "source": "*Refactoring* (Fowler), Chapter 3: Value Objects [385:385]; *Domain-Driven Design* (Evans), Value Objects [9:350]."
+}

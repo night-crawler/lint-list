@@ -1,0 +1,13 @@
+{
+  "id": 907,
+  "title": "Entangling General History Mechanisms with Domain-Specific Undo Actions",
+  "category": "Policy Mechanism",
+  "damaged_code": "```rust\nenum EditAction {\n    InsertText(String),\n    DeleteText(String),\n    MoveCursor(usize),\n}\n\nstruct History {\n    actions: Vec<EditAction>,\n}\n\nimpl History {\n    fn undo(&mut self, editor: &mut Editor) {\n        match self.actions.pop() {\n            Some(EditAction::InsertText(s)) => { editor.remove_text(&s); }\n            Some(EditAction::MoveCursor(pos)) => { editor.cursor = pos; }\n            _ => {}\n        }\n    }\n}\n```",
+  "pattern": "A general-purpose history/undo mechanism is coupled to specific domain actions by branching on a concrete domain enumeration or struct type inside the history manager.",
+  "why_bad": "Creates a circular dependency and information leakage. Adding a new undoable action to the application requires modifying the general-purpose `History` manager, preventing it from being isolated as a reusable, general-purpose component.",
+  "detection": "A generic-looking manager class (like `History` or `UndoManager`) performs pattern matching, casting, or conditional dispatch on domain-specific enums or classes.",
+  "counterexample": "Simple, highly localized undo lists nested entirely within a single component. Marked `Context-dependent` if no external reuse is intended.",
+  "fix": "Extract the general history mechanism into a class that manages actions via a polymorphic interface or trait, pushing special-purpose logic into separate action structures.\n```rust\npub trait Action {\n    fn undo(&self, editor: &mut Editor);\n    fn redo(&self, editor: &mut Editor);\n}\n\nstruct History {\n    actions: Vec<Box<dyn Action>>, // Generic mechanism\n}\n```",
+  "strength": "Strong",
+  "source": "John Ousterhout, *A Philosophy of Software Design* (2018), Chapter 9, \"Example: editor undo mechanism\", p. 451-454."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 142,
+  "title": "API Leaking Internal Representation (Coordinate Exposure)",
+  "category": "Abstraction Failure",
+  "damaged_code": "```rust\nstruct Point {\n    pub x: f64,\n    pub y: f64,\n}\n```",
+  "pattern": "A data struct or class exposes its raw internal representation directly to public callers instead of presenting an abstract interface, forcing users to manipulate coordinates directly.",
+  "why_bad": "It exposes the exact Cartesian format. If the internal representation must be changed to Polar coordinates (for performance or math reasons), all public callers break immediately because they depend on direct access to `x` and `y`.",
+  "detection": "A public struct exposing public fields that represent coordinate components or raw positional/layout fields, forcing external math manipulation.",
+  "counterexample": "Pure Data Transfer Objects (DTOs) with no behavior whose only purpose is passing flat values.",
+  "fix": "Keep fields private, and expose an abstract interface (methods) representing the essence of the data (e.g., polar getters alongside Cartesian setters).",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 6, Section 6.1 (\"Data Abstraction\" / \"Hiding implementation is not just a matter of putting a layer of functions...\")."
+}

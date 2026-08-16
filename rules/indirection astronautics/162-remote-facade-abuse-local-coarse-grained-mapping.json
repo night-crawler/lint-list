@@ -1,0 +1,13 @@
+{
+  "id": 162,
+  "title": "Remote Facade Abuse (Local Coarse-Grained Mapping)",
+  "category": "Indirection Astronautics",
+  "damaged_code": "```rust\nstruct OrderFacade;\n\nimpl OrderFacade {\n    // Coarse-grained remote API style wrapper used strictly in-process\n    pub fn update_order_details(&self, order_id: u64, street: String, city: String, items: Vec<(u64, u32)>) {\n        let mut order = OrderRepository::find(order_id);\n        order.set_address(street, city);\n        order.clear_items();\n        for (item_id, qty) in items {\n            order.add_item(item_id, qty);\n        }\n    }\n}\n```",
+  "pattern": "Employing coarse-grained, string- or tuple-heavy \"facade\" interfaces to cluster multiple fine-grained operations within a single local, in-process address space.",
+  "why_bad": "*   **Type Safety Degradation:** Coarse APIs often rely on primitive clumps (tuples, generic string maps) rather than rich domain types, bypassing compiler guarantees.\n*   **Useless Indirection:** Facades were designed to minimize network roundtrips in distributed systems; applying them to local in-process calls adds cognitive overhead and allocation costs with zero performance benefits.",
+  "detection": "A stateless facade struct whose public methods unpack arrays, tuples, or primitive maps to call fine-grained domain APIs on objects running in the same thread.",
+  "counterexample": "**Subsystem Facade:** Subsystem-level facades that simplify the entry-point to a complex, multi-component external library are valid.",
+  "fix": "Expose the fine-grained domain objects and allow callers to orchestrate the operations directly, leveraging the language's native type safety and pointer references.\n```rust\n// Caller invokes operations directly on the domain model in-process\nlet mut order = repository.find(order_id);\norder.update_shipping_address(address);\norder.sync_items(items);\n```",
+  "strength": "Strong",
+  "source": "Fowler, *Patterns of Enterprise Application Architecture*, Chapter 15 \"Remote Facade\"."
+}

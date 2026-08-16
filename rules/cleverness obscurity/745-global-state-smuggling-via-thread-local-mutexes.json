@@ -1,0 +1,13 @@
+{
+  "id": 745,
+  "title": "Global State Smuggling via Thread-Local Mutexes",
+  "category": "Cleverness Obscurity",
+  "damaged_code": "```rust\n// Rust\nthread_local! {\n    static CACHE: RefCell<HashMap<u32, String>> = RefCell::new(HashMap::new());\n}\nfn process_id(id: u32) {\n    CACHE.with(|c| c.borrow_mut().insert(id, \"processed\".to_string())); // Hidden global modification\n}\n```",
+  "pattern": "Utilizing thread-local storage coupled with interior mutability to pass state across functions without specifying them in method signatures.",
+  "why_bad": "It destroys functional purity. Callers have no way of knowing from a function's signature that it modifies global cached state, creating severe temporal coupling and making testing extremely difficult.",
+  "detection": "Functions that read or mutate `thread_local!` static variables directly inside their execution blocks.",
+  "counterexample": "Low-level thread tracking pools or runtime tracers where thread-local state is the explicit architecture. `Context-dependent`.",
+  "fix": "Pass the cache explicitly as a parameter, or encapsulate it within a dedicated service instance.\n```rust\nfn process_id(id: u32, cache: &mut HashMap<u32, String>) {\n    cache.insert(id, \"processed\".to_string());\n}\n```",
+  "strength": "Strong",
+  "source": "*Designing Data-Intensive Applications*, Chapter 12 / *Rust for Rustaceans*, Chapter 6."
+}

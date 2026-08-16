@@ -1,0 +1,13 @@
+{
+  "id": 389,
+  "title": "Passing Implicit Thread-Local State instead of Thread-Safe Handlers",
+  "category": "Information Loss",
+  "damaged_code": "```rust\nstatic mut CURRENT_TRANSACTION_ID: u64 = 0;\n\nfn perform_action() {\n    // Relies on global implicit mutable state!\n    unsafe { CURRENT_TRANSACTION_ID += 1; }\n}\n```",
+  "pattern": "Relying on implicit global static variables or unsafe thread-local variables to carry critical execution context.",
+  "why_bad": "It causes race conditions, premature disposal, and memory unsafety in concurrent execution contexts. The compiler cannot guarantee that the active instance is safe across threads.",
+  "detection": "Usage of `static mut` or unsafe global variables to store runtime task context.",
+  "counterexample": "Thread-safe reference-counted state passed explicitly:\n```rust\nlet transaction = Arc::new(Mutex::new(Transaction::new()));\n```",
+  "fix": "Pass the state explicitly down the call stack or utilize thread-safe wrappers (`Arc<Mutex<T>>`).\n```rust\nstruct TaskContext {\n    transaction_id: u64,\n}\n\nfn perform_action(ctx: &TaskContext) { ... }\n```",
+  "strength": "Strong",
+  "source": "*1701.00854v6.pdf* (p. 271, Section 13.2)."
+}

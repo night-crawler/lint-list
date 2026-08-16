@@ -1,0 +1,13 @@
+{
+  "id": 67,
+  "title": "The Construction Blob",
+  "category": "Bloaters",
+  "damaged_code": "```rust\nstruct PaymentProcessor {\n    stripe_client: StripeClient,\n    db: PgPool,\n    cache: RedisCache,\n}\n\nimpl PaymentProcessor {\n    fn new() -> Self {\n        let db = PgPool::connect(\"postgresql://...\").unwrap();\n        let cache = RedisCache::new(\"redis://...\").unwrap();\n        let stripe_client = StripeClient::new(\"sk_test_...\".to_string());\n        PaymentProcessor { stripe_client, db, cache }\n    }\n}\n```",
+  "pattern": "An object's constructor directly instantiating its own heavy, outward infrastructure dependencies (database pools, third-party HTTP clients, caching engines) internally rather than accepting them as arguments.",
+  "why_bad": "Creates rigid, hardcoded dependencies. Swapping the database driver or injecting a mock client for unit testing is completely impossible without modifying the struct's internal code. The constructor also inherits the setup logic and failure modes of all its children, making instantiation brittle and non-hermetic.",
+  "detection": "Look for constructors (`new()` or `Default::default()`) that contain hardcoded network connection strings, file paths, or directly invoke constructors of external, concrete infrastructure types.",
+  "counterexample": "Pure domain constructors that only instantiate nested, immutable Value Objects (like initializing a custom date range struct internally).",
+  "fix": "Use Dependency Injection. Pass pre-configured dependency handles (using generic bounds or trait objects) directly into the constructor.",
+  "strength": "Strong",
+  "source": "*Michael C. Feathers - Working Effectively with Legacy Code (2013)*, Chapter 20, \"The Case of the Construction Blob\"; *Robert C. Martin - Clean Architecture (2017)*, Chapter 20, \"DIP\"."
+}

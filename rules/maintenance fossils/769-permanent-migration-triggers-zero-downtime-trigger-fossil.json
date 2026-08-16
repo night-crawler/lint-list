@@ -1,0 +1,13 @@
+{
+  "id": 769,
+  "title": "Permanent Migration Triggers (Zero-Downtime Trigger Fossil)",
+  "category": "Maintenance Fossils",
+  "damaged_code": "```sql\n-- SQL trigger used to sync old schema writes to the new schema during expansion phase\nCREATE TRIGGER sync_old_to_new_user\nAFTER INSERT ON users\nFOR EACH ROW\nBEGIN\n    INSERT INTO user_profiles(user_id, bio) VALUES (NEW.id, NEW.bio);\nEND;\n```",
+  "pattern": "Database write-mirroring triggers left in production long after a zero-downtime deployment is complete and all application servers are upgraded to the new schema.",
+  "why_bad": "Implicit mutation and performance drain. Triggers execute silently database-side, dramatically slowing down write transactions, creating lock contention, obscuring data lineage, and preventing the cleanup and drop of deprecated tables/columns.",
+  "detection": "The linter must observe:\n1. A database schema with write triggers designed to sync data between two overlapping tables or columns.\n2. The trigger's associated deprecated schema table/column has been unreferenced by active application nodes for days or weeks.",
+  "counterexample": "`Context-dependent`\n```sql\n-- Valid: Temporary trigger active strictly during a rolling upgrade window\n```",
+  "fix": "Drop the database trigger and delete the deprecated tables/columns during the cleanup phase of the rollout.\n```sql\nDROP TRIGGER sync_old_to_new_user;\nALTER TABLE users DROP COLUMN bio;\n```",
+  "strength": "Contextual` (Requires DB catalog analysis and active application schema tracing)",
+  "source": "- Michael T. Nygard, *Release It!* (2007) [408, 409]"
+}

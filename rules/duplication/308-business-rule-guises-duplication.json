@@ -1,0 +1,13 @@
+{
+  "id": 308,
+  "title": "Business Rule Guises Duplication",
+  "category": "Duplication",
+  "damaged_code": "```rust\n// In InvoiceValidator:\nfn is_delinquent(invoice: &Invoice) -> bool {\n    invoice.due_date < current_date() - grace_period\n}\n\n// In InvoiceRepository (Selection):\nfn find_delinquent_invoices(&self) -> Vec<Invoice> {\n    self.db.query(\n        \"SELECT * FROM invoices WHERE due_date < ?1\",\n        current_date() - grace_period,\n    )\n}\n```",
+  "pattern": "Writing the exact same logical validation formula inside in-memory check methods and database querying engines.",
+  "why_bad": "The logical unity of the business rule is severed. If the definition of \"delinquency\" changes (e.g. grace period changes from 10 days to 15 days), some versions of the rule are updated while others are missed, leading to system contradictions.",
+  "detection": "The same conditional logic boundary or validation calculation applied in memory and duplicated inside a database query query string.",
+  "counterexample": "None.",
+  "fix": "Use the Specification pattern to define the business constraint in a single object that can evaluate in-memory structs and generate database query criteria.",
+  "strength": "Strong",
+  "source": "*Domain-Driven Design*, Chapter 9: \"Specifications\", p. 18."
+}

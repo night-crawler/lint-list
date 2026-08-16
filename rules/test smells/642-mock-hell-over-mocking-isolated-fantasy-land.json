@@ -1,0 +1,13 @@
+{
+  "id": 642,
+  "title": "Mock Hell (Over-Mocking / Isolated Fantasy Land)",
+  "category": "Test Smells",
+  "damaged_code": "```rust\n#[cfg(test)]\nmod tests {\n    use super::*;\n    use mockall::predicate::*;\n\n    #[test]\n    fn test_process_user() {\n        let mut mock_db = MockDatabase::new();\n        let mut mock_logger = MockLogger::new();\n        let mut mock_notifier = MockNotifier::new();\n\n        // 15 lines of mock expectation setup, leaving no real implementation logic exercised\n        mock_db.expect_get_user().returning(|_| Ok(User::new(\"alice\")));\n        mock_logger.expect_log().returning(|_| ());\n        mock_notifier.expect_send_email().returning(|_| Ok(()));\n\n        let processor = UserProcessor::new(mock_db, mock_logger, mock_notifier);\n        let result = processor.process(\"alice\");\n\n        assert!(result.is_ok());\n    }\n}\n```",
+  "pattern": "A unit test where nearly all collaborator dependencies are replaced with mocks, fakes, or stubs, resulting in a large setup block specifying mock behavior and leaving zero or minimal actual production logic exercised.",
+  "why_bad": "High coupling to unstable internal interactions rather than stable public API contracts [2, 8]. If the underlying implementation is refactored (e.g., changing logging or notification order), the test suite breaks even if user-visible behavior remains correct [3, 90]. It creates a \"fantasy world\" where tests pass successfully against obsolete mock assumptions while the application fails at runtime [107].",
+  "detection": "A high ratio of mock expectation setups (`expect_*`, `returning`, `verify`) to actual execution and assertions. In Rust, this looks like multiple `mockall` or hand-written mock structs instantiated inside a single test.",
+  "counterexample": "```rust\n// Testing pure business logic in isolation with no mocks needed\n#[test]\nfn test_calculate_discount() {\n    let price = Price::new(100);\n    let discount = calculate_discount(&price, DiscountType::Seasonal);\n    assert_eq!(discount, Price::new(90));\n}\n```",
+  "fix": "Re-architect the code to cleanly separate I/O from pure decision logic [15]. Test pure logic using plain values, and use medium/integration scope tests with real (or fake) implementations for the I/O layers [15, 19].",
+  "strength": "Strong",
+  "source": "*   *Composing Software*, \"Mocking is a Code Smell\" (p. 205-221) [2, 3, 5, 8]\n*   *Practical Object-Oriented Design*, \"Isolating the Object under Test\" (p. 222-230) [90, 107]\n*   *Software Engineering at Google*, \"Test Doubles\" (p. 257-280) [198, 204]"
+}

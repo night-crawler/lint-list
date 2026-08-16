@@ -1,0 +1,13 @@
+{
+  "id": 93,
+  "title": "Speculative Hook Methods (Template Method Creep)",
+  "category": "Dispensables",
+  "damaged_code": "```rust\ntrait DataPipeline {\n    fn process(&self) {\n        self.on_start();\n        self.run();\n    }\n    fn on_start(&self) {} // Empty hook\n    fn run(&self);\n}\n```",
+  "pattern": "Defining empty or default-returning hook methods in traits or abstract structures solely for hypothetical future extensibility.",
+  "why_bad": "Pollutes the API contract, forcing implementers to look at unused hooks, complicating execution tracking, and adding zero active value.",
+  "detection": "Trait methods with empty default bodies (`{}`) that are never overridden by any of the trait's active implementers.",
+  "counterexample": "Public plugin architectures or frameworks where third-party consumers are expected to override specific hooks.",
+  "fix": "Delete the hook method and simplify the trait pipeline.",
+  "strength": "Contextual",
+  "source": "Erich Gamma et al., *Design Patterns* (1994), Template Method; Joshua Kerievsky, *Refactoring to Patterns* (2004), Chapter 8."
+}

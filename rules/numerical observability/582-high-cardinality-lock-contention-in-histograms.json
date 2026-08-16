@@ -1,0 +1,13 @@
+{
+  "id": 582,
+  "title": "High-Cardinality Lock Contention in Histograms",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\nstruct HighPrecisionMonitor {\n    lock: Mutex<()>,\n    buckets: [u64; 1200], // 1% geometric scale covering 10us to 1s\n}\n\nimpl HighPrecisionMonitor {\n    fn record(&mut self, latency_us: u64) {\n        let _guard = self.lock.lock().unwrap();\n        let idx = calculate_geometric_bucket(latency_us);\n        self.buckets[idx] += 1;\n    }\n}\n```",
+  "pattern": "Creating thousands of high-precision histogram buckets and wrapping the entire metric array in a single mutex lock updated synchronously on the hot path.",
+  "why_bad": "High-cardinality buckets cause massive cache line misses, and locking the entire structure on every transaction blocks parallel worker threads from doing real work, severely degrading performance (observer effect).",
+  "detection": "Look for synchronous locks (`Mutex`, `RwLock`) wrapping multi-bucket arrays updated inside high-frequency execution loops.",
+  "counterexample": "None.",
+  "fix": "Use a smaller set of power-of-two buckets (20 buckets cover a million-to-one range) and utilize atomics or thread-local storage without locking.\n```rust\nstruct LowOverheadMonitor {\n    // 20 power-of-two buckets, thread-safe with lock-free atomic increments\n    buckets: [AtomicU64; 20], \n}\n\nimpl LowOverheadMonitor {\n    fn record(&self, latency_us: u64) {\n        let idx = (64 - latency_us.leading_zeros() as usize).min(19);\n        self.buckets[idx].fetch_add(1, Ordering::Relaxed);\n    }\n}\n```",
+  "strength": "Strong` — introduces high-frequency locking overhead on the telemetry path.",
+  "source": "Richard L. Sites - *Understanding Software Dynamics* (2021), Chapter 13.5, p. 212-214."
+}

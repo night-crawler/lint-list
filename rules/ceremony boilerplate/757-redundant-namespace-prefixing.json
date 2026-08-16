@@ -1,0 +1,13 @@
+{
+  "id": 757,
+  "title": "Redundant Namespace Prefixing",
+  "category": "Ceremony Boilerplate",
+  "damaged_code": "```rust\nstruct User {\n    user_id: u64,\n    user_name: String,\n}\n```",
+  "pattern": "Prefixing struct field names, enum variant names, or module-level function names with the name of the containing type or module.",
+  "why_bad": "It introduces redundant name repetition and ceremony. Since field names are always accessed via their containing struct instances (e.g., `user.user_id`), prefixing them with the type name results in stuttering (`user.user_id`), adding visual noise and extra typing for zero informational gain.",
+  "detection": "A field inside a struct or an enum variant whose identifier starts with the lowercase name of its containing struct or enum type.",
+  "counterexample": "Public functions or traits in a nested submodule that explicitly include the submodule's name to resolve disambiguation in foreign modules.",
+  "fix": "```rust\nstruct User {\n    id: u64,\n    name: String,\n}\n```",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 11 (\"Power of Cognitive Names\"), pp. 273-275."
+}

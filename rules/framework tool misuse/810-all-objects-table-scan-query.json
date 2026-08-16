@@ -1,0 +1,13 @@
+{
+  "id": 810,
+  "title": "\"All Objects\" Table-Scan Query",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Loading all items into memory to perform a summarization/filter\nlet all_items: Vec<Item> = item_repository.find_all().await?;\nlet total_weight: f64 = all_items.iter().map(|i| i.weight).sum();\n```",
+  "pattern": "Querying the database to instantiate all records of a table/entity into memory as objects, and then selecting or aggregating only a fraction of their fields.",
+  "why_bad": "High memory exhaustion risk. It bypasses database-level indexing and aggregation capabilities, fetching massive datasets across the network and instantiating thousands of objects, easily causing Out-Of-Memory (OOM) crashes in production.",
+  "detection": "Calling a repository finder method named `find_all()` or returning an unbounded list, followed by an immediate filter, map, or fold operation on the in-memory collection.",
+  "counterexample": "A lookup on a small, statically-bounded lookup table (e.g., list of active US states).",
+  "fix": "Express the filter or aggregation directly as a database-level query (e.g., using `SUM` or `WHERE` clauses).",
+  "strength": "Strong",
+  "source": "*Domain-Driven Design (Evans), Chapter 6, p. 138, 144 [414]*"
+}

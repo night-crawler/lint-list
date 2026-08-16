@@ -1,0 +1,13 @@
+{
+  "id": 780,
+  "title": "Big Bang NOT NULL Constraint Rollout",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```sql\n-- Migration script executed in Database before app upgrade finishes rolling out\nALTER TABLE users ADD COLUMN first_name VARCHAR(255) NOT NULL;\n```",
+  "pattern": "Adding a new column with a `NOT NULL` constraint to a shared database schema before all instances of the application code have been upgraded to write that field.",
+  "why_bad": "Older application instances currently running in production do not know about the new column. When they attempt to perform `INSERT` operations during the rolling upgrade, the database will reject the queries with constraint violations, causing write downtime [793].",
+  "detection": "Any migration script containing a `NOT NULL` constraint on a newly added column without a default value, deployed while older application code is still serving write traffic.",
+  "counterexample": "None. Adding non-nullable fields without defaults during live operations always breaks backwards compatibility.",
+  "fix": "Perform schema updates in three distinct phases: first, add the column as nullable (Expansion Phase); second, upgrade all application code to write the field; third, backfill historical data and add the `NOT NULL` constraint (Cleanup Phase) [793, 794].\n```sql\n-- Phase 1: Expansion (Add column as nullable)\nALTER TABLE users ADD COLUMN first_name VARCHAR(255);\n```",
+  "strength": "Strong",
+  "source": "Release It!, \"Adaptable Enterprise Architecture - Zero-Downtime Deployment\" [383, 384, 793, 794]"
+}

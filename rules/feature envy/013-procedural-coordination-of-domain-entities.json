@@ -1,0 +1,13 @@
+{
+  "id": 13,
+  "title": "Procedural Coordination of Domain Entities",
+  "category": "Feature Envy",
+  "damaged_code": "```rust\nstruct Asset {\n    amount: f64,\n    interest_rate: f64,\n}\nstruct AccountingService;\nimpl AccountingService {\n    fn post_to_ledger(&self, ledger: &str, amount: f64) { /* ... */ }\n}\nfn nightly_batch_processing(assets: &[Asset], service: &AccountingService) {\n    for asset in assets {\n        // Envy: extracting data to pass to an external service\n        let interest = asset.amount * asset.interest_rate;\n        service.post_to_ledger(\"Interest\", interest);\n        \n        let fees = asset.amount * 0.01;\n        service.post_to_ledger(\"Fees\", fees);\n    }\n}\n```",
+  "pattern": "A batch coordinator or orchestration script loops over domain objects, calculates domain-specific metrics using their fields, and procedurally passes the results to other services.",
+  "why_bad": "It treats domain entities as thin database wrappers and contains the actual business logic (interest calculation and posting rules) in a procedural script. This leads to an anemic domain model.",
+  "detection": "A coordinator function that queries fields from type A and immediately pushes them to type B, performing calculations in between.",
+  "counterexample": "`Context-dependent`. Thin integration controllers that only fetch and serialize data without containing calculation rules.",
+  "fix": "Let the domain entity generate its own events or entries and return them.\n```rust\nstruct Accrual {\n    ledger: String,\n    amount: f64,\n}\nimpl Asset {\n    fn calculate_daily_accruals(&self) -> Vec<Accrual> {\n        vec![\n            Accrual { ledger: \"Interest\".to_string(), amount: self.amount * self.interest_rate },\n            Accrual { ledger: \"Fees\".to_string(), amount: self.amount * 0.01 },\n        ]\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Eric Evans, *Domain-Driven Design* (2003), Chapter 9."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 331,
+  "title": "Dual-Purpose Reused Variables (Lie-to-Reader)",
+  "category": "Semantic Ambiguity",
+  "damaged_code": "```rust\nfn calculate_total(mut value: f64) -> f64 {\n    // ...\n    value = value * 1.08; // value is no longer the input value!\n    // ...\n    value\n}\n```",
+  "pattern": "Reusing an input parameter or a local variable to hold a computed intermediate value that has a semantically different meaning than its original initialization.",
+  "why_bad": "It constitutes disinformation. The variable name (e.g., `value` or `input_val`) becomes a lie. If a maintainer later attempts to use `value` assuming it contains the raw input, they will introduce silent calculation bugs.",
+  "detection": "Match parameters declared as mutable (`mut`) that are reassigned values computed from themselves in non-trivial ways.",
+  "counterexample": "Reassigning a loop counter or accumulator whose semantic meaning remains constant:\n```rust\nlet mut total = 0.0;\ntotal += price;\n```",
+  "fix": "Declare a new, immutable variable with a descriptive name for the computed value, leaving the original input intact.\n```rust\nfn calculate_total(input_value: f64) -> f64 {\n    let price_with_tax = input_value * 1.08;\n    price_with_tax\n}\n```",
+  "strength": "Strong",
+  "source": "*Code Complete* by Steve McConnell (p. 188)."
+}

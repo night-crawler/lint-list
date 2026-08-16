@@ -1,0 +1,13 @@
+{
+  "id": 545,
+  "title": "Hand-Coded String Formatting in Loops (Premature String Capacity)",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\nlet mut output = String::new();\nfor i in 0..1000 {\n    // Attempting to manually calculate exact byte offsets to avoid String allocation overhead\n    let val_str = i.to_string();\n    output.reserve(val_str.len());\n    output.push_str(&val_str);\n}\n```",
+  "pattern": "Manually computing exact byte lengths and calling `.reserve()` on every iteration of a string concatenation loop to prevent reallocations.",
+  "why_bad": "Rust's `String` growth algorithm uses a highly optimized geometric reallocation strategy. Manually calculating offsets and calling reserve inside the loop introduces extra branch evaluations and variable updates that slow down the code compared to straightforward concatenation [317, 360].",
+  "detection": "Iterative call sequences containing explicit manual length calculations and calls to `.reserve()` directly inside string assembly loops.",
+  "counterexample": "Allocating a single bulk reservation *before* entering the loop (`output.reserve(expected_total)`) which is highly efficient. `Context-dependent`.",
+  "fix": "```rust\nlet mut output = String::new();\nfor i in 0..1000 {\n    output.push_str(&i.to_string());\n}\n```",
+  "strength": "Strong",
+  "source": "*A Philosophy of Software Design*, Chapter 20 (p. 317); *Code Complete*, Section 26.4 (p. 360)."
+}

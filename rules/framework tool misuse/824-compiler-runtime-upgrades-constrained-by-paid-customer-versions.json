@@ -1,0 +1,13 @@
+{
+  "id": 824,
+  "title": "Compiler/Runtime Upgrades Constrained by Paid Customer Versions",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Retaining 32-bit compatibility hacks to support customers refusing to upgrade\n#[cfg(target_pointer_width = \"32\")]\npub fn handle_large_buffer() { ... }\n```",
+  "pattern": "Delaying compiler or standard library upgrades across an entire codebase to support a small set of clients running on outdated runtimes.",
+  "why_bad": "It holds the entire transitive closure of dependencies hostage, blocking security patches, optimizations, and modern language features across the ecosystem.",
+  "detection": "Platform/compiler-specific configurations (`cfg` flags) retained exclusively to maintain compatibility with obsolete client environments.",
+  "counterexample": "Deploying containerized virtualization environments to isolate legacy applications from core development.",
+  "fix": "Separate the legacy application into an isolated runtime or enforce a sunset timeline for obsolete versions.",
+  "strength": "Contextual",
+  "source": "*Software Engineering at Google (Winters et al.), Chapter 21, p. 454 [194, 1045]*"
+}

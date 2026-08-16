@@ -1,0 +1,13 @@
+{
+  "id": 714,
+  "title": "In-Memory SQL Query Object (Ad-Hoc Ast Composition)",
+  "category": "Inner Platform Effect",
+  "damaged_code": "```\n// Attempting to represent SQL queries as a verbose hierarchy of in-memory Criteria structures\nstruct Criteria {\n    field: String,\n    operator: String,\n    value: String,\n}\n\nstruct QueryObject {\n    table: String,\n    criteria: Vec<Criteria>,\n}\n\nimpl QueryObject {\n    fn add_criteria(&mut self, criteria: Criteria) {\n        self.criteria.push(criteria);\n    }\n\n    fn generate_sql(&self) -> String {\n        let mut sql = format!(\"SELECT * FROM {} WHERE \", self.table);\n        let clauses: Vec<String> = self.criteria.iter()\n            .map(|c| format!(\"{} {} '{}'\", c.field, c.operator, c.value))\n            .collect();\n        sql.push_str(&clauses.join(\" AND \"));\n        sql\n    }\n}\n```",
+  "pattern": "Building a composite hierarchy of runtime objects (like `Criteria` and `QueryObject`) solely to construct query strings dynamically in memory.",
+  "why_bad": "It bypasses compile-time query verification, hides the schema structure from compiler analysis, and introduces severe overhead due to runtime string formatting and memory allocation. It replicates an extremely weak, uncompiled version of a database query parser inside application memory.",
+  "detection": "The presence of structs that contain raw strings for fields, operators, and parameters, combined with recursive traversal functions whose sole output is a database-bound query string.",
+  "counterexample": "`Context-dependent`. If a query system is intended to receive dynamic, user-configured search preferences at runtime from a web UI to filter datasets, a structured Query Object is appropriate.",
+  "fix": "Utilize compile-time SQL macro providers or static query builders (such as Diesel or SQLx in Rust) where query semantics, parameters, and tables are validated during compilation.\n\n```\n// Compile-time checked static query utilizing a standard query framework\nlet active_users = users::table\n    .filter(users::age.gt(21))\n    .filter(users::name.like(\"John%\"))\n    .load::<User>(&mut connection)?;\n```",
+  "strength": "Strong",
+  "source": "[The Addison-Wesley signature series] Martin Fowler - _Patterns of Enterprise Application Architecture_ (2015_2002, Addison-Wesley Professional).pdf, Chapter 10 \"Query Object\"; Joshua Kerievsky - _Refactoring to Patterns_ (2004, Addison-Wesley Professional).pdf, Chapter 7 \"Replace Implicit Language with Interpreter\"."
+}

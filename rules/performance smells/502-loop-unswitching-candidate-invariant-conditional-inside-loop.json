@@ -1,0 +1,13 @@
+{
+  "id": 502,
+  "title": "Loop Unswitching Candidate (Invariant Conditional inside Loop)",
+  "category": "Performance Smells",
+  "damaged_code": "```cpp\nfor (int i = 0; i < count; i++) {\n    if (mode == FAST) { // Evaluated on every iteration\n        process_fast(i);\n    } else {\n        process_slow(i);\n    }\n}\n```",
+  "pattern": "An `if-else` block inside a loop where the condition variable is constant throughout the loop's entire execution.",
+  "why_bad": "It forces the CPU to evaluate the conditional branch on every iteration, wasting cycles on branch prediction checks and preventing loop optimizations.",
+  "detection": "An `if` statement whose conditional expression depends strictly on loop-invariant variables.",
+  "counterexample": "Loop executes very few times (e.g., < 5 iterations). `Context-dependent`.",
+  "fix": "Place the conditional check outside the loop, wrapping two independent loop blocks: `if (mode == FAST) { for ... } else { for ... }`.",
+  "strength": "Strong",
+  "source": "*Code Complete*, Chapter 26, \"Unswitching\" (p. 478)."
+}

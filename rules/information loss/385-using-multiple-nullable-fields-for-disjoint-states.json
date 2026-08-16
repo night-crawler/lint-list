@@ -1,0 +1,13 @@
+{
+  "id": 385,
+  "title": "Using Multiple Nullable Fields for Disjoint States",
+  "category": "Information Loss",
+  "damaged_code": "```rust\nstruct Task {\n    id: u64,\n    assigned_worker: Option<String>,\n    completion_date: Option<DateTime<Utc>>,\n    rejection_reason: Option<String>,\n}\n```",
+  "pattern": "Defining a struct with multiple optional (`Option`) fields that represent disjoint, mutually exclusive states.",
+  "why_bad": "It allows representing impossible states (e.g., having both a `completion_date` and a `rejection_reason` simultaneously). Upstream and downstream components must write complex match patterns to resolve the true state.",
+  "detection": "Structs containing 3 or more `Option` fields that are semantically tied to mutually exclusive lifecycle phases of the struct.",
+  "counterexample": "A struct with truly independent, non-exclusive optional fields:\n```rust\nstruct UserSettings {\n    theme: Option<Theme>,\n    timezone: Option<TimeZone>,\n}\n```",
+  "fix": "Define a clean state enum carrying only the relevant data inside each variant.\n```rust\nenum TaskState {\n    Assigned { worker: String },\n    Completed { date: DateTime<Utc> },\n    Rejected { reason: String },\n}\n```",
+  "strength": "Strong",
+  "source": "*Domain Modeling made Functional* by Scott Wlaschin (p. 108)."
+}

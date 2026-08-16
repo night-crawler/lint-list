@@ -1,0 +1,13 @@
+{
+  "id": 372,
+  "title": "Discarding Causal Causes in Error Type Wrappers",
+  "category": "Information Loss",
+  "damaged_code": "```rust\nstruct DatabaseError;\n\nimpl std::error::Error for DatabaseError {\n    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {\n        None // Discards the underlying sqlx::Error!\n    }\n}\n```",
+  "pattern": "Creating a custom wrapper error type but returning `None` in the implementation of `std::error::Error::source`.",
+  "why_bad": "It destroys the causal error chain. Logging utilities and error trackers cannot print backtraces or recursively dump underlying causes, leaving operators blind to the root failure (e.g. connection timeout vs constraint violation).",
+  "detection": "Implementations of the `std::error::Error` trait where the `source` method is omitted or returns `None` despite the struct wrapping an underlying error field.",
+  "counterexample": "Leaf errors that do not stem from any underlying cause:\n```rust\nstruct TimeoutError; // No internal source\n```",
+  "fix": "Return the wrapped error in the `source` method, or use macro libraries like `thiserror` to generate the delegation automatically.\n```rust\n#[derive(thiserror::Error, Debug)]\npub enum AppError {\n    #[error(\"Database failure: {0}\")]\n    Db(#[source] sqlx::Error),\n}\n```",
+  "strength": "Strong",
+  "source": "*Patterns of Enterprise Application Architecture* by Martin Fowler (p. 391); *Rust for Rustaceans* by Jon Gjengset (p. 139)."
+}

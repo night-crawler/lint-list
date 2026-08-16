@@ -1,0 +1,13 @@
+{
+  "id": 952,
+  "title": "False Cognates - Contextual Concept Collapsing",
+  "category": "Conceptual Integrity",
+  "damaged_code": "```rust\nstruct Account {\n    // Banking context\n    routing_number: Option<String>,\n    // Literary context (reused for 'Account of events')\n    written_by: Option<String>,\n}\n```",
+  "pattern": "Attempting to unify completely different concepts under a single generic type because they share the same homonym in English.",
+  "why_bad": "It creates a bloated, confusing structure riddled with nullable fields and conditional branches. It violates boundary principles, making it impossible to enforce invariants since the struct represents different concepts in different contexts.",
+  "detection": "Identify structs containing large clusters of optional fields that are never populated together, accompanied by variable naming that shifts meaning based on the call path.",
+  "counterexample": "None. Reusing homonyms for completely separate business meanings is a fundamental modeling defect. `Strong`.",
+  "fix": "Establish distinct models within distinct namespaces (e.g., `BankingAccount` and `LiteraryAccount`).",
+  "strength": "Strong",
+  "source": "*Domain-Driven Design* by Eric Evans (2003), p. 335, 456; *Implementing Domain-Driven Design* by Vaughn Vernon (2013), p. 72."
+}

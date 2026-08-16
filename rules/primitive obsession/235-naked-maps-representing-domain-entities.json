@@ -1,0 +1,13 @@
+{
+  "id": 235,
+  "title": "Naked Maps representing Domain Entities",
+  "category": "Primitive Obsession",
+  "damaged_code": "```rust\nlet mut user_profile: HashMap<String, String> = HashMap::new();\n```",
+  "pattern": "Using raw key-value maps (`HashMap`, `BTreeMap`) to represent structured domain entities.",
+  "why_bad": "It completely eliminates compile-time type checking. Keys are checked at runtime, making simple spelling mistakes (e.g., `\"firstname\"` vs. `\"first_name\"`) compile successfully but fail at runtime. It also incurs unnecessary heap allocations and hash-computation overhead.",
+  "detection": "Core business variables structured as `HashMap<String, String>` or `HashMap<String, serde_json::Value>` where the keys represent entity fields.",
+  "counterexample": "A generic indexing system, an arbitrary configuration store, or a cache layer mapping dynamic runtime user values.",
+  "fix": "Define a formal, typed struct representing the entity.\n```rust\nstruct UserProfile {\n    first_name: String,\n    last_name: String,\n}\n```",
+  "strength": "Strong",
+  "source": "*Domain Modeling made Functional* by Scott Wlaschin (p. 110)."
+}

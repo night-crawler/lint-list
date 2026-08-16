@@ -1,0 +1,13 @@
+{
+  "id": 841,
+  "title": "Sharing Thread Pools Across Bulkhead Boundaries",
+  "category": "Operational Architecture Smells",
+  "damaged_code": "```rust\n// A single thread pool shared for EJB HTTP requests and database connection checks\n```",
+  "pattern": "Using a single global thread pool for all tasks of different priorities, durations, or targets.",
+  "why_bad": "If public request threads block on a slow backend, they exhaust the pool. Admin request threads are starved, meaning operations cannot log in, query metrics, or perform graceful shutdowns.",
+  "detection": "Executing low-priority, slow integrations on the same Tokio runtime or thread pool as high-priority, latency-sensitive serving paths.",
+  "counterexample": "Single-purpose CLI applications.",
+  "fix": "Implement Bulkheads—separate thread pools or executors for different request classes.",
+  "strength": "Strong",
+  "source": "*Release It!*, \"Bulkheads,\" p. 176 / p. 81."
+}

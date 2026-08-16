@@ -1,0 +1,13 @@
+{
+  "id": 660,
+  "title": "Noise-to-Signal Spill (Debug Logs in Production)",
+  "category": "Observability Operability Smells",
+  "damaged_code": "```rust\n// Inside a high-frequency request processing loop\nfn process_packet(packet: &Packet) {\n    log::debug!(\"Processing token segment for user_id: {}\", packet.user_id);\n    // ...\n}\n```",
+  "pattern": "Presence of active `debug!` or `trace!` log statements inside hot code paths without a mechanism for build-time or compile-time stripping.",
+  "why_bad": "At scale, high-frequency logging creates immense noise, increases CPU/IO overhead significantly, fills filesystems, and risks exfiltrating sensitive PII into log systems [83, 282, 691].",
+  "detection": "A static analyzer detecting active debug-level or trace-level macros within functions annotated as hot paths or loops, or lacking static stripping gates.",
+  "counterexample": "Using compile-time features or log gates:\n```rust\n#[cfg(debug_assertions)]\nlog::debug!(\"Processing token segment: {}\", packet.user_id);\n```",
+  "fix": "Strip verbose trace and debug logs from production builds entirely using build-time feature gates (such as cargo features targeting maximum log levels like `max_level_info`).",
+  "strength": "Strong",
+  "source": "*Release It!*, page 282, 283 [282, 691]."
+}

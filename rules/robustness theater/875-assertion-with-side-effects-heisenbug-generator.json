@@ -1,0 +1,13 @@
+{
+  "id": 875,
+  "title": "Assertion with Side Effects (Heisenbug Generator)",
+  "category": "Robustness Theater",
+  "damaged_code": "```rust\n// In a loop processing a stream\nwhile iter.has_more() {\n    // Damaged: Side effect inside a debug-only check\n    debug_assert!(iter.next_element().is_some()); \n    let item = iter.next_element(); \n    process(item);\n}\n```",
+  "pattern": "An expression evaluated inside a diagnostic assert block (e.g., `assert!`, `debug_assert!`) modifies state variables, increments counters, or advances iterators.",
+  "why_bad": "It creates a critical Heisenbug. When assertions are disabled in release/production builds, the side-effecting expression is omitted, altering program execution flow (e.g., skipping elements only in debug builds) and introducing bugs that cannot be reproduced under test.",
+  "detection": "A mutation, function call with side effects, or iterator advancement appearing within the arguments of a macro containing `assert` or `debug_assert`.",
+  "counterexample": "```rust\n// Correct: Separating the side effect from the diagnostic check\nwhile iter.has_more() {\n    let item = iter.next_element();\n    debug_assert!(item.is_some());\n    process(item);\n}\n```",
+  "fix": "Evaluate the expression outside the assertion, store the result in a temporary variable, and pass the static variable to the assertion.",
+  "strength": "Strong",
+  "source": "Andrew Hunt & David Hurst Thomas, *The Pragmatic Programmer*, Topic 25 (\"Assertions and Side Effects\")."
+}

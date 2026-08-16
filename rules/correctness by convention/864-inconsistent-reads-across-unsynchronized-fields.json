@@ -1,0 +1,13 @@
+{
+  "id": 864,
+  "title": "Inconsistent Reads across Unsynchronized Fields",
+  "category": "Correctness By Convention",
+  "damaged_code": "```rust\n// Java-like\nclass Account {\n    int balance;\n    int ledger_id;\n    // Reader thread\n    void print_state() {\n        print(this.balance); // BUG: balance and ledger_id are read without a shared lock!\n        print(this.ledger_id);\n    }\n}\n```",
+  "pattern": "Reading multiple related fields of an object sequentially in separate unsynchronized operations, allowing writers to modify fields concurrently.",
+  "why_bad": "The reader thread will load inconsistent state (e.g., an updated balance with an old ledger_id), violating the structural transactional integrity invariants of the object.",
+  "detection": "Exposing multiple getters or reading multiple state fields of a mutable class without acquiring a shared lock or transaction block over the entire read block.",
+  "counterexample": "Wrapping the entire read sequence in a single synchronized block or transaction.",
+  "fix": "Acquire a single shared lock or wrap the entire read block in a transaction: `synchronized(this) { ... }` to guarantee a consistent read.",
+  "strength": "Strong",
+  "source": "[The Addison-Wesley signature series] Martin Fowler - PEAA, p. 235 [235]."
+}

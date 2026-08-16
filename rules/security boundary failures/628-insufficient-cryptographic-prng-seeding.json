@@ -1,0 +1,13 @@
+{
+  "id": 628,
+  "title": "Insufficient Cryptographic PRNG Seeding",
+  "category": "Security Boundary Failures",
+  "damaged_code": "```rust\nfn seed_prng() -> u32 {\n    // Seeding pseudo-random generator with only the process ID (PID)\n    let pid = std::process::id();\n    pid as u32\n}\n```",
+  "pattern": "Initializing a pseudo-random number generator (PRNG) meant for cryptographic key or token creation with low-entropy parameters, such as the current process identifier or a low-resolution system timestamp.",
+  "why_bad": "PIDs and boot timestamps are highly predictable or trivially brute-forced. If the PRNG seed space is small (e.g. only 32,768 possible seeds), an attacker can generate all possible key combinations in seconds, completely breaking encryption.",
+  "detection": "PRNG seeding functions taking process IDs, sequential thread counters, or low-resolution timestamps as inputs without cryptographic entropy sources.",
+  "counterexample": "```rust\nfn seed_prng() -> [u8; 32] {\n    let mut seed = [0u8; 32];\n    getrandom::getrandom(&mut seed).unwrap();\n    seed\n}\n```",
+  "fix": "Always seed cryptographic PRNGs with high-entropy source values retrieved directly from OS-level entropy interfaces (like `/dev/urandom` or system cryptocalls).",
+  "strength": "Strong",
+  "source": "`Heather Adkins et al. - Building Secure and Reliable Systems (2020)`, Ch 1, p. 31; Ch 2, p. 31."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 613,
+  "title": "Direct Trust of Client-Manipulable Cookies",
+  "category": "Security Boundary Failures",
+  "damaged_code": "```rust\nfn calculate_total(cookie_data: &str) -> f64 {\n    // Deserializing cart data directly from a client cookie\n    let cart: ShoppingCart = serde_json::from_str(cookie_data).unwrap();\n    cart.items.iter().map(|item| item.price * item.qty).sum()\n}\n```",
+  "pattern": "Relying directly on values extracted from client-side cookies, query parameters, or hidden fields to enforce business invariants (like prices, roles, or quantities).",
+  "why_bad": "HTTP clients can easily manipulate cookie payloads using browsers or intercepting proxies. Adversaries can modify data (e.g. altering the price of an item to `$0.01`) to subvert pricing, roles, or inventory rules.",
+  "detection": "Deserializing client-supplied string inputs (cookies, headers, query strings) directly into model structures that govern pricing or access privileges without database cross-verification.",
+  "counterexample": "```rust\nfn calculate_total(session_id: &str) -> f64 {\n    // Load state from the secure server-side database using session key\n    let cart = db::load_cart(session_id);\n    cart.items.iter().map(|item| item.price * item.qty).sum()\n}\n```",
+  "fix": "Store only a random, unpredictable session token on the client side; maintain all transactional data, roles, and pricing variables strictly on the server database.",
+  "strength": "Strong",
+  "source": "`Michael T. Nygard - Release It! (2007)`, p. 144, 272-273."
+}

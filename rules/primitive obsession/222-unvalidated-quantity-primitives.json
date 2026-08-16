@@ -1,0 +1,13 @@
+{
+  "id": 222,
+  "title": "Unvalidated Quantity Primitives",
+  "category": "Primitive Obsession",
+  "damaged_code": "```rust\nstruct OrderLine {\n    quantity: i32,\n}\n```",
+  "pattern": "Using a raw, unbounded signed/unsigned integer (`i32`, `u32`, `usize`) to represent a quantity or count that has strict domain boundaries.",
+  "why_bad": "It allows representing structurally invalid states (e.g., ordering `-5` items or `0` items) which can bypass logical checks, trigger division-by-zero errors, or cause integer underflow during mathematical operations.",
+  "detection": "Look for struct fields named `quantity`, `qty`, `count` typed as a raw integer primitive without an associated validation wrapper.",
+  "counterexample": "General collection sizes or memory indices bounded by the execution environment:\n```rust\nlet index: usize = items.len();\n```",
+  "fix": "Define a validated newtype struct with a private constructor enforcing the domain boundaries.\n```rust\npub struct OrderQuantity(i32);\n\nimpl OrderQuantity {\n    pub fn new(qty: i32) -> Result<Self, String> {\n        if qty >= 1 && qty <= 1000 {\n            Ok(OrderQuantity(qty))\n        } else {\n            Err(\"Quantity must be between 1 and 1000\".into())\n        }\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Domain Modeling made Functional* by Scott Wlaschin (p. 83, 108)."
+}

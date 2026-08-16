@@ -1,0 +1,13 @@
+{
+  "id": 493,
+  "title": "Using LIFO (Stack) for Connection Allocation under Light Load",
+  "category": "Resource Capacity Blindness",
+  "damaged_code": "```rust\nstruct ConnectionPool {\n    // Holding connections in a Stack (LIFO)\n    available: Vec<std::net::TcpStream>,\n}\n\nimpl ConnectionPool {\n    fn checkout(&mut self) -> std::net::TcpStream {\n        self.available.pop().unwrap() // Pops the most recently used\n    }\n}\n```",
+  "pattern": "Implementing a resource pool (such as connection pools or thread pools) that relies on a Last-In-First-Out (LIFO/Stack) allocation strategy for dispensing handles.",
+  "why_bad": "Under light load, only the single connection at the top of the stack gets repeatedly checked out, used, and checked back in [196]. The remaining pooled connections sit idle [196]. If their idle time exceeds stateful network devices' (firewalls) inactivity timeouts, the firewall silently evicts them [196]. When load eventually spikes, checkouts of these idle connections immediately hang as threads attempt to write/read to evicted sockets [196, 197].",
+  "detection": "Identify pool implementations that return connection resources from the top/tail of a stack structure (like `.pop()`) rather than from a FIFO queue.",
+  "counterexample": "```rust\nuse std::collections::VecDeque;\n\nstruct ConnectionPool {\n    // Holding connections in a FIFO Queue\n    available: VecDeque<std::net::TcpStream>,\n}\n\nimpl ConnectionPool {\n    fn checkout(&mut self) -> std::net::TcpStream {\n        self.available.pop_front().unwrap() // Pops oldest to ensure periodic usage\n    }\n}\n```",
+  "fix": "Use a First-In-First-Out (FIFO) queue for pooling resources to ensure even, periodic utilization of all pooled connections [196].",
+  "strength": "Strong",
+  "source": "Michael T. Nygard, *Release It!*, Chapter 2 (Resource Pools) / passages [196, 197]."
+}

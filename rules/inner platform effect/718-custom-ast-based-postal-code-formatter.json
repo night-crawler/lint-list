@@ -1,0 +1,13 @@
+{
+  "id": 718,
+  "title": "Custom AST-Based Postal Code Formatter",
+  "category": "Inner Platform Effect",
+  "damaged_code": "```\n// Implementing a miniature parser and interpreter to validate simple text formats\nenum ASTNode {\n    Digit,\n    Alpha,\n}\n\nfn validate(input: &str, ast: &[ASTNode]) -> bool {\n    let mut chars = input.chars();\n    for node in ast {\n        let c = match chars.next() {\n            Some(val) => val,\n            None => return false,\n        };\n        match node {\n            ASTNode::Digit => if !c.is_ascii_digit() { return false; },\n            ASTNode::Alpha => if !c.is_alphabetic() { return false; },\n        }\n    }\n    true\n}\n```",
+  "pattern": "Building a custom abstract syntax tree (AST) and interpreter to validate standard, simple structured formats (such as postal codes or phone numbers).",
+  "why_bad": "It incurs high cognitive overhead and code footprint to perform validations that are solved in a few lines by optimized regular expressions or compiled libraries.",
+  "detection": "Custom tokenizing, parsing, and AST evaluation methods written locally inside simple format-validation helper modules.",
+  "counterexample": "`Context-dependent`. If the format rules are complex, vary dynamically at runtime based on market localization, or are defined entirely by non-programming users.",
+  "fix": "Utilize standard regular expression compilation or straightforward native checks.\n\n```\n// Standard optimized compiled regular expression check\nuse once_cell::sync::Lazy;\nuse regex::Regex;\n\nstatic POSTAL_CODE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r\"^[A-Z]\\d[A-Z]\\s?\\d[A-Z]\\d$\").unwrap());\n\nfn validate_postal_code(input: &str) -> bool {\n    POSTAL_CODE_RE.is_match(input)\n}\n```",
+  "strength": "Strong",
+  "source": "[2nd] Andrew Hunt_ David Hurst Thomas - _The Pragmatic Programmer_ Your Journey to Mastery_, 20th Anniversary Edition (2019, Addison-Wesley Professional).pdf, Topic 28 \"Domain Languages\"; Joshua Kerievsky - _Refactoring to Patterns_ (2004, Addison-Wesley Professional).pdf, Chapter 7 \"Replace Implicit Language with Interpreter\"."
+}

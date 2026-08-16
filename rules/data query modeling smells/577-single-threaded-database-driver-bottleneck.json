@@ -1,0 +1,13 @@
+{
+  "id": 577,
+  "title": "Single-Threaded Database Driver Bottleneck",
+  "category": "Data Query Modeling Smells",
+  "damaged_code": "```rust\n// Hand-rolling synchronous sequential socket reads for data-intensive queries\nlet mut conn = TcpStream::connect(\"database:5432\")?;\nwhile let Ok(row) = read_row(&mut conn) {\n    process(row); // Blocks execution on a single thread\n}\n```",
+  "pattern": "Executing database clients or drivers on a single thread without connection pooling or asynchronous task scheduling for heavy query workloads.",
+  "why_bad": "Performance collapse. Single-threaded drivers spend 100% of their time blocked on socket I/O, completely stalling transaction throughput and wasting server capacity [404, 554].",
+  "detection": "Synchronous database library blocking main application event loops or using single-threaded query executors.",
+  "counterexample": "Async database drivers executing queries concurrently across a pool of connection tasks.",
+  "fix": "Use asynchronous, pooled connection libraries (like `sqlx` in Rust) to allow high-concurrency non-blocking database access.",
+  "strength": "Strong",
+  "source": "*Systems Performance (Gregg), p. 13 [404]*  \n*Pragmatic Programmers - Release It! (Nygard), p. 81 [554]*"
+}

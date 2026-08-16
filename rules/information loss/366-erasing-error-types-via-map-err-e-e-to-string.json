@@ -1,0 +1,13 @@
+{
+  "id": 366,
+  "title": "Erasing Error Types via `map_err(|e| e.to_string())`",
+  "category": "Information Loss",
+  "damaged_code": "```rust\nfn load_config() -> Result<Config, String> {\n    std::fs::read_to_string(\"config.toml\")\n        .map_err(|e| e.to_string())\n}\n```",
+  "pattern": "Catching a rich, typed error and immediately transforming it into a raw string using `.to_string()`, `format!(\"{:?}\", e)`, or `.map_err(ToString::to_string)`.",
+  "why_bad": "It erases the structured type metadata of the error. Downstream callers cannot programmatically recover, match on specific failure variants (e.g., `ErrorKind::NotFound`), or retry selective errors without parsing the flat string.",
+  "detection": "Look for calls to `.map_err()` that invoke `to_string()`, `format!`, or other string conversions where the containing function returns `Result<_, String>`.",
+  "counterexample": "Converting an error to a custom structured domain error that wraps the original or maps to a typed enum:\n```rust\nfn load_config() -> Result<Config, ConfigError> {\n    std::fs::read_to_string(\"config.toml\")\n        .map_err(ConfigError::IoError)\n}\n```",
+  "fix": "Map to a descriptive enum or custom struct that implements `std::error::Error` and retains the original type context.\n```rust\n#[derive(Debug)]\npub enum ConfigError {\n    Io(std::io::Error),\n    Format(toml::de::Error),\n}\n\nfn load_config() -> Result<Config, ConfigError> {\n    let content = std::fs::read_to_string(\"config.toml\").map_err(ConfigError::Io)?;\n    toml::from_str(&content).map_err(ConfigError::Format)\n}\n```",
+  "strength": "Strong",
+  "source": "*Types and Programming Languages* by Benjamin C. Pierce (p. 204, Section 14.1); *Rust for Rustaceans* by Jon Gjengset (p. 137)."
+}

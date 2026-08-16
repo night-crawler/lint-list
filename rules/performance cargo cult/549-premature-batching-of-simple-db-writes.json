@@ -1,0 +1,13 @@
+{
+  "id": 549,
+  "title": "Premature Batching of Simple DB Writes",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\n// Accumulating single DB updates in a queue and writing only when queue size hits 10\n```",
+  "pattern": "Queueing and batching single, low-frequency database updates or inserts to \"save transaction overhead.\"",
+  "why_bad": "Batching adds massive thread synchronization complexity, queue maintenance, and dramatically increases the average response latency of user-facing transactions. If database transaction rates are low, individual synchronous writes are extremely fast and keep the code simple [142].",
+  "detection": "The presence of timers, buffers, or queues to delay simple database updates until a threshold size is met in low-traffic or single-user systems.",
+  "counterexample": "High-throughput systems (like analytics logs processors receiving > 10,000 requests per second) where batching is mandatory. `Contextual`.",
+  "fix": "Write updates synchronously to the database immediately when they occur.",
+  "strength": "Strong",
+  "source": "*Systems Performance*, Chapter 8, Section 8.4 (p. 142)."
+}

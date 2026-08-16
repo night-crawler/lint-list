@@ -1,0 +1,13 @@
+{
+  "id": 962,
+  "title": "Mixed String-Construction Styles for Database Queries",
+  "category": "Conceptual Integrity",
+  "damaged_code": "```rust\n// Query A: Safe parameterized query\nlet q = \"SELECT * FROM users WHERE id = ?\";\n// Query B: Vulnerable manual string concatenation\nlet q = format!(\"SELECT * FROM users WHERE name = '{}'\", input_name);\n```",
+  "pattern": "Mixing secure, parameterized SQL query structures with manual string concatenation in the same database access module.",
+  "why_bad": "It violates safety and reliability consistency. It exposes specific paths of the application to SQL injection attacks and breaks the predictability of query parsing.",
+  "detection": "Scan modules for SQL string templates, flagging any that use string formatters (`format!`) alongside standard parameterized placeholders (`?`).",
+  "counterexample": "None. String concatenation of user inputs in SQL statements is a security defect. `Strong`.",
+  "fix": "Standardize all queries on parameterized statements or a type-safe query builder.",
+  "strength": "Strong",
+  "source": "*Kill It with Fire* by Marianne Bellotti (2021), p. 136, 527."
+}

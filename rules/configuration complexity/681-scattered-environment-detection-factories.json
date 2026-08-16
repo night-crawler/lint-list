@@ -1,0 +1,13 @@
+{
+  "id": 681,
+  "title": "Scattered Environment-Detection Factories",
+  "category": "Configuration Complexity",
+  "damaged_code": "```rust\nfn get_connection_string() -> String {\n    let env = std::env::var(\"APP_ENV\").unwrap_or_default();\n    if env == \"test\" {\n        \"sqlite::memory:\".to_string()\n    } else {\n        std::env::var(\"DATABASE_URL\").unwrap()\n    }\n}\n```",
+  "pattern": "Checking environmental profiles (e.g., `test`, `prod`) inside various constructors and low-level code factories scattered across the codebase.",
+  "why_bad": "Couples the application internals to environment naming schemas and config keys. Introducing a new environment or changing a config variable name requires modifying and recompiling multiple files.",
+  "detection": "Arbitrary environment checks (`env::var`) or conditional testing factories placed within low-level utility or core modules rather than isolated at startup boundaries.",
+  "counterexample": "```rust\n// Configuration properties are resolved once at startup and injected as clear abstractions\nfn main() {\n    let db_url = resolve_db_url_from_config();\n    let client = PostgresDb::new(&db_url);\n}\n```",
+  "fix": "Centralize configuration parsing inside a single bootstrap layer at startup, resolving parameters into concrete configurations or plugin structures before initialization.",
+  "strength": "Strong",
+  "source": "[The Addison-Wesley signature series] Martin Fowler - *Patterns of Enterprise Application Architecture* (2015_2002, Addison-Wesley Professional).pdf, Chapter 18."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 758,
+  "title": "Mocking Concrete Structs via Empty Interfaces",
+  "category": "Ceremony Boilerplate",
+  "damaged_code": "```rust\ntrait OrderValidator {\n    fn validate(&self, order: &Order) -> bool;\n}\nstruct ConcreteValidator;\nimpl OrderValidator for ConcreteValidator {\n    fn validate(&self, order: &Order) -> bool { true }\n}\n```",
+  "pattern": "Creating an abstract interface (trait) with only a single implementation, solely to enable mocking of a stable, deterministic, local concrete type in tests.",
+  "why_bad": "It creates high interface ceremony and file pollution. If a concrete type contains only pure mathematical, logical, or state-based code with no volatile external side-effects, it can be tested and used directly without any mocking infrastructure.",
+  "detection": "A public trait with exactly one implementation in the codebase, where the implementation logic does not interact with any network, filesystem, or database boundaries.",
+  "counterexample": "Interfaces designed to abstract truly volatile external services (like third-party payment gateways or cloud-based notification systems).",
+  "fix": "```rust\nstruct ConcreteValidator;\nimpl ConcreteValidator {\n    pub fn validate(&self, order: &Order) -> bool { true }\n}\n```",
+  "strength": "Contextual",
+  "source": "Titus Winters, Tom Manshreck, Hyrum Wright, *Software Engineering at Google* (2020), Chapter 13 (\"Mocking\"), pp. 245-248."
+}

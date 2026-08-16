@@ -1,0 +1,13 @@
+{
+  "id": 903,
+  "title": "Direct In-Place Database Updates",
+  "category": "Local Optimization",
+  "damaged_code": "```rust\n// Read-optimized in-place database updater\npub fn update_record(db_file: &mut std::fs::File, offset: u64, new_data: &[u8]) {\n    db_file.seek(std::io::SeekFrom::Start(offset)).unwrap();\n    db_file.write_all(new_data).unwrap(); // Random I/O write bottleneck\n}\n```",
+  "pattern": "A database or storage engine is designed to locate records on disk and overwrite pages at their original file offsets to optimize subsequent point query performance.",
+  "why_bad": "While locally optimizing point queries (reads can immediately locate and return the record), it severely pessimizes write throughput. In-place updates force the storage engine to perform random writes to different disk blocks. On HDDs, this causes severe mechanical head-positioning delays. On SSDs, it incurs a massive garbage collection penalty because pages must be erased in blocks before they can be rewritten, leading to premature write wear.",
+  "detection": "Storage designs that perform random-access write operations directly at variable file offsets instead of writing sequentially or buffering in memory.",
+  "counterexample": "Valid for small configuration files or databases with extremely low write rates. Mark `Context-dependent`.",
+  "fix": "Use an append-only, buffered log structure (like an LSM Tree) to batch updates in memory and write them to disk sequentially, transforming random writes into sequential writes.\n```rust\n// Append-only write path\npub fn update_record(log_writer: &mut LogWriter, record: Record) {\n    log_writer.append(record); // Sequential append\n}\n```",
+  "strength": "Strong",
+  "source": "Alex Petrov, *Database Internals*, Chapter 7 \"In-place updates vs Append-only\" (p. 129) / Martin Kleppmann, *Designing Data-Intensive Applications*, Chapter 3 \"SSTables and LSM-Trees\" (p. 77, 81)."
+}

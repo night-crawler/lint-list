@@ -1,0 +1,13 @@
+{
+  "id": 289,
+  "title": "Uncoordinated Cross-System Updates (Dual Writes)",
+  "category": "Temporal Coupling Lifecycle Bugs",
+  "damaged_code": "```rust\n// Rust\nfn process_payment(db: &Database, billing_service: &BillingApi) {\n    db.mark_as_paid(invoice_id); // Success\n    billing_service.charge_credit_card(user_id, 100); // Fail! Invoice is marked paid, but card never charged!\n}\n```",
+  "pattern": "Sequentially updating two separate, decoupled database systems or services in a single workflow without coordinating transactions.",
+  "why_bad": "If the first write succeeds but the second write fails (e.g. due to a network outage), the system is left in an inconsistent split-brain state with no automatic way to roll back the first write.",
+  "detection": "A single, uncoordinated controller method writes to a database and then makes an external, un-transactioned API call, without catching downstream exceptions and rolling back the database state.",
+  "counterexample": "A system utilizing a transactional outbox pattern where the database update and the outbox message are committed in a single local transaction.",
+  "fix": "Use asynchronous message queues combined with compensating transactions to undo the first write if the downstream service fails, or use event-driven reconciliation.",
+  "strength": "Contextual",
+  "source": "Scott Wlaschin, *Domain Modeling made Functional*, page 119 / passage [242, 534, 538, 539]."
+}

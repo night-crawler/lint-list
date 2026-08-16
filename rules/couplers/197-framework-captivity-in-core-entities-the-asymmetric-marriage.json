@@ -1,0 +1,13 @@
+{
+  "id": 197,
+  "title": "Framework Captivity in Core Entities (The Asymmetric Marriage)",
+  "category": "Couplers",
+  "damaged_code": "```rust\n// Core business entity directly annotated with database framework macros\n#[derive(Insertable, Queryable, Identifiable)]\n#[diesel(table_name = \"users\")]\nstruct User {\n    id: i32,\n    name: String,\n}\n```",
+  "pattern": "Core business domain models (entities) are directly annotated with database, HTTP, or serialization framework-specific annotations and macros.",
+  "why_bad": "The business logic is married to a specific external library. If the database schema changes, or if you decide to switch from a SQL database to a Document database, your core business rules must be recompiled and risk breaking.",
+  "detection": "Structs inside the domain logic/entities folder containing direct import dependencies and attributes from external O/RM or serialization crates.",
+  "counterexample": "Standard, language-level attributes (like `#[derive(Debug, PartialEq)]`) that have zero external runtime dependency.",
+  "fix": "Keep domain entities completely pure. Create separate Database Transfer Objects (DTOs) for the framework and map them to domain entities at the boundary.\n```rust\nstruct User { name: String } // Pure domain entity\n\n#[derive(Queryable)]\nstruct UserRow { id: i32, name: String } // Database-specific DTO\n```",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Architecture* (2017), Chapter 22 (\"The Dependency Rule\") and Chapter 29 (\"Frameworks are Details\")."
+}

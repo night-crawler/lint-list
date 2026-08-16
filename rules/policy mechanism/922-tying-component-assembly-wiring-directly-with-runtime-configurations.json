@@ -1,0 +1,13 @@
+{
+  "id": 922,
+  "title": "Tying Component Assembly/Wiring directly with Runtime Configurations",
+  "category": "Policy Mechanism",
+  "damaged_code": "```yaml\n# Spring/wiring configuration mixing object associations with credentials\nbeans:\n  - id: databaseConnection\n    class: com.system.infra.DbConnection\n    properties:\n      - host: \"10.0.0.12\"\n      - password: \"production_clear_password\" # Sensitive environmental secret\n  - id: billingService\n    class: com.system.domain.BillingService\n    properties:\n      - database: { ref: databaseConnection } # Code assembly / wiring\n```",
+  "pattern": "A single configuration file contains both sensitive runtime parameters (passwords, IP addresses, tokens) and basic application code assembly/wiring rules (object instantiation, bean references).",
+  "why_bad": "Forces operators or administrators to edit highly volatile, complex structure files just to update a simple password. A single typo in the 5,000-line XML/YAML code-assembly section of the file can break core object references, causing obscure runtime crashes.",
+  "detection": "Configuration files where database/service credentials and connection variables are combined with classpath, object hierarchy, or reference mappings.",
+  "counterexample": "Simple metadata manifest descriptors. Marked as `Strong`.",
+  "fix": "Keep application object wiring entirely separate from sensitive runtime configurations. Sensitive properties should be loaded in separate files or environment variables, or injected as external properties.\n```yaml\n# separate file: credentials.env\nDB_PASSWORD=\"production_clear_password\"\n```",
+  "strength": "Strong",
+  "source": "Michael T. Nygard, *Release It!* (2007), Chapter 14.2, \"Configuration Files\", p. 598-599."
+}

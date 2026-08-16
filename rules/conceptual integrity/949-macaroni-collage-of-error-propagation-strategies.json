@@ -1,0 +1,13 @@
+{
+  "id": 949,
+  "title": "Macaroni Collage of Error-Propagation Strategies",
+  "category": "Conceptual Integrity",
+  "damaged_code": "```rust\n// Three different recovery styles in the same module\nfn read_config() -> Config {\n    panic!(\"Config missing\"); // Crash\n}\nfn load_user(id: u64) -> Option<User> { ... } // Silent empty\nfn save_order(order: Order) -> Result<(), IOError> { ... } // Result\n```",
+  "pattern": "Mixing incompatible error models (such as panics, `Option::None`, custom `Result` types, and raw error strings) for recoverable errors within the same package or service layer.",
+  "why_bad": "It forces clients to write highly complex, inconsistent glue logic to handle errors. It makes centralized operations (like logging, telemetry, or translating error messages for the UI) virtually impossible because errors lack a unified contract.",
+  "detection": "Check for a mixture of return types (`None`, `Result`, and panics) in the public functions of a single module designed for recoverable I/O or business operations.",
+  "counterexample": "Using panics strictly for unrecoverable programmer errors (like index out of bounds) and `Result` for recoverable runtime errors. Marked `Context-dependent`.",
+  "fix": "Establish a single error type (e.g., using `thiserror` to define module errors) and return a unified `Result<T, ModuleError>` from all public functions.",
+  "strength": "Strong",
+  "source": "*Code Complete, Second Edition* by Steve McConnell (2004), p. 230, 612."
+}

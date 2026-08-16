@@ -1,0 +1,13 @@
+{
+  "id": 935,
+  "title": "Monolithic God Services",
+  "category": "Wrong Granularity",
+  "damaged_code": "```\n/services/core_enterprise_service/\n  - Handles customer signups\n  - Manages payment processing\n  - Generates financial tax reports\n  - Dispatches truck shipments\n  - Compiles marketing emails\n```",
+  "pattern": "Lumping unrelated functional domains and business workflows into a single massive distributed service (\"The God Monolith\").",
+  "why_bad": "Forces coordinated deployments of the entire system for a minor change in any subdomain. If the tax calculator hits a memory leak, it crashes the payment processor and user signups. It limits independent scalability; developers cannot scale the high-traffic payment layer without scaling the heavy, low-frequency tax reporting layer.",
+  "detection": "A single deployable service with endpoints and database models spanning multiple, completely unrelated business domains.",
+  "counterexample": "Small startups or early-stage MVPs where a single deployment unit (\"Monolith\") is necessary to move fast before domain boundaries are discovered.",
+  "fix": "Extract unrelated business domains into independent services that coordinate through clear API boundaries.\n```\n/services/payment_service/\n/services/shipping_service/\n```",
+  "strength": "Strong",
+  "source": "*Juval Löwy - Righting Software (2019)*, Chapter 2, \"AVOID FUNCTIONAL DECOMPOSITION\" (Lumping operations into mega services, p. 15); *Martin Kleppmann - Designing Data-Intensive Applications (2017)*, Chapter 1."
+}

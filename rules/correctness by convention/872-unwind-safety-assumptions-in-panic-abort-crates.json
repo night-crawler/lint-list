@@ -1,0 +1,13 @@
+{
+  "id": 872,
+  "title": "Unwind Safety Assumptions in Panic-Abort Crates",
+  "category": "Correctness By Convention",
+  "damaged_code": "```rust\n// Rust\nfn critical_cleanup() {\n    // BUG: This cleanup assumes drop is called, but crate compiles with abort!\n    let _guard = FileCleanupGuard::new();\n}\n```",
+  "pattern": "Relying on custom `Drop` destructors to perform critical, external state cleanup (like flushing caches, closing network sockets, or releasing hardware lock resources) under panic unwinding, while compiling the crate with `panic = \"abort\"`.",
+  "why_bad": "If the crate is compiled with `panic = \"abort\"`, stack unwinding is completely bypassed on panic. The process terminates immediately without executing any destructors, leaving system files, hardware locks, or database caches in a corrupted, half-written state.",
+  "detection": "A crate relies on stack unwinding destructors to maintain global or external consistency invariants, but allows configuration of the global `panic = \"abort\"` profile.",
+  "counterexample": "Explicitly checking or documenting that a crate requires `panic = \"unwind\"`, or writing crash-consistent state handlers.",
+  "fix": "Document or restrict compilation settings to unwind, or use transactional writes that remain crash-consistent even on unexpected aborts.",
+  "strength": "Strong",
+  "source": "Rust For Rustaceans, Chapter 10 (panic settings / unwinding) [799-801]."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 880,
+  "title": "The Wildcard Default Fallback (Match Silence)",
+  "category": "Robustness Theater",
+  "damaged_code": "```rust\nenum ConnectionState {\n    Disconnected,\n    Connecting,\n    Connected,\n}\n\nfn process_state(state: ConnectionState) {\n    match state {\n        ConnectionState::Connected => run_heartbeat(),\n        _ => stop_all_activity(), // Defensive wildcard: treats all other states as Stopped\n    }\n}\n```",
+  "pattern": "Using a catch-all wildcard (like `_` in Rust or `default:` in C) to group and silently execute default fallback behavior for all unlisted variants of an enumeration.",
+  "why_bad": "When new states/variants are added to the enum in the future, the compiler will not flag this `match` statement as incomplete. The new state will be silently funneled into the default fallback branch (e.g., a newly added `Reconnecting` state would unexpectedly stop all activity), creating logical bugs that are hard to detect.",
+  "detection": "Match expressions on closed enumerations that use a wildcard (`_`) default branch instead of list-exhaustion.",
+  "counterexample": "`Context-dependent`. Permissible on open, highly volatile external integer representations, but highly dangerous on internal state enums.",
+  "fix": "Explicitly list every enumeration variant in the match arm, allowing the compiler to enforce exhaustive checking when new variants are introduced.",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete*, Section 8.6 / 8.7 (offensive programming: default case should fail hard during development to expose unhandled states)."
+}

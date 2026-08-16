@@ -1,0 +1,13 @@
+{
+  "id": 121,
+  "title": "Redundant Iteration Roundtrips (Double Collecting)",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nlet vec: Vec<i32> = list.into_iter().collect();\nlet result: Vec<i32> = vec.into_iter().filter(|x| x > &0).collect();\n```",
+  "pattern": "Collecting an iterator into a collection (`Vec`, `HashSet`, etc.) only to immediately call `.into_iter()` on it again to chain more operations.",
+  "why_bad": "Forces expensive heap allocations, data copying, and memory management overhead to build a temporary collection that is immediately discarded.",
+  "detection": "An iterator chain containing `.collect()` immediately followed by variable binding and subsequent `.into_iter()` on the same variable.",
+  "counterexample": "Cases where intermediate collecting is required to resolve borrow checker lifetimes or execute specific side-effects.",
+  "fix": "Chain the iterator operations directly, performing exactly one final `.collect()` at the end.",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust For Rustaceans* (2021)."
+}

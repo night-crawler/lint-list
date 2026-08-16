@@ -1,0 +1,13 @@
+{
+  "id": 506,
+  "title": "Linear Time `list::size()` inside Loop Condition",
+  "category": "Performance Smells",
+  "damaged_code": "```cpp\n// C++ (Older standards/compilers)\nwhile (list.size() > max_size) { // size() is O(N)\n    list.pop_back();\n}\n```",
+  "pattern": "Executing `collection.size()` or `.count()` inside a loop condition when the size check operation is non-constant-time.",
+  "why_bad": "In older standard library implementations (like C++98 `std::list`), `size()` is O(N) because it counts elements sequentially, transforming a simple linear operation into an accidental O(N^2) algorithmic disaster.",
+  "detection": "Loop termination conditions that repeatedly invoke a collection size method known to perform full traversals.",
+  "counterexample": "Standard libraries where `size()` is guaranteed O(1).",
+  "fix": "Maintain a manual count variable, check list emptiness (`empty()`), or use updated compilers with O(1) size tracking.",
+  "strength": "Strong",
+  "source": "*The Art of Readable Code*, Chapter 5, \"Example: list::size()\" (p. 52 / 572)."
+}

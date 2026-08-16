@@ -1,0 +1,13 @@
+{
+  "id": 816,
+  "title": "Framework-Centric Packaging Schemes",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Organizing source files by framework layers instead of domain components\nsrc/\n  controllers/\n    user_controller.rs\n  models/\n    user_model.rs\n  views/\n    user_view.rs\n```",
+  "pattern": "Organizing the physical project directory and package structure strictly by technical framework layers (e.g., MVC folders: `controllers`, `models`, `views`) rather than by business domain components.",
+  "why_bad": "It destroys the spatial cohesion of business domain components, forcing developers to edit files across multiple disparate directories to implement a single business feature.",
+  "detection": "A root directory layout partitioned by technical stereotypes (`controllers/`, `views/`, `daos/`) rather than business domains (`billing/`, `shipping/`).",
+  "counterexample": "A small project (less than 10 source files) where a technical folder layout is used to bootstrap development.",
+  "fix": "Organize code by domain components (Package by Component), keeping all classes representing a single business concept in the same package.",
+  "strength": "Contextual",
+  "source": "*Clean Architecture (Martin), Chapter 34, p. 313 [47-48, 731, 1097]*"
+}

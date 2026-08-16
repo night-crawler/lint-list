@@ -1,0 +1,13 @@
+{
+  "id": 475,
+  "title": "Consistent Prefix Reads Violation (Uneven Partition Replication Lag)",
+  "category": "Distributed Systems Fallacies",
+  "damaged_code": "```rust\n// Querying causally related entities from different database partitions\nasync fn read_concluding_dialogue(client: &DbClient) {\n    // Partition 1 contains the question\n    let question = client.read_partition(\"p1\", \"q_101\").await.unwrap(); // Lagging\n    \n    // Partition 2 contains the answer\n    let answer = client.read_partition(\"p2\", \"a_101\").await.unwrap(); // Up-to-date\n    // BUG: If partition 1 is lagging behind partition 2, we might observe \n    // the answer but find the question does not exist yet!\n}\n```",
+  "pattern": "Querying causally related entities across distinct partitioned tables or database shards without utilizing coordinated snapshot isolation or transaction-locked version boundaries.",
+  "why_bad": "In a partitioned database, partitions replicate independently and experience uneven delays [118]. If an observer reads causally dependent items (e.g., a question and its reply, or a state trigger and its outcome) across different lagging partitions, they can witness the effect before the cause [118]. This violates consistent prefix reads (or causal consistency), breaking application logic that assumes basic logical flow [118, 130].",
+  "detection": "Identify read queries directed to different database partition keys sequentially within the same execution block, where the retrieved data has causal relationships but is not filtered by a single, cluster-wide consistent transaction timestamp.",
+  "counterexample": "```rust\nasync fn read_concluding_dialogue_safe(client: &DbClient) {\n    // Request a single read-atomic transaction snapshot spanning multiple partitions\n    let snapshot = client.get_global_snapshot_tx().await.unwrap();\n    let question = snapshot.read(\"p1\", \"q_101\").unwrap();\n    let answer = snapshot.read(\"p2\", \"a_101\").unwrap();\n}\n```",
+  "fix": "Utilize global snapshot isolation levels (e.g., RAMP transactions or total order broadcast logging) that ensure causal writes become visible across all partitions atomically [74, 75, 118].",
+  "strength": "Strong",
+  "source": "Martin Kleppmann, *Designing Data-Intensive Applications*, Chapter 5 / passages [118, 130]; Alex Petrov, *Database Internals*, Chapter 13 (Coordination Avoidance & RAMP) / passages [73, 74, 75]."
+}

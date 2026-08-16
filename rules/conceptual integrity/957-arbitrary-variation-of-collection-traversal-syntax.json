@@ -1,0 +1,13 @@
+{
+  "id": 957,
+  "title": "Arbitrary Variation of Collection Traversal Syntax",
+  "category": "Conceptual Integrity",
+  "damaged_code": "```rust\n// File A: loop with indexing\nfor i in 0..items.len() {\n    process(&items[i]);\n}\n// File B: functional iterator\nitems.iter().for_each(|item| process(item));\n```",
+  "pattern": "Using different syntax styles to traverse collections across similar tasks in the same codebase.",
+  "why_bad": "It increases reading friction. The reader has to pause to analyze whether there is a subtle memory-safety or performance reason for the syntactic difference, only to find it was arbitrary.",
+  "detection": "Flag varying traversal syntax (loops, iterators, manual index ranges) across non-performance-critical paths.",
+  "counterexample": "Using specific, non-standard iteration patterns because of concrete performance constraints or lifetime borrows. Marked `Context-dependent`.",
+  "fix": "Standardize all standard collection iterations on the idiomatic `for item in &items` loops.",
+  "strength": "Too subjective",
+  "source": "*Clean Code* by Robert C. Martin (2008), p. 292."
+}

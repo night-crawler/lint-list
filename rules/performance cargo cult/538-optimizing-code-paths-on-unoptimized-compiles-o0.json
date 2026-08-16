@@ -1,0 +1,13 @@
+{
+  "id": 538,
+  "title": "Optimizing Code Paths on Unoptimized Compiles (-O0)",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```bash\n# Executing unoptimized binary with complex hand-tuned code\nrustc -C opt-level=0 main.rs\n./main\n```",
+  "pattern": "Tuning source code and introducing complex hacks (like manual register operations or bit-shifts) while compiling the program without standard compiler optimizations enabled.",
+  "why_bad": "Without optimizations, the execution dynamics of the code are completely distorted. An optimization that makes unoptimized code faster can easily make optimized code slower by preventing compiler instruction scheduling and loop vectorization [13, 347, 348].",
+  "detection": "Executing microbenchmarks or performance comparisons using debug builds (or `-C opt-level=0` / `gcc -O0`) to justify complex code transformations.",
+  "counterexample": "Debugging compiling errors or testing stack trace addresses where debug symbols must be strictly preserved. `Contextual`.",
+  "fix": "Compile code with standard optimizations enabled (`-O2` or `-O3`) before performing any performance measurement or microbenchmarking.",
+  "strength": "Strong",
+  "source": "*1701.00854v6.pdf*, Section 6.5 (p. 13); *Code Complete*, Section 25.3 (p. 347, 348)."
+}

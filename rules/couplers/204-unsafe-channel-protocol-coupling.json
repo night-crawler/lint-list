@@ -1,0 +1,13 @@
+{
+  "id": 204,
+  "title": "Unsafe Channel Protocol Coupling",
+  "category": "Couplers",
+  "damaged_code": "```rust\nuse std::sync::mpsc::channel;\n\nfn run_worker() {\n    let (tx, rx) = channel();\n    std::thread::spawn(move || {\n        let msg = rx.recv().unwrap(); // Blocks waiting for message\n        tx.send(\"reply\").unwrap();\n    });\n}\n```",
+  "pattern": "Two threads communicate via raw channels without a compiler-enforced state machine or structural protocol, relying on implicit, manual synchronization order.",
+  "why_bad": "If one thread deviates from the expected message sequence (e.g., sending two messages instead of one), the receiving thread will mismatch types or hang forever in a deadlock.",
+  "detection": "The use of untyped channels or simple channels passing primitive types in complex bidirectional communication flows.",
+  "counterexample": "Unidirectional pipeline threads where data flows strictly in one direction from producer to consumer.",
+  "fix": "Define structural protocol enums that represent exact protocol phases, or enforce communication states using Rust's type-state system.\n```rust\nenum Protocol {\n    Handshake(String),\n    Command(u32),\n    Terminate,\n}\n```",
+  "strength": "Strong",
+  "source": "Edwin Brady, *Type-driven Development with Idris* (2017), Chapter 15 (\"Problems with channels: type errors and blocking\")."
+}

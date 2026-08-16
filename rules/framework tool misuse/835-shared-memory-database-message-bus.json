@@ -1,0 +1,13 @@
+{
+  "id": 835,
+  "title": "Shared Memory/Database Message Bus",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Using the database as a high-frequency polling queue\nloop {\n    let job = sqlx::query(\"SELECT * FROM queue WHERE status = 'Pending' LIMIT 1 FOR UPDATE\")\n        .fetch_optional(&pool).await?;\n    if let Some(j) = job {\n        // Process and delete\n    }\n}\n```",
+  "pattern": "Using a relational database or shared disk files as a high-frequency polling queue to communicate between services.",
+  "why_bad": "It triggers high database contention and disk I/O. Polling queries lock tables constantly, inflating CPU utilization and causing lock escalation.",
+  "detection": "An infinite polling loop in application code constantly querying a single table for state changes.",
+  "counterexample": "Using specialized distributed message queues (like RabbitMQ or Kafka) or database Change Data Capture logs.",
+  "fix": "Migrate communication to an event-driven system using standard messaging middleware.",
+  "strength": "Strong",
+  "source": "*Clean Architecture (Martin), Appendix A, p. 326 [732]*"
+}

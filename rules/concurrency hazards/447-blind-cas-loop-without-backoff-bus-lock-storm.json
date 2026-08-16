@@ -1,0 +1,13 @@
+{
+  "id": 447,
+  "title": "Blind CAS Loop without Backoff (Bus Lock Storm)",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```cpp\nvoid push(Node* n) {\n    Node* old_head = head.load();\n    do {\n        n->next = old_head;\n        // BUG: Tight blind CAS loop under high contention\n    } while (!head.compare_exchange_weak(old_head, n)); \n}\n```",
+  "pattern": "A tight Compare-and-Swap (CAS) retry loop that spins blindly on failure under high thread contention without yielding or backing off.",
+  "why_bad": "Under high contention, multiple CPUs constantly issue cache invalidate and write commands to the same cache line. This triggers a \"bus lock storm,\" saturating the interconnect fabric, stalling all CPU pipelines, and degrading system-wide performance.",
+  "detection": "A loop containing a weak or strong CAS retry block with no yield, sleep, or backoff operations on the failure path.",
+  "counterexample": "The loop body contains an explicit exponential backoff or spin-loop yield.",
+  "fix": "Introduce exponential backoff on CAS failure.\n```cpp\nint delay = 1;\nwhile (!head.compare_exchange_weak(old_head, n)) {\n    for (volatile int i = 0; i < delay; i++) {} // backoff\n    delay *= 2; // exponential backoff\n}\n```",
+  "strength": "Contextual",
+  "source": "Herlihy 7.4, Richard Sites Ch 27"
+}

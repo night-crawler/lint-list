@@ -1,0 +1,13 @@
+{
+  "id": 266,
+  "title": "Unsynchronized Spinlock loops",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```rust\n// Thread 1\nwhile !self.ready {}\n```",
+  "pattern": "Spin-waiting on a plain boolean flag modified by another thread without volatile/atomic reads or compiler fences.",
+  "why_bad": "Infinite loop hazard. The compiler can optimize the loop by loading the variable into a CPU register once, never observing changes made by other threads.",
+  "detection": "Loops reading shared unsynchronized variables with no compiler fences or atomic operations in the body.",
+  "counterexample": "Standard single-threaded variables.",
+  "fix": "Use atomic types with proper memory ordering:\n```rust\n// Thread 1\nwhile !self.ready.load(Ordering::Acquire) {}\n```",
+  "strength": "Strong",
+  "source": "Paul E. McKenney, *Is Parallel Programming Hard?*, Listing 4.19."
+}

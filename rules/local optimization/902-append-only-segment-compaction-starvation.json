@@ -1,0 +1,13 @@
+{
+  "id": 902,
+  "title": "Append-Only Segment Compaction Starvation",
+  "category": "Local Optimization",
+  "damaged_code": "```rust\n// Write-optimized append-only writer that ignores reads and space\npub struct LogWriter {\n    file: std::fs::File,\n}\n\nimpl LogWriter {\n    pub fn append(&mut self, key: &str, val: &str) {\n        // Simply appends to the end of the file instantly\n        writeln!(self.file, \"{}:{}\", key, val).unwrap();\n    }\n}\n```",
+  "pattern": "A storage component is designed strictly to append updates to a log file to achieve peak write performance, without implementing any background compaction or segment merging.",
+  "why_bad": "Locally, the append-only write path is blazingly fast because it avoids all random disk seeks. Globally, it is a system trap. It causes massive read amplification (readers must scan the entire log to find the latest value of a key) and space amplification (stale records accumulate indefinitely). Eventually, the storage device fills up (e.g., SSD garbage collection penalty), causing the whole system to plunge into extremely low performance or crash.",
+  "detection": "Append-only log storage designs that lack any background thread or scheduler for log compaction, vacuuming, or segment merging.",
+  "counterexample": "Valid for short-lived sessions or simple transient append-only metrics loggers where space is bounded and reads are rare. Mark `Context-dependent`.",
+  "fix": "Implement a background compaction process (such as a Log-Structured Merge Tree merge cycle) to periodically merge segments and reclaim stale records.\n```rust\n// Storage engine utilizing background compaction\npub struct LSMTree {\n    // Coordinates memory tables with background thread segment compactor\n}\n```",
+  "strength": "Strong",
+  "source": "Alex Petrov, *Database Internals*, Chapter 7, \"Log-Structured Storage: Read/Write Amplification\" (p. 129, 143-144)."
+}

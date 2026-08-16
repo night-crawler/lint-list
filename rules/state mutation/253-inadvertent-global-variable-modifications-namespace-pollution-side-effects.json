@@ -1,0 +1,13 @@
+{
+  "id": 253,
+  "title": "Inadvertent Global Variable Modifications (Namespace Pollution Side-Effects)",
+  "category": "State Mutation",
+  "damaged_code": "```rust\nstatic mut THE_ANSWER: i32 = 0;\n\nfn get_the_answer() -> i32 {\n    unsafe {\n        THE_ANSWER = 42;\n        THE_ANSWER\n    }\n}\n\nfn get_other_answer() -> i32 {\n    unsafe {\n        THE_ANSWER = 100; // Inadvertently overwrites THE_ANSWER!\n        THE_ANSWER\n    }\n}\n\n// Call site:\nfn main() {\n    let ans = get_the_answer();\n    let other = get_other_answer();\n    let average = (ans + other) / 2; // BUG: ans was modified by get_other_answer!\n}\n```",
+  "pattern": "A function relies on a global variable to hold its return or state value, allowing subsequent calls to unrelated routines to inadvertently overwrite the variable's value.",
+  "why_bad": "It introduces severe, non-obvious temporal side effects. A developer calling `get_other_answer` assumes it has no effect on `ans`, but because they share a hidden global namespace variable, the calculation is corrupted.",
+  "detection": "Multiple functions write to and read from a single static/global mutable variable to pass intermediate results or return values.",
+  "counterexample": "Returning local values directly on the stack:\n```rust\nfn get_the_answer_clean() -> i32 {\n    42\n}\n```",
+  "fix": "Eliminate global storage for return values or intermediate states. Return values directly from functions as stack outputs.\n```rust\n// Values returned directly, removing global variable write.\n```",
+  "strength": "Strong",
+  "source": "*Code Complete* by Steve McConnell (Chapter 13, \"Inadvertent changes to global data\", \"Visual Basic Example of a Side-Effect Problem\")."
+}

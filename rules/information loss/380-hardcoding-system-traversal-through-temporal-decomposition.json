@@ -1,0 +1,13 @@
+{
+  "id": 380,
+  "title": "Hardcoding System Traversal through Temporal Decomposition",
+  "category": "Information Loss",
+  "damaged_code": "```rust\nstruct FileLoader;\nimpl FileLoader { fn load(&self) -> String { ... } }\n\nstruct FileModifier;\nimpl FileModifier { fn modify(&self, data: String) -> String { ... } }\n\nstruct FileWriter;\nimpl FileParser { fn write(&self, data: String) { ... } }\n```",
+  "pattern": "Breaking a system into separate classes/modules where each step represents a chronological step of execution (temporal order) and duplicates structural knowledge of file/protocol structures.",
+  "why_bad": "It causes information leakage. If the format of the file/protocol changes, all three independent chronological classes must be modified, increasing change amplification and risk of divergence.",
+  "detection": "Separate structs or modules whose names match a chronological verb chain (e.g. `Loader`, `Modifier`, `Writer`) that all pass raw representations of the same format data.",
+  "counterexample": "Encapsulating format structure in a cohesive engine while using action verbs for pure processing steps:\n```rust\nstruct Engine;\n```",
+  "fix": "Combine the structural knowledge into a single class/module that handles the format, and pass domain-abstract models through processing phases.\n```rust\nstruct ConfigManager {\n    file_path: PathBuf,\n}\nimpl ConfigManager {\n    fn load(&self) -> DomainData { ... }\n    fn save(&self, data: DomainData) { ... }\n}\n```",
+  "strength": "Strong",
+  "source": "*A Philosophy of Software Design* by John K. Ousterhout (Chapter 5.3, p. 23)."
+}

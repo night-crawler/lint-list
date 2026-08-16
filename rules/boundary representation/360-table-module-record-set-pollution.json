@@ -1,0 +1,13 @@
+{
+  "id": 360,
+  "title": "Table Module Record Set Pollution",
+  "category": "Boundary Representation",
+  "damaged_code": "```rust\nfn apply_sales_tax(records: &mut RecordSet) {\n    for row in records.rows_mut() {\n        let total: f64 = row.get_field(\"total_amount\");\n        row.set_field(\"total_amount\", total * 1.1); // String-keyed lookups in core logic\n    }\n}\n```",
+  "pattern": "Carrying untyped, tabular `RecordSet` or row hash map structures throughout business logic layers in place of type-safe objects.",
+  "why_bad": "It eliminates compiler checks. Typo errors in column name strings (e.g., `\"totall_amount\"`) lead to quiet runtime bugs, and the domain model's self-documenting type benefits are entirely lost.",
+  "detection": "Domain logic files performing lookups and mutations on generic string-keyed record structures or tabular maps.",
+  "counterexample": "Low-level mapping engines or reporting systems where data format is dynamic. Mark as `Context-dependent`.",
+  "fix": "Map tabular row collections to typed domain structs immediately when leaving the persistence module.",
+  "strength": "Strong",
+  "source": "*Patterns of Enterprise Application Architecture* by Martin Fowler (p. 271, \"Table Module\")."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 822,
+  "title": "Shading Vocabulary Types Across API Boundaries",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Attempting to pass shaded types from two library versions between modules\npub fn process_shaded_map(map: libbase_v1::Map) {\n    libbase_v2::process_map(map); // Compiler error: mismatched types\n}\n```",
+  "pattern": "Using symbol renaming (shading) to allow multiple versions of a library in the same binary when those versions exchange vocabulary types.",
+  "why_bad": "While shading works for static utility functions, it fails both conceptually and programmatically when types are exchanged across API boundaries, leading to compilation or runtime failures.",
+  "detection": "Shading configuration rules applied to library packages whose types cross interface boundaries between distinct modules.",
+  "counterexample": "Shading a self-contained JSON parsing library whose types never exit the wrapping service.",
+  "fix": "Enforce the One-Version Rule across the repository, keeping only a single, unified version of shared dependencies.",
+  "strength": "Strong",
+  "source": "*Software Engineering at Google (Winters et al.), Chapter 16, p. 341 [143, 989]*"
+}

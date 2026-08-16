@@ -1,0 +1,13 @@
+{
+  "id": 318,
+  "title": "Shared Struct Fields with Inconsistent Meanings (Dog Tag Fields)",
+  "category": "Dry Abuse",
+  "damaged_code": "```rust\nstruct Order {\n    id: u64,\n    is_vendor_order: bool,\n    destination_or_supplier: String, // Shipping address if false, vendor name if true\n}\n```",
+  "pattern": "Using a single struct field to store different domain meanings based on the state of a flag in another field.",
+  "why_bad": "It breaks type safety, hides business rules, and couples unrelated customer-shipment and supplier-order tracking logics together, leading to silent state corruption.",
+  "detection": "A single string/raw field whose documentation or conditional branches indicate it holds distinct conceptual types based on a boolean flag.",
+  "counterexample": "None.",
+  "fix": "Separate the structures or use an enum to represent mutually exclusive states with type-safe payloads.\n```rust\nenum OrderType {\n    Customer { shipping_address: String },\n    Vendor { supplier_name: String },\n}\n\nstruct Order {\n    id: u64,\n    order_type: OrderType,\n}\n```",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete* (2nd Edition), Chapter 12: \"dog tag fields\", p. 326-327."
+}

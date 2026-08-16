@@ -1,0 +1,13 @@
+{
+  "id": 879,
+  "title": "Overridden Safeties (The Silent Warning Compiler)",
+  "category": "Robustness Theater",
+  "damaged_code": "```rust\n// In Cargo.toml or top-level file\n#![allow(unused_must_use)] // Silencing unused Result warnings system-wide\n#![allow(warnings)]        // Completely overriding compiler safety nets\n\nfn execute_transaction() {\n    let _ = write_to_ledger(); // Critical operation could fail silently!\n}\n```",
+  "pattern": "Systematically silencing compiler warnings, turning off static analyzer rules, or commenting out failing test suites in order to expedite development or \"clean up\" the build output.",
+  "why_bad": "It overrides safety rails. Critical warnings (such as ignoring a `Result` that could indicate database failure) are silenced, making the build pass superficially while leaving the runtime unstable and prone to silent data corruption (Chernobyl pattern).",
+  "detection": "Directives that disable compiler warnings globally (e.g., `#![allow(warnings)]` or `#![allow(unused_must_use)]`) or commented-out assert statements in test files.",
+  "counterexample": "`Context-dependent`. Disabling highly specific, non-critical lint rules on legacy code is acceptable, but system-wide silence of safety diagnostics is defective.",
+  "fix": "Resolve compiler warnings and failing tests directly rather than hiding them. Use explicit error-handling keywords (like `?` or `match`) on variables returned from volatile functions.",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code*, Chapter 17, G4 (\"Overridden Safeties\")."
+}

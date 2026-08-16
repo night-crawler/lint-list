@@ -1,0 +1,13 @@
+{
+  "id": 691,
+  "title": "Relative Binary-Path Config Loading",
+  "category": "Configuration Complexity",
+  "damaged_code": "```rust\n// Relies strictly on the current working directory matching execution path\nlet file = std::fs::File::open(\"config.json\")?;\n```",
+  "pattern": "Loading configuration files using relative file paths starting from the current working directory of the caller.",
+  "why_bad": "Fails instantly if the binary is executed from a different directory (e.g. systemd startup, cron jobs, or multi-directory pipelines), leading to crash loops or silent default fallbacks.",
+  "detection": "Using standard file opening functions with raw relative literal strings (like `\"config.json\"`) instead of fully qualified, absolute paths.",
+  "counterexample": "```rust\nlet config_path = std::env::var(\"APP_CONFIG_PATH\")\n    .map(PathBuf::from)\n    .unwrap_or_else(|_| PathBuf::from(\"/etc/app/config.json\"));\nlet file = std::fs::File::open(config_path)?;\n```",
+  "fix": "Expose configuration paths via environment variables or CLI options, always resolving them into absolute file paths before opening.",
+  "strength": "Strong",
+  "source": "[Pragmatic Programmers] Michael T. Nygard - *Release It!_ Design and Deploy Production-Ready Software* (2007, Pragmatic Bookshelf).pdf, Section 14.2."
+}

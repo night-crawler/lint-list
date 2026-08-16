@@ -1,0 +1,13 @@
+{
+  "id": 634,
+  "title": "Naive Interactive Session Logging (Shell Command Auditing Bypass)",
+  "category": "Security Boundary Failures",
+  "damaged_code": "```rust\nfn audit_session() {\n    // Attempting to audit interactive sessions by simply capturing standard input commands\n    let bash_history = read_bash_history_file();\n}\n```",
+  "pattern": "Relying on high-level command shells or file-system-level command tracking (like `.bash_history` or standard output transcripts) to provide robust administrative session auditing.",
+  "why_bad": "Interactive auditing is trivial to bypass. An attacker can start a shell, open an editor (like `vim`), and execute arbitrary shell commands from within the editor (e.g., `:!/bin/evilcmd`). This bypasses history logs entirely and muddled standard transcripts with terminal control characters.",
+  "detection": "Relying on standard user-mode shell logs or command-logging wrappers on boundaries where strict administrative security accountability is claimed.",
+  "counterexample": "```rust\n// Utilize system-call level auditing frameworks (like auditd in Linux)\n// that capture process execution at the kernel boundary.\n```",
+  "fix": "Enforce low-level kernel auditing (like system-call capture) or restrict administrative tasks to small, granular functional API proxies that log the specific request instead of raw shell sessions.",
+  "strength": "Strong",
+  "source": "`Heather Adkins et al. - Building Secure and Reliable Systems (2020)`, Ch 5, p. 66."
+}

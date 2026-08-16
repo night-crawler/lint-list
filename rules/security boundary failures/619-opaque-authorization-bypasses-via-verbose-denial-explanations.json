@@ -1,0 +1,13 @@
+{
+  "id": 619,
+  "title": "Opaque Authorization Bypasses via Verbose Denial Explanations",
+  "category": "Security Boundary Failures",
+  "damaged_code": "```rust\nfn handle_access_denial(client: &Client) -> Response {\n    Response::new(403, format!(\n        \"Access Denied: You must be a member of group 'f-admins' on network '10.0.0.0/8' with active MFA token.\"\n    ))\n}\n```",
+  "pattern": "Returning highly verbose error messages to unprivileged or unauthenticated users detailing the exact reasons, missing groups, or network rules causing an authorization denial.",
+  "why_bad": "It exposes critical system topology details to attackers, who can use this detailed roadmap to target the precise directories, networks, or administrative users needed to bypass security.",
+  "detection": "Format macros returning system constraints, database fields, or group requirements inside 403 Forbidden response handlers.",
+  "counterexample": "```rust\nfn handle_access_denial(client: &Client) -> Response {\n    let support_token = generate_diagnostic_token(client);\n    Response::new(403, format!(\n        \"Access Denied. Support code: {}\", support_token\n    ))\n}\n```",
+  "fix": "Return generic, opaque \"Access Denied\" errors to the client; expose diagnostic details only through random support tokens analyzed in backend logging systems.",
+  "strength": "Strong",
+  "source": "`Heather Adkins et al. - Building Secure and Reliable Systems (2020)`, Ch 5, p. 73."
+}

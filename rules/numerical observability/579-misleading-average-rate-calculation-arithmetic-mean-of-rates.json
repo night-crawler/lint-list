@@ -1,0 +1,13 @@
+{
+  "id": 579,
+  "title": "Misleading Average Rate Calculation (Arithmetic Mean of Rates)",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\nfn average_transfer_rate(segments: &[SegmentMetrics]) -> f64 {\n    let sum: f64 = segments.iter().map(|s| s.mb_per_sec).sum();\n    sum / segments.len() as f64\n}\n```",
+  "pattern": "Using the arithmetic mean to calculate the average rate of a metric (like throughput or transfer rate) across data segments of varying sizes.",
+  "why_bad": "The arithmetic mean of rates is mathematically incorrect when the duration or volume of work at each rate differs. To find the true average rate of a set of intervals, you must use the harmonic mean (the count of values divided by the sum of their reciprocals). For example, sending 100 MB at 50 MB/s and 700 MB at a throttled rate of 10 MB/s yields a true rate of 11.1 MB/s, whereas an arithmetic average of rates suggests a false 30 MB/s.",
+  "detection": "Look for arithmetic averages computed directly over rate units (e.g., `MB/s`, `ops/sec`) without weighting by time or volume.",
+  "counterexample": "Valid only if the volume (or distance) is identical for all rate measurements, making the arithmetic mean acceptable.",
+  "fix": "Compute the harmonic mean or divide the total volume by the total elapsed time.\n```rust\nfn average_transfer_rate_correct(segments: &[SegmentMetrics]) -> f64 {\n    let total_bytes: f64 = segments.iter().map(|s| s.bytes).sum();\n    let total_seconds: f64 = segments.iter().map(|s| s.bytes / s.mb_per_sec).sum();\n    total_bytes / total_seconds\n}\n```",
+  "strength": "Strong` — mathematically incorrect unless the denominator of each rate is identical.",
+  "source": "Gregg, Brendan - *Systems Performance* (2013), Section 2.8.2, p. 71."
+}

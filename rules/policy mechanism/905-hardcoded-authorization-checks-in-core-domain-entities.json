@@ -1,0 +1,13 @@
+{
+  "id": 905,
+  "title": "Hardcoded Authorization Checks in Core Domain Entities",
+  "category": "Policy Mechanism",
+  "damaged_code": "```rust\nimpl Forum {\n    pub fn start_discussion(&self, user: &User, subject: &str) -> Result<Discussion, Error> {\n        if !user.has_permission(\"start_discussion\") { // Tangled check\n            return Err(Error::Unauthorized);\n        }\n        Ok(Discussion::new(self.id, subject))\n    }\n}\n```",
+  "pattern": "An authorization or access control check (`has_permission`, `has_role`) is executed directly inside a domain entity's core behavioral methods.",
+  "why_bad": "It entangles security policy (who is allowed to do what) with domain capabilities (how a discussion starts). This prevents the entity from being reused in contexts where security is bypassed or handled differently (e.g., system tasks, database seeders, or unit tests). It forces a dependency on security-related models like `User` inside purely collaborative models.",
+  "detection": "AST search for method calls matching authorization patterns (`has_permission`, `has_role`, `is_authorized`) inside files defined within core domain modules, especially within entity or aggregate implementations.",
+  "counterexample": "Superficially similar security boundaries check authorization at the entry points (e.g., application services or RPC interceptors) before calling the domain entity. Marked as `Context-dependent` if domain-level permissions are highly dynamic, but generally security checks belong at the service boundary.",
+  "fix": "Accept pre-qualified domain abstractions (like an `Author` value object) into the domain method, delegating security checks to the application service or middleware boundary.\n```rust\nimpl Forum {\n    // Author represents a pre-validated, authorized entity in this context\n    pub fn start_discussion(&self, author: Author, subject: &str) -> Discussion {\n        Discussion::new(self.id, author.id, subject)\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Vaughn Vernon, *Implementing Domain-Driven Design* (2013), Chapter 2, \"Collaboration Context\", p. 53, 513-514."
+}

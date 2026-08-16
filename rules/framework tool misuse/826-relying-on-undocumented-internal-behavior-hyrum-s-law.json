@@ -1,0 +1,13 @@
+{
+  "id": 826,
+  "title": "Relying on Undocumented Internal Behavior (Hyrum's Law)",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Relying on the output formatting of an internal error utility\nlet err_msg = internal_util::format_error(err);\nassert!(err_msg.starts_with(\"Error:\")); // Breaks when format string changes\n```",
+  "pattern": "Writing production code that depends on the undocumented implementation details of an external dependency.",
+  "why_bad": "It blocks critical optimizations and upgrades. A theoretically compatible patch release from the provider breaks the application due to implicit, undocumented dependencies.",
+  "detection": "Unit tests or production logic assertions matching error string formats or output orders of third-party APIs.",
+  "counterexample": "Asserting explicitly documented constraints and guarantees defined in the provider's API contract.",
+  "fix": "Rely strictly on the documented public API contract, or contribute to making the observed behavior part of the contract.",
+  "strength": "Contextual",
+  "source": "*Software Engineering at Google (Winters et al.), Chapter 21, p. 453 [193, 1044]*"
+}

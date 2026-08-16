@@ -1,0 +1,13 @@
+{
+  "id": 430,
+  "title": "Unsynchronized Dequeue-Resize Collision",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```java\n// Thread 1: Dequeues from bucket\nNode deq(int bucket) {\n    Node h = table[bucket];\n    table[bucket] = h.next;\n    return h;\n}\n// Thread 2: Concurrently resizes table\nvoid resize() {\n    Node[] new_table = new Node[new_size];\n    // Copying elements without coordinating buckets\n    new_table[new_idx] = table[old_idx];\n}\n```",
+  "pattern": "Performing structural modifications on a collection (e.g. dequeuing from a bucket) while another thread concurrently resizes the collection's backbone array without exclusive lock coordination.",
+  "why_bad": "It breaks the structural alignment of the collection, leading to pointer corruption, lost elements, or infinite loops in traversal.",
+  "detection": "A non-thread-safe collection structure where resizing does not acquire the locks of all individual buckets or elements being modified.",
+  "counterexample": "Using a resizing protocol that locks all buckets (e.g. Java's `ConcurrentHashMap` resizing) or blocks all traversals during a resize.",
+  "fix": "Coordinate the bucket modifications and resizes with locks or epoch-based synchronization.",
+  "strength": "Strong",
+  "source": "Herlihy 13.2"
+}

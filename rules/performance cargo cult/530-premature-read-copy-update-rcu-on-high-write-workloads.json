@@ -1,0 +1,13 @@
+{
+  "id": 530,
+  "title": "Premature Read-Copy-Update (RCU) on High-Write Workloads",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\n// Using a hand-crafted read-copy-update epoch or pointer swap on a frequently updated counter\n```",
+  "pattern": "Replacing standard locks with read-copy-update (RCU) or deferred hazard-pointer synchronization schemes on a data structure that experiences frequent updates.",
+  "why_bad": "RCU is optimized exclusively for read-mostly scenarios. In write-heavy workloads, the overhead of allocating new versions of objects, keeping track of grace periods, and executing deferred garbage collection destroys write performance and leads to high memory overhead [17, 61, 142].",
+  "detection": "Use of complex deferred-free, grace-period monitoring, or double-pointer swap algorithms for collections or variables that undergo frequent modifications (high write-to-read ratio).",
+  "counterexample": "Read-mostly directories (such as routing tables or configuration parameters) where updates occur less than 1% of the time. `Contextual`.",
+  "fix": "Use standard locks (`std::sync::RwLock` or `Mutex`) that perform extremely well when updates are common.",
+  "strength": "Strong",
+  "source": "*1701.00854v6.pdf*, Chapter 9, Section 9.5 (p. 17, 61, 142)."
+}

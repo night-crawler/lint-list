@@ -1,0 +1,13 @@
+{
+  "id": 436,
+  "title": "Broken Release-Acquire Chains (Lack of Transitivity)",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```c\n// CPU 0\nWRITE_ONCE(x, 1);\nsmp_store_release(&y, 1);\n\n// CPU 1\nr1 = smp_load_acquire(&y);\nWRITE_ONCE(z, 1); // Plain write! Breaks chain\n\n// CPU 2\nr2 = smp_load_acquire(&z);\nr3 = READ_ONCE(x); // Can return 0!\n```",
+  "pattern": "Attempting to establish a multi-hop memory visibility chain across CPUs, but utilizing non-atomic plain writes on intermediate nodes.",
+  "why_bad": "The transitive visibility property of release-acquire chains requires every intermediate step to pair an acquire-load with a release-store on the *same* variable. Breaking the chain with a plain store on CPU 1 prevents the memory visibility of CPU 0's writes from propagating to CPU 2.",
+  "detection": "A sequence of thread-to-thread communication steps where at least one intermediate step does not pair an acquire load with a release store.",
+  "counterexample": "Properly chaining all steps using acquire-release.",
+  "fix": "Chain CPU 1's intermediate step using release-acquire.\n```c\n// CPU 1\nr1 = smp_load_acquire(&y);\nsmp_store_release(&z, 1); // Restores chain\n```",
+  "strength": "Strong",
+  "source": "Paul McKenney 15.2.7.4 (p. 333)"
+}

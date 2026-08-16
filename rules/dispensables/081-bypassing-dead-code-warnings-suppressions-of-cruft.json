@@ -1,0 +1,13 @@
+{
+  "id": 81,
+  "title": "Bypassing Dead Code Warnings (Suppressions of Cruft)",
+  "category": "Dispensables",
+  "damaged_code": "```rust\n#[allow(dead_code)]\nfn obsolete_utility_calculation() -> f64 {\n    3.14159\n}\n```",
+  "pattern": "Attributing dead or unused modules, functions, or structs with `#[allow(dead_code)]` or `#[allow(unused)]` instead of resolving or deleting them.",
+  "why_bad": "Hides architectural decay from the compiler and automated tooling, retaining dead code that bloats compile times and confuses future readers.",
+  "detection": "Occurrence of unused items decorated with `#[allow(dead_code)]` or `#[allow(unused)]` within non-library codebases.",
+  "counterexample": "Public library APIs, external crates, or FFI bindings where code is consumed externally.",
+  "fix": "Delete the unused code and its associated suppression attribute.",
+  "strength": "Strong",
+  "source": "Sandi Metz, *Practical Object-Oriented Design* (2019), Chapter 9 (\"Designing Cost-Effective Tests - Delete Unused Code\"), p. 179."
+}

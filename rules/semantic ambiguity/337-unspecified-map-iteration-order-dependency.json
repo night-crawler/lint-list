@@ -1,0 +1,13 @@
+{
+  "id": 337,
+  "title": "Unspecified Map Iteration Order Dependency",
+  "category": "Semantic Ambiguity",
+  "damaged_code": "```rust\nuse std::collections::HashMap;\n\nfn serialize_config(map: &HashMap<String, String>) -> String {\n    let mut out = String::new();\n    for (k, v) in map { // Iteration order is non-deterministic\n        out.push_str(&format!(\"{}={};\", k, v));\n    }\n    out\n}\n```",
+  "pattern": "Iterating over a standard `HashMap` or `HashSet` to generate a string, list, key, or file that is expected to be deterministic.",
+  "why_bad": "Standard hash maps in Rust use non-deterministic hashing algorithms (with random state seeds) to prevent Denial-of-Service attacks. Iterating directly over them produces values in a random order on every execution, leading to unstable outputs, broken test assertions, and non-reproducible build artifacts.",
+  "detection": "Iteration blocks over `HashMap` or `HashSet` whose loop bodies append to sequential builders or serialize state.",
+  "counterexample": "Sorting keys before iterating to guarantee order:\n```rust\nlet mut keys: Vec<_> = map.keys().collect();\nkeys.sort();\n```",
+  "fix": "Collect and sort the keys or elements deterministically before iterating when order is required.\n```rust\nfn serialize_config(map: &HashMap<String, String>) -> String {\n    let mut keys: Vec<_> = map.keys().collect();\n    keys.sort(); // Restores deterministic ordering\n    let mut out = String::new();\n    for k in keys {\n        out.push_str(&format!(\"{}={};\", k, map.get(k).unwrap()));\n    }\n    out\n}\n```",
+  "strength": "Strong",
+  "source": "*Designing Data-Intensive Applications* by Martin Kleppmann (Chapter 3); *Code Complete* by Steve McConnell (p. 211)."
+}

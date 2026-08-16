@@ -1,0 +1,13 @@
+{
+  "id": 440,
+  "title": "Broken Cumulative Ordering (No Propagation)",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```c\n// CPU 0\nWRITE_ONCE(x, 1);\nsmp_store_release(&y, 1);\n\n// CPU 1\nr1 = smp_load_acquire(&y);\nREAD_ONCE(z); // Plain read\n\n// CPU 2\nWRITE_ONCE(z, 1);\nsmp_mb();\nr3 = READ_ONCE(x); // Can return 0!\n```",
+  "pattern": "Assuming that `smp_store_release` alone provides global propagation ordering when combined with intermediate load-to-store steps.",
+  "why_bad": "The cumulativity property of release-store only propagates writes that occurred *before* the release. It does not enforce ordering through a load-to-store step on CPU 1 where a subsequent write is made on CPU 2.",
+  "detection": "Multi-CPU litmus test where a release-acquire chain is interrupted by a load-to-store dependency.",
+  "counterexample": "Using full memory barriers (`smp_mb()`) across all communicating threads.",
+  "fix": "Upgrade intermediate loads/stores to use full memory barriers.",
+  "strength": "Strong",
+  "source": "Paul McKenney 15.2.7.2 (p. 331)"
+}

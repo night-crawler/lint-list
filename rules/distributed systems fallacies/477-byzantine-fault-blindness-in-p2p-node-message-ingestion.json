@@ -1,0 +1,13 @@
+{
+  "id": 477,
+  "title": "Byzantine Fault Blindness in P2P Node Message Ingestion",
+  "category": "Distributed Systems Fallacies",
+  "damaged_code": "```rust\n// Trusting a peer node payload blindly without cryptographic verification\nfn ingest_peer_metadata(raw_payload: &[u8], cluster_state: &mut ClusterState) {\n    // BUG: We parse and apply peer updates directly assuming all peers are honest\n    let peer_update: PeerClusterView = serde_json::from_slice(raw_payload).unwrap();\n    cluster_state.apply_ring_positions(peer_update);\n}\n```",
+  "pattern": "Accepting and applying critical cluster state updates, metadata adjustments, or configuration changes directly from peer nodes without verifying digital signatures, validation ranges, or consensus authorizations.",
+  "why_bad": "In any distributed or peer-to-peer (P2P) system, nodes can run buggy software versions, experience clock drift, or be compromised by adversaries [143]. Blindly trusting unverified peer metadata (such as schema updates or ring positions) can corrupt the local node's routing tables, cause it to misplace data records, misroute read queries, or crash due to unexpected payload structures [26, 27].",
+  "detection": "Identify methods that ingest raw bytes from external socket streams representing peer node metadata (e.g., `ClusterView`, `SchemaSync`) and update internal memory structures without invoking cryptographic signature checks or validating fields against strict local invariants.",
+  "counterexample": "```rust\nfn ingest_peer_metadata_safe(raw_payload: &[u8], cluster_state: &mut ClusterState) {\n    // Parse but strictly verify signatures and validate ring limits\n    if let Ok(peer_update) = parse_and_cryptographically_verify(raw_payload) {\n        if peer_update.is_within_bounds() {\n            cluster_state.apply_ring_positions(peer_update);\n        }\n    }\n}\n```",
+  "fix": "Implement defensive payload validation. Every peer-to-peer message modifying cluster layout, ring positions, or schema state must be cryptographically signed by an authorized key, and fields must be verified against local node sanity checks [26, 27, 91, 143].",
+  "strength": "Strong",
+  "source": "Alex Petrov, *Database Internals*, Chapter 8 (Byzantine Faults) / passages [26, 27]; Heather Adkins et al., *Building Secure and Reliable Systems*, Chapter 8 (Revocation Ranges) / passages [91, 92]; Martin Kleppmann, *Designing Data-Intensive Applications*, Chapter 8 / passage [143]."
+}

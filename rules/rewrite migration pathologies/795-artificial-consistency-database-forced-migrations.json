@@ -1,0 +1,13 @@
+{
+  "id": 795,
+  "title": "Artificial Consistency Database Forced Migrations",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```rust\n// Migrating a highly performant Redis cache to Postgres\n// solely because \"we want all our data in a SQL database for consistency\"\n```",
+  "pattern": "Forcing the migration of a specialized, stable, and highly performant database (like a Redis cache or NoSQL store) to a relational database solely to enforce corporate architectural \"uniformity.\"",
+  "why_bad": "It overlooks specialized design trade-offs. Forcing a low-latency key-value cache into a relational database increases query complexity, ruins write performance, and introduces unnecessary locking, leading to system instability [108, 571].",
+  "detection": "Migration proposals advocating the replacement of a data store without referencing any technical metrics (such as CPU, latency, or memory bottlenecks) or business-value gains [141, 586].",
+  "counterexample": "Valid if the cost of supporting multiple database technologies outweighs the performance benefits and the target database easily meets the required SLAs. Mark as `Context-dependent`.",
+  "fix": "Acknowledge cyclical and specialized data store patterns; prioritize technical requirements (low latency, high throughput) over artificial consistency [108, 571].",
+  "strength": "Contextual",
+  "source": "Kill It with Fire, Chapter 3, \"Beware Artificial Consistency\" [107, 108, 569, 570, 571, 586]"
+}

@@ -1,0 +1,13 @@
+{
+  "id": 656,
+  "title": "Testing the Compiler (Trivial Type Invariants)",
+  "category": "Test Smells",
+  "damaged_code": "```rust\n#[derive(PartialEq, Debug)]\npub struct User {\n    id: u64,\n}\n\n#[test]\nfn test_type_equality() {\n    let u1 = User { id: 1 };\n    let u2 = User { id: 1 };\n    // Testing compiler-generated structural equality on basic type\n    assert_eq!(u1, u2); \n}\n```",
+  "pattern": "A test written to verify basic properties guaranteed by the language compiler, type system, or standard library (such as type assignment, basic struct derivation, or basic map behavior).",
+  "why_bad": "It adds zero confidence while cluttering the test suite with boilerplate that must be maintained [32]. It is a waste of execution and engineering time [274].",
+  "detection": "Assertions checking language standard library behavior or basic compiler-generated struct properties directly.",
+  "counterexample": "Verifying custom trait implementations or complex manual implementations of structural equality that override standard behaviors.",
+  "fix": "Delete the trivial tests and trust the language compiler and runtime properties [32, 274].",
+  "strength": "Strong",
+  "source": "*   *Building Secure and Reliable Systems*, \"Mechanical Facts / Language invariants\" (p. 274) [32]"
+}

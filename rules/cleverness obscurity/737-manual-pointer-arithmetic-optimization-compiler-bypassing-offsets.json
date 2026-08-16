@@ -1,0 +1,13 @@
+{
+  "id": 737,
+  "title": "Manual Pointer Arithmetic Optimization (Compiler-Bypassing Offsets)",
+  "category": "Cleverness Obscurity",
+  "damaged_code": "```rust\n// Rust\nfn get_element(arr: &[i32], idx: usize) -> i32 {\n    unsafe { *arr.as_ptr().add(idx) } // Bypass safe indexing\n}\n```",
+  "pattern": "Bypassing standard collection indexing or iterators in favor of manual raw pointer calculations (`.add()`, `.offset()`) under the assumption that it avoids bounds-checking overhead.",
+  "why_bad": "It bypasses safe bounds checking, introducing severe memory unsafety risks. Furthermore, manual pointer arithmetic obscures the loop structure, preventing modern compiler optimization passes (such as loop vectorization) from optimizing the assembly.",
+  "detection": "Use of `unsafe` blocks containing raw pointer additions (`.add()`, `.offset()`, `.sub()`) on slice or vector pointers.",
+  "counterexample": "Low-level memory allocator implementations or custom OS kernel architectures where raw memory access is mandatory. `Context-dependent`.",
+  "fix": "Use safe indexing or standard safe iterators, allowing the compiler to perform automatic bounds-check elimination where possible.\n```rust\nfn get_element(arr: &[i32], idx: usize) -> i32 {\n    arr[idx]\n}\n```",
+  "strength": "Strong",
+  "source": "*Systems Performance*, Chapter 5 / *Code Complete*, Chapter 25."
+}

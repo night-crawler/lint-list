@@ -1,0 +1,13 @@
+{
+  "id": 884,
+  "title": "Faux Optionality (Default Sentinel wrapping Option)",
+  "category": "Robustness Theater",
+  "damaged_code": "```rust\nfn find_user(&self, id: u64) -> Option<User> {\n    if id == 0 {\n        // Return a dummy object wrapped in Some instead of None\n        return Some(User::default()); \n    }\n    self.map.get(&id).cloned()\n}\n```",
+  "pattern": "A function wrapped in an `Option` returns a dummy, \"neutral\" default value (like `Some(Default::default())`) on invalid inputs, rather than returning `None`.",
+  "why_bad": "It defeats the purpose of the `Option` type. Callers are forced to write match arms for `None` that will never execute, while simultaneously being exposed to silent errors because invalid inputs yield dummy data blocks instead of forcing empty-set checks.",
+  "detection": "A return of `Some(t)` where `t` is a sentinel or default-constructed instance, inside a method whose signature is designed to represent nullable or missing results via `Option`.",
+  "counterexample": "```rust\n// Correct: Use None on invalid index/ID\nfn find_user(&self, id: u64) -> Option<User> {\n    if id == 0 { return None; }\n    self.map.get(&id).cloned()\n}\n```",
+  "fix": "Return `None` on invalid inputs, forcing callers to explicitly and safely handle the absence of data.",
+  "strength": "Strong",
+  "source": "Scott Wlaschin, *Domain Modeling made Functional*, Chapter 4 (\"Flipping the signature\")."
+}

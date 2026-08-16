@@ -1,0 +1,13 @@
+{
+  "id": 710,
+  "title": "Relying Exclusively on CLI Arguments for Complex Configs",
+  "category": "Configuration Complexity",
+  "damaged_code": "```bash\n# Complex invocation coupled to transient terminal states\napp --port=8080 --db-host=localhost --db-user=admin --db-pass=secret --thread-pool=32 --cache-limit=1024\n```",
+  "pattern": "Exposing dozens of operational parameters solely as command line flags, lacking file-system configuration schema alternatives.",
+  "why_bad": "Forces operators to write complex, error-prone shell startup scripts. It makes configuration auditing impossible, as CLI arguments are transient and easily leaked in process lists (`ps aux`).",
+  "detection": "The presence of extensive argument parsing maps without file-based fallback deserializers.",
+  "counterexample": "```bash\napp --config=/etc/app/config.yaml\n```",
+  "fix": "Provide an option to supply configuration files (e.g. in YAML or TOML); limit CLI flags to bootstrap variables like the config path itself.",
+  "strength": "Strong",
+  "source": "[Pragmatic Programmers] Michael T. Nygard - *Release It!_ Design and Deploy Production-Ready Software* (2007, Pragmatic Bookshelf).pdf, Section 14.2."
+}

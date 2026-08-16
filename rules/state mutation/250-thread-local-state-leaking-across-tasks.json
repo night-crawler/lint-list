@@ -1,0 +1,13 @@
+{
+  "id": 250,
+  "title": "Thread-Local State Leaking Across Tasks",
+  "category": "State Mutation",
+  "damaged_code": "```rust\nthread_local! {\n    static CURRENT_TRANSACTION: RefCell<Option<Transaction>> = RefCell::new(None);\n}\n\nfn execute_transaction(tx: Transaction) {\n    CURRENT_TRANSACTION.with(|current| {\n        *current.borrow_mut() = Some(tx); // Sets thread-local context\n    });\n    perform_operations();\n    // CRITICAL BUG: Forgot to clean up CURRENT_TRANSACTION upon completion!\n}\n```",
+  "pattern": "A thread-local variable is used to store mutable task-specific state (such as transaction contexts or user credentials) without a guaranteed cleanup or reset mechanism upon function return or panic.",
+  "why_bad": "In modern asynchronous systems or thread-pool engines (e.g. Rayon, Tokio), threads are continuously recycled. If a thread-local variable is not cleared, subsequent unrelated tasks executed on the same thread will inherit stale, potentially unauthorized state, leading to catastrophic \"action-at-a-distance\" security or data bugs.",
+  "detection": "Mutations to thread-local storage (`thread_local!`) in a function that lack a corresponding RAII guard, `Drop` implementation, or a `finally`/`ensure` block ensuring clean state reset.",
+  "counterexample": "Using an RAII guard that automatically resets the thread-local state when dropped:\n```rust\nstruct TransactionGuard;\nimpl Drop for TransactionGuard {\n    fn drop(&mut self) {\n        CURRENT_TRANSACTION.with(|c| *c.borrow_mut() = None); // Auto reset\n    }\n}\n```",
+  "fix": "Wrap the thread-local modification in an RAII guard struct that implements `Drop` to guarantee cleanup, even if the task panics.\n```rust\nlet _guard = TransactionGuard; // Automatically clears on scope exit\n```",
+  "strength": "Strong",
+  "source": "*Righting Software* by Juval Löwy (Chapter 7, \"Thread-local variables\"); *Patterns of Enterprise Application Architecture* by Martin Fowler (p. 483, \"Registry\", \"Thread-Scoped Registry\")."
+}

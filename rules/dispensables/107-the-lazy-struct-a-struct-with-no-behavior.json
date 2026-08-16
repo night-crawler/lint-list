@@ -1,0 +1,13 @@
+{
+  "id": 107,
+  "title": "The Lazy Struct (A Struct with No Behavior)",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nstruct Data {\n    name: String,\n    age: u32,\n}\n```",
+  "pattern": "A struct that acts solely as a dumb data container with no behavioral methods, no invariants, and is only accessed by other classes.",
+  "why_bad": "Indicates that behavior has been stripped from the data, leading to feature envy. The struct doesn't pay for itself as a class/type.",
+  "detection": "A struct containing only public fields or basic accessors, with no domain logic methods of its own.",
+  "counterexample": "Simple data structures (DTOs) used strictly for serialization or boundary transport between separate subsystems.",
+  "fix": "Move associated behaviors into this struct, or inline/merge it into the primary consuming class.",
+  "strength": "Contextual",
+  "source": "Fowler, *Refactoring*, Chapter 3 (\"Bad Smells - Data Class / Lazy Class\"); Joshua Kerievsky, *Refactoring to Patterns* (2004)."
+}

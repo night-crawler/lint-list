@@ -1,0 +1,13 @@
+{
+  "id": 560,
+  "title": "Unmeasured Network Frame Batching",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\n// Accumulating small network packets in a custom array before calling write() on TCP stream\n```",
+  "pattern": "Manually delaying and buffering outgoing network writes in application code before calling `write()` on a TCP socket.",
+  "why_bad": "The operating system network stack already manages write buffering and TCP packet aggregation (using Nagle's algorithm). Custom user-level buffering delays packets, spikes latency, and degrades network throughput [474, 495].",
+  "detection": "The presence of buffers or queues accumulating small diagnostic payloads before triggering network socket flushes.",
+  "counterexample": "Zero-copy user-space network bypass stacks (like DPDK) where the operating system network layer is completely bypassed. `Contextual`.",
+  "fix": "Write directly to the TCP stream using standard system calls, allowing the kernel to optimize packet flow dynamically.",
+  "strength": "Strong",
+  "source": "*Systems Performance*, Chapter 10 (p. 474, 495)."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 194,
+  "title": "Unsafe Sequence of Global Initialization",
+  "category": "Couplers",
+  "damaged_code": "```rust\n// File: database.rs\npub static mut DB_CONN: Option<Connection> = None;\npub fn init_db() { unsafe { DB_CONN = Some(Connection); } }\n\n// File: logger.rs\npub static mut LOG_CONN: Option<Logger> = None;\npub fn init_logger() {\n    // Implicitly depends on DB_CONN being initialized first\n    let db = unsafe { DB_CONN.as_ref().unwrap() };\n    unsafe { LOG_CONN = Some(Logger::new(db)); }\n}\n```",
+  "pattern": "Multiple static initialization functions in different files depend on each other's execution order without explicit compiler-enforced sequence.",
+  "why_bad": "The initialization order of global variables in different files (translation units) is often undefined. This creates brittle systems that crash randomly during startup or upon compiler version upgrades.",
+  "detection": "Static mut initialization routines that access other static mut variables declared in different files.",
+  "counterexample": "Explicit orchestrator boots where a single `main` function calls initializers sequentially in a verified order.",
+  "fix": "Wrap the dependent global states in a single cohesive initialization struct or use thread-safe lazy evaluation on first access.\n```rust\nstruct SystemState {\n    db: Connection,\n    logger: Logger,\n}\n```",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 13 (\"Uncertain initialization-order issues with global data\")."
+}

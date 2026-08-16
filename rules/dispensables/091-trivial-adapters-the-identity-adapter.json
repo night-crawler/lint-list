@@ -1,0 +1,13 @@
+{
+  "id": 91,
+  "title": "Trivial Adapters (The Identity Adapter)",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nstruct LoggerAdapter<T>(T);\nimpl<T: Log> Log for LoggerAdapter<T> {\n    fn log(&self, record: &Record) {\n        self.0.log(record);\n    }\n}\n```",
+  "pattern": "An adapter struct that implements a target interface by delegating directly to a source interface that already has the matching signature.",
+  "why_bad": "Adds zero value. If the interface signatures already match, adapting them is an identity operation that introduces boilerplate.",
+  "detection": "An adapter struct implementing trait A by calling methods on an inner type that already implements trait A.",
+  "counterexample": "Adapter translating between genuinely different traits or mismatching method signatures.",
+  "fix": "Remove the adapter and let callers use the original type directly.",
+  "strength": "Strong",
+  "source": "Joshua Kerievsky, *Refactoring to Patterns* (2004), Chapter 8 (\"Generalization - Adapter\"), p. 247."
+}

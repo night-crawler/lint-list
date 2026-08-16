@@ -1,0 +1,13 @@
+{
+  "id": 400,
+  "title": "production-unwrap (Unwrapping Foreseeable Runtime Conditions)",
+  "category": "Error Handling Pathologies",
+  "damaged_code": "```rust\nlet conn = connect_to_db().unwrap(); // Crashes process if database is temporarily down!\n```",
+  "pattern": "Calling `.unwrap()` or `.expect()` on fallible I/O, network, database, or environmental lookups in a production path.",
+  "why_bad": "Fragile, crash-prone architecture. These lookups rely on external systems that can easily fail in production (e.g., dropped packets, database server reboots, expired keys). Unwrapping these results turns a recoverable transient network hiccup into a full process crash. [15, Chapter 5]",
+  "detection": "Calling `.unwrap()` or `.expect()` on `Result` types returned by standard library I/O, database drivers, or remote HTTP clients in a production codebase.",
+  "counterexample": "Rust initialization doctests, unit tests, or main configuration parsing where a failure immediately at startup means the program cannot run anyway.",
+  "fix": "Handle the connection failure gracefully, returning a structured error.\n```rust\nlet conn = connect_to_db()?;\n```",
+  "strength": "Strong",
+  "source": "*Jon Gjengset - Rust for Rustaceans*, Chapter 5, \"Opaque Errors\" [15]"
+}

@@ -1,0 +1,13 @@
+{
+  "id": 470,
+  "title": "Single-Leader Read Served without Lease/Quorum Validation",
+  "category": "Distributed Systems Fallacies",
+  "damaged_code": "```rust\nstruct ReplicatedStorageNode {\n    is_leader: bool,\n    local_cache: HashMap<String, String>,\n}\n\nimpl ReplicatedStorageNode {\n    // Serving read queries locally because the node *believes* it is the leader\n    fn serve_read_vulnerable(&self, key: &str) -> Option<String> {\n        if self.is_leader {\n            // BUG: During a network partition, we might have been deposed!\n            // Another leader is elected, but we can't hear the heartbeat.\n            // Serving from local cache returns stale, non-linearizable data.\n            self.local_cache.get(key).cloned()\n        } else {\n            None\n        }\n    }\n}\n```",
+  "pattern": "A replica database node serving read queries directly from local state or cache simply because it flags itself as \"leader,\" without verifying leader validity through active consensus heartbeats or quorum leases.",
+  "why_bad": "If a network partition occurs, a leader node can be isolated from the majority of the cluster while a new leader is successfully elected by the remaining quorum [42, 81]. If the partitioned node continues to serve read requests because it is unaware of the election, it will return stale, outdated information, violating linearizability guarantees of consensus [81].",
+  "detection": "Identify methods in replication coordinate classes that evaluate local boolean flags (e.g., `is_leader`, `self.leader_status`) to serve local data reads, without executing a network quorum check or validating an active lease time window with participants.",
+  "counterexample": "```rust\nimpl ReplicatedStorageNode {\n    fn serve_read_safe(&self, key: &str, coordinator: &Consensus) -> Option<String> {\n        // Enforce a check that verifies the lease is active or queries a quorum of nodes\n        if coordinator.verify_active_leader_lease() {\n            self.local_cache.get(key).cloned()\n        } else {\n            None\n        }\n    }\n}\n```",
+  "fix": "Ensure read operations are only served after verifying the leader's lease status through active heartbeats with cluster participants, or force reads to query a quorum of nodes to guarantee linearizability [81, 82, 179].",
+  "strength": "Strong",
+  "source": "Alex Petrov, *Database Internals*, Chapter 14 (Consensus) / passages [81, 82]; Martin Kleppmann, *Designing Data-Intensive Applications*, Chapter 9 / passages [42, 179]."
+}

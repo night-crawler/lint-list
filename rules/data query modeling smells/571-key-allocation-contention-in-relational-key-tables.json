@@ -1,0 +1,13 @@
+{
+  "id": 571,
+  "title": "Key Allocation Contention in Relational Key Tables",
+  "category": "Data Query Modeling Smells",
+  "damaged_code": "```sql\n-- Repeatedly locking a single key row to allocate sequential IDs\nBEGIN;\nSELECT next_id FROM key_table WHERE table_name = 'orders' FOR UPDATE;\nUPDATE key_table SET next_id = next_id + 1 WHERE table_name = 'orders';\nCOMMIT;\n```",
+  "pattern": "Managing unique key generation by maintaining a single row per table in a relational database, and locking that row (`FOR UPDATE`) for every insert.",
+  "why_bad": "High lock contention. Every concurrent insert transaction must serialize on this single row lock, killing parallel write performance and rendering multi-core database scaling useless [308, 313].",
+  "detection": "SQL statements executing `SELECT ... FOR UPDATE` on tables with schema structures like `(table_name, next_id)`.",
+  "counterexample": "Key tables using block-reservation patterns (e.g., Hi-Lo algorithm) where a block of IDs is reserved at once.",
+  "fix": "Reserve a batch of IDs (e.g., increment by 100) using a single query to reduce database calls and eliminate lock contention.",
+  "strength": "Strong",
+  "source": "*Patterns of Enterprise Application Architecture (Fowler), p. 313 [308, 313]*"
+}

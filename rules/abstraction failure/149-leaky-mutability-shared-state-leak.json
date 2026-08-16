@@ -1,0 +1,13 @@
+{
+  "id": 149,
+  "title": "Leaky Mutability (Shared State Leak)",
+  "category": "Abstraction Failure",
+  "damaged_code": "```rust\nstruct UserRegistry {\n    users: Vec<User>,\n}\n\nimpl UserRegistry {\n    // Leaks internal mutable reference directly to callers\n    pub fn get_users_mut(&mut self) -> &mut Vec<User> {\n        &mut self.users\n    }\n}\n```",
+  "pattern": "Exposing a direct, mutable reference to an internal private collection, allowing external callers to perform arbitrary mutations without the struct's knowledge.",
+  "why_bad": "It breaks the encapsulation of the struct entirely. Callers can bypass any validations or invariants that the struct is designed to enforce on its collection, leading to corrupt or invalid states.",
+  "detection": "A method returning a mutable reference (`&mut`) to a private field of type `Vec`, `HashMap`, or any collection.",
+  "counterexample": "Conceptually open collection wrappers or builders whose explicit purpose is to act as customizable containers.",
+  "fix": "Return read-only references (e.g., `&[T]`), perform mutations strictly via encapsulating methods (e.g., `register_user`), or return clones.",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 6, Section 6.2 (\"Minimize accessibility\"); Robert C. Martin, *Clean Code* (2008), Chapter 17."
+}

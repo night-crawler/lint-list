@@ -1,0 +1,13 @@
+{
+  "id": 111,
+  "title": "Redundant String Conversions",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nlet name = \"Dwight\".to_string().to_string();\n```",
+  "pattern": "Invoking `.to_string()` or `.to_str()` repeatedly on a value that is already of the target string type.",
+  "why_bad": "Wastes heap memory allocations and CPU cycles executing useless conversion pipelines that yield the exact same value.",
+  "detection": "Calling string conversion methods on objects whose underlying static type is already `String` or `&str` respectively.",
+  "counterexample": "Converting a custom struct that implements `ToString` into a String.",
+  "fix": "Remove the redundant `.to_string()` or `.to_str()` calls.",
+  "strength": "Strong",
+  "source": "Fowler, *Refactoring*, Chapter 3 (\"Bad Smells - Dispensables\")."
+}

@@ -1,0 +1,12 @@
+{
+  "id": 752,
+  "title": "Multi-Line Split Log Formats",
+  "category": "Cleverness Obscurity",
+  "damaged_code": "```rust\n// Rust\ninfo!(\"User login failed\\nIP: {}\\nReason: {}\", ip, reason); // Spans multiple lines\n```",
+  "pattern": "Emitting log records containing explicit newline characters (`\\n`), splitting a single log event across multiple physical lines.",
+  "why_bad": "It breaks standard log parsing tools (`grep`, `awk`, log aggregators). Line-oriented utilities cannot correlate split log entries, defeating automated monitoring and parsing scripts.",
+  "detection": "Logging macro invocations containing explicit newline characters in their format string.",
+  "fix": "Use structured JSON logging or format log entries on a single physical line with key-value descriptors.\n```rust\ninfo!(target: \"login_failures\", ip = ?ip, reason = ?reason, \"User login failed\");\n```",
+  "strength": "Strong",
+  "source": "*Release It!*, Section 17.4 (p. 252)."
+}

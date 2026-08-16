@@ -1,0 +1,13 @@
+{
+  "id": 129,
+  "title": "Using Traits as Static Namespaces",
+  "category": "Speculative Generality",
+  "damaged_code": "```rust\ntrait Utils {\n    fn hash(s: &str) -> String { s.to_string() }\n}\n```",
+  "pattern": "Defining traits containing only static methods and no `self` receiver, used merely as a namespace.",
+  "why_bad": "Confuses traits with modules, adding useless boilerplate.",
+  "detection": "A trait with zero methods receiving `self`, `&self`, or `&mut self`.",
+  "counterexample": "Factory traits designed to construct types.",
+  "fix": "Move static functions to a standard module.",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust for Rustaceans* (2021)."
+}

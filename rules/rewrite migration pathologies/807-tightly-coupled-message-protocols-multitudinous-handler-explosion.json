@@ -1,0 +1,13 @@
+{
+  "id": 807,
+  "title": "Tightly-Coupled Message Protocols (Multitudinous Handler Explosion)",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```rust\n// Exposing 100+ fine-grained network message types, one for each field update\nstruct UpdateFirstNameMsg { id: u64, name: String }\nstruct UpdateLastNameMsg { id: u64, name: String }\nstruct UpdateEmailMsg { id: u64, email: String }\n```",
+  "pattern": "Defining distinct, fine-grained network message schemas and corresponding handler methods for every individual data attribute modification across separate application tiers.",
+  "why_bad": "Adding a single field to the model requires updating all message schemas, modifying multiple serialization formats, and rewriting dozens of protocol handlers across three tiers, creating massive development friction and stopping refactoring [386].",
+  "detection": "A high ratio of separate network message types to domain entities, combined with handlers that map directly to single attribute mutations.",
+  "counterexample": "Valid for performance-critical systems where network bandwidth is extremely constrained and updates must be minimal. Mark as `Context-dependent`.",
+  "fix": "Expose coarse-grained, document-based message protocols or use unified patch-delta payloads to allow cohesive data structures to flow seamlessly [386, 626].",
+  "strength": "Strong",
+  "source": "Clean Architecture, Chapter 17, \"boundaries: drawing lines\" [386]; Designing Data-Intensive Applications, Chapter 4 [626]"
+}

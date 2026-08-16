@@ -1,0 +1,13 @@
+{
+  "id": 329,
+  "title": "Overlapping Range Query Endpoint Bugs",
+  "category": "Semantic Ambiguity",
+  "damaged_code": "```rust\nstruct Range {\n    begin: i32,\n    end: i32, // exclusive\n}\n\nimpl Range {\n    fn overlaps_with(&self, other: &Range) -> bool {\n        // Buggy overlap logic: misses enclosure cases and miscalculates boundaries\n        (self.begin >= other.begin && self.begin <= other.end) ||\n        (self.end >= other.begin && self.end <= other.end)\n    }\n}\n```",
+  "pattern": "Implementing range overlap checks by testing individual endpoints using complex compound inequalities with inclusive comparison operators (`<=`, `>=`) on exclusive endpoints.",
+  "why_bad": "This pattern is structurally bug-prone. It miscalculates adjacent ranges (e.g. claiming `[0, 2)` overlaps with `[2, 4)` because of the `<=` check), and completely fails to detect cases where one range fully encloses the other without its endpoints falling inside.",
+  "detection": "Look for range overlap functions using nested `&&` and `||` inequality checks on `begin`/`end` or `start`/`stop` fields.",
+  "counterexample": "Writing range overlap by checking the negation of non-overlapping states:\n```rust\nimpl Range {\n    fn overlaps_with(&self, other: &Range) -> bool {\n        !(self.end <= other.begin || self.begin >= other.end)\n    }\n}\n```",
+  "fix": "Express range overlap elegantly by checking the negation of the two scenarios where they *cannot* overlap: one ends before the other begins, or vice versa.\n```rust\nstruct Range {\n    begin: i32,\n    end: i32,\n}\n\nimpl Range {\n    fn overlaps_with(&self, other: &Range) -> bool {\n        // They end before we begin OR they begin after we end\n        if other.end <= self.begin { return false; }\n        if other.begin >= self.end { return false; }\n        true\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*The Art of Readable Code* by Dustin Boswell and Trevor Foucher (Chapter 8, pp. 86-87)."
+}

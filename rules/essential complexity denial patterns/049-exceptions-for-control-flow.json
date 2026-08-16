@@ -1,0 +1,13 @@
+{
+  "id": 49,
+  "title": "Exceptions for Control Flow",
+  "category": "Essential Complexity Denial Patterns",
+  "damaged_code": "```rust\n// Using try/catch to check if a value is in range instead of a simple test\nfn get_value_for_period(period_num: usize) -> u32 {\n    match std::panic::catch_unwind(|| {\n        VALUES[period_num]\n    }) {\n        Ok(v) => v,\n        Err(_) => 0,\n    }\n}\n```",
+  "pattern": "Relying on panic handling or try-catch blocks to catch predictable errors that could be checked up front with a simple conditional statement.",
+  "why_bad": "Exceptions are expensive and disrupt the normal execution flow, creating tangled \"spaghetti code\" that is difficult to read, maintain, and test [28:430].",
+  "detection": "Using try-catch blocks or panic catches for index-out-of-bounds, null pointer checks, or simple parsing tasks that have obvious guard tests [28:430].",
+  "counterexample": "```rust\nfn get_value_for_period(period_num: usize) -> u32 {\n    if period_num >= VALUES.len() {\n        return 0;\n    }\n    VALUES[period_num]\n}\n```",
+  "fix": "Replace exception-throwing pathways with predictive guard statements [28:430].",
+  "strength": "Strong",
+  "source": "*Code Complete* (McConnell), Chapter 8 [28:430]; *Refactoring* (Fowler) [22:392]."
+}

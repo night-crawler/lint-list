@@ -1,0 +1,13 @@
+{
+  "id": 291,
+  "title": "Deadlock on Parent-Child Thread Lifecycle Shutdown",
+  "category": "Temporal Coupling Lifecycle Bugs",
+  "damaged_code": "```rust\n// Rust\n// Producer-Consumer threads spawned. Parent triggers shutdown:\nproducer_shutdown_flag.store(true, Ordering::SeqCst);\nconsumer_shutdown_flag.store(true, Ordering::SeqCst);\n\n// Producer exits immediately. Consumer blocks forever on `channel.recv()`!\nproducer_thread.join();\nconsumer_thread.join(); // DEADLOCK! Parent hangs here forever.\n```",
+  "pattern": "A parent thread signals a cooperative producer-consumer child thread pair to shut down, then blocks waiting to join them. The producer thread exits quickly, leaving the consumer thread blocked forever waiting on a channel read from the dead producer.",
+  "why_bad": "The consumer thread never reaches its shutdown check, causing the parent thread to hang indefinitely during join operations.",
+  "detection": "Spawning interdependent threads where shutdown triggers are set, but parent thread joins are executed sequentially without join timeouts.",
+  "counterexample": "Closing the communication channel explicitly before joining, which automatically unblocks the consumer thread with an `End-Of-Stream` error.",
+  "fix": "Never block on joins without timeouts, or use non-blocking channel reads, or ensure the channel itself is closed to unblock the consumer thread.",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* / passage [527]."
+}

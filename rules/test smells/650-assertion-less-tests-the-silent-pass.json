@@ -1,0 +1,13 @@
+{
+  "id": 650,
+  "title": "Assertion-less Tests (The Silent Pass)",
+  "category": "Test Smells",
+  "damaged_code": "```rust\n#[test]\nfn test_user_creation_coverage() {\n    let mut db = InMemoryDb::new();\n    let service = UserService::new(&mut db);\n    // Runs the code but asserts absolutely nothing about the resulting state or return value\n    let _user = service.create_user(\"alice\"); \n}\n```",
+  "pattern": "Test cases that execute a production code path but contain no assertions or validation conditions, relying solely on the absence of a crash (panic) to declare success.",
+  "why_bad": "It represents a major \"coverage theater\" smell. The test passes even if the production code returns incorrect data, performs zero actions, or fails to set up state. It provides zero functional confidence [29].",
+  "detection": "Test functions (`#[test]`) containing zero assertion macros (`assert!`, `assert_eq!`, `should_panic`, etc.) or checking no outputs.",
+  "counterexample": "A test specifically designed to verify that a complex operation does not panic under exceptional inputs, although even this is better verified with explicit outcome checks.",
+  "fix": "Add explicit asserts validating the return values, invariants, or state modifications of the operation [29].",
+  "strength": "Strong",
+  "source": "*   *Building Secure and Reliable Systems*, \"Testing Code: Silent Passes\" (p. 239) [29]"
+}

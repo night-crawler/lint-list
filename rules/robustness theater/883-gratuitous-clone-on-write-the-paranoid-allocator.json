@@ -1,0 +1,13 @@
+{
+  "id": 883,
+  "title": "Gratuitous Clone-on-Write (The Paranoid Allocator)",
+  "category": "Robustness Theater",
+  "damaged_code": "```rust\nstruct ConfigManager {\n    config_data: String,\n}\n\nimpl ConfigManager {\n    // Redundantly copying read-only data out of paranoia\n    pub fn get_config(&self) -> String {\n        self.config_data.clone() \n    }\n}\n```",
+  "pattern": "Cloning or deeply duplicating immutable internal data on every access, when returning a borrowed reference is structurally safe and sufficient.",
+  "why_bad": "It incurs high, unnecessary CPU and memory allocation overhead. This defeats the explicit safety guarantees of a modern borrow checker, replacing structured ownership with defensive duplication theater.",
+  "detection": "The presence of `.clone()` or `.to_owned()` on internal, read-only structures in getter/accessor implementations returning to consumers within the same thread.",
+  "counterexample": "```rust\n// Correct: Safely return a read-only borrow\npub fn get_config(&self) -> &str {\n    &self.config_data\n}\n```",
+  "fix": "Return a borrowed reference (`&T` or `&str`) instead of a full clone, delegating lifecycle and access safety to the compiler.",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code*, Chapter 17, G5 (\"Duplication\") / \"Corollary: Use Copies of Data\" / Steve McConnell, *Code Complete*, Section 8.8."
+}

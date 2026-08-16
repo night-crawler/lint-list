@@ -1,0 +1,13 @@
+{
+  "id": 328,
+  "title": "Double Negation Boolean Flags (`not_` / `disable_`)",
+  "category": "Semantic Ambiguity",
+  "damaged_code": "```rust\nlet not_ready: bool = false;\n\nif !not_ready {\n    println!(\"Proceeding...\");\n}\n```",
+  "pattern": "A boolean variable or function name containing a negative term (`not`, `no`, `non`, `disable`, `invalid`), especially when used in negation expressions (`!`).",
+  "why_bad": "Double negatives (`!not_ready` or `!disabled`) require high cognitive load to parse, are extremely prone to logical inversion errors, and obscure the positive state of the system.",
+  "detection": "Match boolean variables or functions prefixed with negative words or containing negatives when combined with logical NOT operators.",
+  "counterexample": "Using positive booleans that can be negated cleanly at the call site:\n```rust\nlet is_ready: bool = true;\nif is_ready { ... }\n```",
+  "fix": "Refactor the boolean to represent the positive state of the entity.\n```rust\nlet is_ready: bool = true;\n\nif is_ready {\n    println!(\"Proceeding...\");\n}\n```",
+  "strength": "Strong",
+  "source": "*The Art of Readable Code* by Dustin Boswell and Trevor Foucher (Chapter 3, p. 26); *Code Complete* by Steve McConnell (p. 607)."
+}

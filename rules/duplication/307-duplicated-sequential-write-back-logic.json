@@ -1,0 +1,13 @@
+{
+  "id": 307,
+  "title": "Duplicated Sequential Write-Back Logic",
+  "category": "Duplication",
+  "damaged_code": "```rust\nfn save_order(order: &Order, conn: &Connection) {\n    conn.execute(\"UPDATE Order SET status = 'Saved' WHERE id = ?1\", params![order.id]);\n    for line in &order.lines {\n        conn.execute(\"UPDATE OrderLine SET qty = ?1 WHERE id = ?2\", params![line.qty, line.id]);\n    }\n}\n```",
+  "pattern": "Manually coding direct update queries to database tables inside every business transaction script or endpoint.",
+  "why_bad": "Knowledge of database change tracking is scattered. If an endpoint fails to manually save a modified nested record, the database becomes corrupt and inconsistent.",
+  "detection": "Repeated manual SQL update statements or transactional sequential saves written within separate controller methods.",
+  "counterexample": "Bulk migration scripts.",
+  "fix": "Use a Unit of Work pattern to track in-memory entity changes automatically and perform a single, atomic flush.",
+  "strength": "Strong",
+  "source": "*Patterns of Enterprise Application Architecture*, \"Unit of Work\", p. 184."
+}

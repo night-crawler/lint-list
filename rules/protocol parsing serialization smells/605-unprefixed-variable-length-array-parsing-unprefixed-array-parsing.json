@@ -1,0 +1,13 @@
+{
+  "id": 605,
+  "title": "Unprefixed Variable-Length Array Parsing (UNPREFIXED_ARRAY_PARSING)",
+  "category": "Protocol Parsing Serialization Smells",
+  "damaged_code": "```rust\n// Unsafe: Scanning raw bytes without length prefix, looking for a terminator byte\nfn parse_packet_data(bytes: &[u8]) -> Vec<u8> {\n    let mut i = 0;\n    while bytes[i] != 0x00 { // Brittle: Risks out-of-bounds index panic or SEGFAULT\n        i += 1;\n    }\n    bytes[..i].to_vec()\n}\n```",
+  "pattern": "Parsing variable-length byte blocks or string slices by scanning sequentially for a sentinel terminator byte (e.g., null-termination) instead of using an explicit length prefix.",
+  "why_bad": "If the sentinel terminator byte is corrupted, missing, or omitted by a faulty transmitter, the parser will read past the allocated buffer bounds. This leads to crashes, buffer overflows, or severe security read violations (CWE-125/CWE-787).",
+  "detection": "Look for while/for loops that read sequentially from raw byte indices until a sentinel byte is found, without performing safe length bounds checks against the buffer.",
+  "counterexample": "```rust\n// Valid: Length-prefixed UCSD/Pascal style parsing\nfn parse_packet_data(bytes: &[u8]) -> Option<Vec<u8>> {\n    if bytes.len() < 2 { return None; }\n    let length = u16::from_be_bytes([bytes[0], bytes[1]]) as usize;\n    if bytes.len() < 2 + length { return None; } // Strict validation\n    Some(bytes[2..2 + length].to_vec())\n}\n```",
+  "fix": "Adopt length-prefixed (Pascal-style) variable-size layout packing, validating the buffer capacity upfront before starting sequential array reads.",
+  "strength": "Strong",
+  "source": "*Alex Petrov - Database Internals (2019)*, Chapter 3 (Strings and Variable-Size Data); *Paul McKenney - Is Parallel Programming Hard (Perfbook, 2019)*, Chapter 13."
+}

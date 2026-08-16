@@ -1,0 +1,13 @@
+{
+  "id": 555,
+  "title": "Hand-tuned Atomic Ordering (Relaxed Atomics)",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\nuse std::sync::atomic::{AtomicU32, Ordering};\nstatic COUNTER: AtomicU32 = AtomicU32::new(0);\n// Using Relaxed to \"speed up updates\" without verifying memory synchronization\nCOUNTER.fetch_add(1, Ordering::Relaxed);\n```",
+  "pattern": "Manually specifying weak memory ordering parameters (like `Ordering::Relaxed` or `Acquire`/`Release`) on shared atomics to \"avoid memory fence overhead.\"",
+  "why_bad": "Weak memory ordering introduces extremely subtle concurrency bugs, instruction reordering hazards, and race conditions that are nearly impossible to debug. The performance difference on x86 architectures is zero, as the CPU enforces strong consistency in hardware [15, 31, 329].",
+  "detection": "Using atomic operations with `Ordering::Relaxed` or `Acquire`/`Release` on atomics that synchronize multi-thread execution blocks without formal proof.",
+  "counterexample": "```rust\nCOUNTER.fetch_add(1, Ordering::SeqCst); // Strongly consistent and safe\n```",
+  "fix": "Default to sequential consistency (`Ordering::SeqCst`) which is highly secure, and only downgrade after profiling and validation.",
+  "strength": "Strong",
+  "source": "*1701.00854v6.pdf*, Chapter 15, Section 15.2.6 (p. 15, 31); *Code Complete*, Section 2.1 (p. 329)."
+}

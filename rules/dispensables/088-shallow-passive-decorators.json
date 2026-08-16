@@ -1,0 +1,13 @@
+{
+  "id": 88,
+  "title": "Shallow Passive Decorators",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nstruct EventLogger<W: Write> {\n    writer: W,\n}\nimpl<W: Write> Write for EventLogger<W> {\n    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {\n        self.writer.write(buf)\n    }\n    fn flush(&mut self) -> std::io::Result<()> {\n        self.writer.flush()\n    }\n}\n```",
+  "pattern": "A decorator/wrapper struct that implements a trait by forwarding every single method call to the wrapped type with zero modifications.",
+  "why_bad": "It adds cognitive weight, nesting complexity, and instantiation boilerplate without adding any behavior, logging, safety, or transformation.",
+  "detection": "Struct implementing a trait by forwarding all calls directly to an inner type implementing the same trait.",
+  "counterexample": "Decorators that add dynamic behavior, like logging, buffering, or encryption, in at least one of the trait methods.",
+  "fix": "Remove the decorator layer and use the wrapped type directly.",
+  "strength": "Strong",
+  "source": "Michael C. Feathers, *Working Effectively with Legacy Code* (2013), Chapter 7 (\"Wrap Class\"), p. 225."
+}

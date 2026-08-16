@@ -1,0 +1,13 @@
+{
+  "id": 636,
+  "title": "Insecure Session Identifier Hashing (Low Entropy/Collision Risk)",
+  "category": "Security Boundary Failures",
+  "damaged_code": "```rust\nfn generate_session_hash(user_id: &str) -> String {\n    // Fast, non-cryptographic hash (FNV) used to represent session key\n    let mut hasher = fnv::FnvHasher::default();\n    hasher.write(user_id.as_bytes());\n    format!(\"{:x}\", hasher.finish())\n}\n```",
+  "pattern": "Representing or validating session states using fast, non-cryptographic, low-entropy hashing algorithms.",
+  "why_bad": "Non-cryptographic hashing algorithms are designed for speed, not collision resistance or unpredictability. Attackers can trivially compute collisions or brute-force user sessions, leading to privilege hijacking.",
+  "detection": "The invocation of non-cryptographic hashes (`Fnv`, `MurmurHash`, `xxhash`) inside session generation methods.",
+  "counterexample": "```rust\nfn generate_session_hash(session_id: &str) -> String {\n    // Cryptographically secure hash\n    sha256::hash(session_id.as_bytes())\n}\n```",
+  "fix": "Represent session tokens using high-entropy secure hash algorithms (such as `SHA-256` or `SHA-3`) with cryptographically secure salts.",
+  "strength": "Strong",
+  "source": "`Heather Adkins et al. - Building Secure and Reliable Systems (2020)`, Ch 18, p. 434."
+}

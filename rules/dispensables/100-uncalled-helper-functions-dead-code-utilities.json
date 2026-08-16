@@ -1,0 +1,13 @@
+{
+  "id": 100,
+  "title": "Uncalled Helper Functions (Dead Code Utilities)",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nfn private_formatting_helper(s: &str) -> String {\n    format!(\"[{}]\", s)\n}\n```",
+  "pattern": "Private helper functions or methods that are completely uncalled inside or outside their defining module.",
+  "why_bad": "It is pure waste. It consumes file space, complicates refactoring, and rots silently without contributing any value.",
+  "detection": "Private items (lacking `pub`) that have zero local references or call sites.",
+  "counterexample": "Public APIs or routines designed to be called by external integration tests.",
+  "fix": "Ruthlessly delete the uncalled function.",
+  "strength": "Strong",
+  "source": "Sandi Metz, *Practical Object-Oriented Design* (2019), Chapter 9, p. 179; Robert C. Martin, *Clean Code*, Chapter 17, G9."
+}

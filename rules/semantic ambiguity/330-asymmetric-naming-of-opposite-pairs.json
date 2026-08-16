@@ -1,0 +1,13 @@
+{
+  "id": 330,
+  "title": "Asymmetric Naming of Opposite Pairs",
+  "category": "Semantic Ambiguity",
+  "damaged_code": "```rust\nlet range = (begin_index, last_index); // Inconsistent opposites\n```",
+  "pattern": "Defining opposite variables, parameters, or struct fields using mismatched pairs (e.g., `begin` with `last`, `first` with `end`, or `min` with `limit`).",
+  "why_bad": "Departing from standard, symmetric linguistic opposites increases cognitive load and causes maintainers to misinterpret range boundaries (e.g., assuming `last` is exclusive because it is paired with `begin`).",
+  "detection": "Match structs, tuples, or functions defining range limits with asymmetric opposites. Symmetric pairs are: `begin`/`end`, `first`/`last`, `min`/`max`, `locked`/`unlocked`.",
+  "counterexample": "Symmetric opposites:\n```rust\nlet range = (first_index, last_index);\n```",
+  "fix": "Rename variables to form symmetric linguistic pairs.\n```rust\nlet range = (begin_index, end_index);\n// Or\nlet range = (first_index, last_index);\n```",
+  "strength": "Strong",
+  "source": "*Code Complete* by Steve McConnell (p. 193)."
+}

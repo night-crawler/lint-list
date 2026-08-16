@@ -1,0 +1,13 @@
+{
+  "id": 598,
+  "title": "Language-Specific Binary Serialization (LANGUAGE_SPECIFIC_SERIALIZATION)",
+  "category": "Protocol Parsing Serialization Smells",
+  "damaged_code": "```rust\n// Using compiler-internal format binders directly for network boundaries/persistence\nfn save_session_state<T: serde::Serialize>(state: &T) -> Vec<u8> {\n    // Rust-specific non-standard format (e.g. raw bincode without layout versioning)\n    bincode::serialize(state).unwrap()\n}\n```",
+  "pattern": "Using language-specific, VM-specific, or compiler-specific serialization frameworks (such as Java's `Serializable`, Python's `pickle`, Ruby's `Marshal`, or native binary compilers without standard wire layout) to store state across persistence or network boundaries.",
+  "why_bad": "1. It ties the architecture to a single language runtime. 2. Severe security vulnerability (CWE-502): deserialization of untrusted payloads triggers arbitrary class/code execution. 3. Compilation adjustments or minor dependency refactors immediately invalidate historical serialized byte arrays, causing runtime decoding failures.",
+  "detection": "Look for serialization markers that lack an explicit, language-agnostic schema description (e.g., standard VM serialization streams or untrusted raw binary serialization wrappers at system boundaries).",
+  "counterexample": "```rust\n// Valid: Explicit, language-neutral schema serialization via Protocol Buffers\n#[derive(Clone, PartialEq, ::prost::Message)]\npub struct SessionState {\n    #[prost(string, tag=\"1\")]\n    pub user_id: ::prost::alloc::string::String,\n}\n```",
+  "fix": "Adopt standard, language-neutral, schema-driven encodings like Protocol Buffers, Apache Thrift, or Avro, separating the physical transport schema from VM-specific objects.",
+  "strength": "Strong",
+  "source": "*Martin Kleppmann - Designing Data-Intensive Applications (2017)*, Chapter 4; *Mark Richards & Neal Ford - Fundamentals of Software Architecture (2020)*, Chapter 9."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 727,
+  "title": "Dynamic Object Model Emulation",
+  "category": "Inner Platform Effect",
+  "damaged_code": "```\nuse std::collections::HashMap;\n\n// Simulating object-oriented inheritance via manual hashing maps\nstruct Object {\n    class_name: String,\n    methods: HashMap<String, Box<dyn Fn(&Object)>>,\n}\n\nimpl Object {\n    fn call(&self, method: &str) {\n        if let Some(m) = self.methods.get(method) {\n            (m)(self);\n        }\n    }\n}\n```",
+  "pattern": "Re-implementing polymorphic method dispatch by storing closures in a key-value hash map.",
+  "why_bad": "It destroys compiler calling optimizations, prevents type-checking of parameter bounds, and causes runtime panics if a method lookup string is misspelled.",
+  "detection": "The presence of structs that contain maps of function pointers or closures called via string lookups.",
+  "counterexample": "`None`. Rust's native static or dynamic dispatch should always be preferred over manual maps of closures.",
+  "fix": "Use Rust's native polymorphic features like traits or enums.\n\n```\n// Utilizing native trait dispatch\npub trait Counter {\n    fn get(&self) -> u32;\n    fn inc(&mut self);\n}\n\npub struct ConcreteCounter {\n    x: u32,\n}\n\nimpl Counter for ConcreteCounter {\n    fn get(&self) -> u32 { self.x }\n    fn inc(&mut self) { self.x += 1; }\n}\n```",
+  "strength": "Strong",
+  "source": "Benjamin C. Pierce - _Types and Programming Languages_ (2002, MIT).pdf, Chapter 18 \"Imperative Objects\"."
+}

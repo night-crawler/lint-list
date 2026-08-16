@@ -1,0 +1,13 @@
+{
+  "id": 594,
+  "title": "Regex-as-Grammar Parser (REGEX_AS_GRAMMAR_PARSER)",
+  "category": "Protocol Parsing Serialization Smells",
+  "damaged_code": "```rust\nuse regex::Regex;\n\nfn parse_iso_time(s: &str) -> Option<(i32, i32, i32)> {\n    // Massive, unreadable, non-composable regex used to parse structured time\n    let re = Regex::new(r\"^(\\d{4})-(?:(\\d{2}))?-(?:(\\d{2}))?T(?:(\\d{2})):(?:(\\d{2})):(?:(\\d{2}))?(?:\\.(\\d+))?(?:Z|([+-]\\d{2}:\\d{2}))?$\").unwrap();\n    let caps = re.captures(s)?;\n    // Complex, brittle index-based extraction logic\n    Some((\n        caps.get(1)?.as_str().parse().ok()?,\n        caps.get(4)?.as_str().parse().ok()?,\n        caps.get(5)?.as_str().parse().ok()?,\n    ))\n}\n```",
+  "pattern": "Using highly complex, nested, or unreadable regular expressions with capture groups as a substitute for a structured parser or recursive-descent grammar when reading nested, optional, or hierarchical formats.",
+  "why_bad": "Regular expressions are non-composable; they cannot be cleanly combined to build larger formats. They are extremely hard to test and maintain, and small changes in target formats lead to silent capture-index mismatches. Moreover, they suffer from catastrophic backtracking bugs and fail on subtle quoting/escaping rules.",
+  "detection": "Look for complex nested regular expressions (especially those containing multiple optional groups, lookaheads, or non-capturing groups) whose captured indices are manually parsed and converted to structure fields.",
+  "counterexample": "```rust\n// Valid: Parsing with structured combinators (e.g., nom) or a dedicated parser\nfn parse_iso_time(s: &str) -> Result<chrono::DateTime<chrono::Utc>, chrono::ParseError> {\n    chrono::DateTime::parse_from_rfc3339(s).map(|dt| dt.with_timezone(&chrono::Utc))\n}\n```",
+  "fix": "Refactor to use a recursive-descent parser, parser combinators (e.g., `nom`), or a dedicated serialization library where format specifications are cleanly decoupled and composable.",
+  "strength": "Strong",
+  "source": "*Chris Hanson & Gerald Sussman - Software Design for Flexibility (2021)*, Section 2.2; *Andrew Hunt & David Thomas - The Pragmatic Programmer, 20th Anniversary Edition (2019)*, Appendix 2 (Answer 8)."
+}

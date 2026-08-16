@@ -1,0 +1,13 @@
+{
+  "id": 503,
+  "title": "Loop Jamming Candidate (Separated Redundant Iteration)",
+  "category": "Performance Smells",
+  "damaged_code": "```vb\nFor i = 0 To count - 1\n    names(i) = \"\"\nNext\n'... other operations\nFor i = 0 To count - 1\n    earnings(i) = 0\nNext\n```",
+  "pattern": "Two separate loops iterating over the exact same index range and modifying adjacent arrays or structures.",
+  "why_bad": "Incurs double the loop branch overhead and requires loading the indices/cache lines into memory twice instead of coalescing accesses.",
+  "detection": "Sequential loop blocks with identical bounds and loop variables.",
+  "counterexample": "Jamming the loops introduces order-of-execution bugs or degrades cache performance due to too many variables in the combined loop body. `Contextual`.",
+  "fix": "Jam/merge the two loop bodies into a single loop block.",
+  "strength": "Strong",
+  "source": "*Code Complete*, Chapter 26, \"Jamming\" (p. 479-480)."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 520,
+  "title": "Shallow Layer Condition Propagation (Redundant Boundary Validation)",
+  "category": "Performance Smells",
+  "damaged_code": "```cpp\nvoid Buffer::alloc(size_t len) {\n    if (!allocateAppend(len)) return; // Check 1\n}\nbool Buffer::allocateAppend(size_t len) {\n    if (!Allocation::allocateAppend(len)) return false; // Check 2\n    return true;\n}\n```",
+  "pattern": "Multiple shallow abstraction layers with identical signatures sequentially checking the same precondition boundary values.",
+  "why_bad": "It creates design complexity and adds execution cost on hot paths by executing redundant branch conditional assembly instructions over and over.",
+  "detection": "Call stacks composed of methods passing transient bounds parameters down while repetitively validating success states.",
+  "counterexample": "Multi-process/process boundary checks where security sandboxing is required. `Context-dependent`.",
+  "fix": "Design deeper classes with unified boundary validation at the entry points.",
+  "strength": "Contextual",
+  "source": "*A Philosophy of Software Design*, Chapter 20 (p. 176-177)."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 218,
+  "title": "Representational Duplication / API Representation Leaks",
+  "category": "Low Cohesion",
+  "damaged_code": "```rust\nstruct UserClient;\n\nimpl UserClient {\n    // Duplicated external representation scattered across separate methods\n    fn get_user_name(&self, json_payload: &str) -> String {\n        json_payload.split(\"\\\"name\\\":\").nth(1).unwrap().to_string()\n    }\n\n    fn get_user_age(&self, json_payload: &str) -> u32 {\n        json_payload.split(\"\\\"age\\\":\").nth(1).unwrap().parse().unwrap()\n    }\n}\n```",
+  "pattern": "Knowledge of an external API's response schema fields is duplicated and scattered across multiple independent methods, rather than being encapsulated in a single parsing interface.",
+  "why_bad": "It creates multiple DRY violations. If the external API updates its response format (e.g., changes `\"name\"` to `\"full_name\"`), multiple independent client methods break simultaneously, complicating upgrades.",
+  "detection": "The same API schema paths, JSON key literals, or payload structures are referenced across multiple separate methods.",
+  "counterexample": "Standard parsing macros or serialization templates that group mappings in a single localized definition.",
+  "fix": "Parse the external payload into a single, dedicated type at the system boundary, isolating external schema details from the rest of the application.\n```rust\n#[derive(Deserialize)]\nstruct ExternalUser {\n    name: String,\n    age: u32,\n}\n```",
+  "strength": "Strong",
+  "source": "*Andrew Hunt & David Thomas - The Pragmatic Programmer, Chapter 2 (A Pragmatic Approach), \"REPRESENTATIONAL DUPLICATION\"*"
+}

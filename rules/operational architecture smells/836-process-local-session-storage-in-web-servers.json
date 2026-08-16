@@ -1,0 +1,13 @@
+{
+  "id": 836,
+  "title": "Process-Local Session Storage in Web Servers",
+  "category": "Operational Architecture Smells",
+  "damaged_code": "```rust\nthread_local! {\n    static SESSIONS: RefCell<HashMap<String, UserSession>> = RefCell::new(HashMap::new());\n}\n```",
+  "pattern": "Storing user session state in thread-local storage or process-local global variables in a horizontally scaled server environment.",
+  "why_bad": "Couples user state to a single server instance/thread. This forces the use of sticky sessions, which degrades load balancing, and causes loss of session data if the instance crashes or restarts.",
+  "detection": "HTTP request handlers reading or writing from local static or thread-local maps for user-specific workflow state.",
+  "counterexample": "Process-local caches for strictly read-only, shared immutable static data.",
+  "fix": "Store session state in an external shared database or cached key-value store, or use client-side signed tokens.",
+  "strength": "Strong",
+  "source": "*Release It!*, \"Users,\" p. 161; *Patterns of Enterprise Application Architecture*, \"Server Session State,\" p. 458."
+}

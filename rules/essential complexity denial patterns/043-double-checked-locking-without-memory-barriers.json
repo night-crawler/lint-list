@@ -1,0 +1,13 @@
+{
+  "id": 43,
+  "title": "Double-Checked Locking without Memory Barriers",
+  "category": "Essential Complexity Denial Patterns",
+  "damaged_code": "```rust\n// Double-checked locking with raw static mut variables\nstatic mut INSTANCE: Option<Singleton> = None;\nunsafe {\n    if INSTANCE.is_none() {\n        acquire_lock();\n        if INSTANCE.is_none() {\n            INSTANCE = Some(Singleton::new());\n        }\n        release_lock();\n    }\n}\n```",
+  "pattern": "Performing an unsynchronized read of a shared pointer/variable, then acquiring a lock, and verifying the variable again before initializing it, using non-atomic mutable accesses.",
+  "why_bad": "Compilers and CPUs reorder instructions for performance. Without explicit memory barriers, another thread may observe a partially initialized object (e.g., the pointer is allocated, but fields are not populated), causing unpredictable crashes when reading the fields [39:62].",
+  "detection": "Performing an unsynchronized conditional check on a non-atomic mutable variable before entering a synchronized lock block that writes to the same variable [39:62].",
+  "counterexample": "```rust\nuse std::sync::Once;\nstatic INIT: Once = Once::new();\nstatic mut INSTANCE: Option<Singleton> = None;\nINIT.call_once(|| {\n    unsafe { INSTANCE = Some(Singleton::new()); }\n});\n```",
+  "fix": "Utilize standard language primitives (like `std::sync::Once` or atomic types with `SeqCst`/`Acquire`/`Release` ordering) that emit the necessary memory fence instructions [39:62].",
+  "strength": "Strong",
+  "source": "*Database Internals* (Petrov), Chapter 8 [39:62]; *Types and Programming Languages* (Pierce) [3:301]."
+}

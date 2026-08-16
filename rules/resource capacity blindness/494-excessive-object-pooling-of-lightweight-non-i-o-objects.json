@@ -1,0 +1,13 @@
+{
+  "id": 494,
+  "title": "Excessive Object Pooling of Lightweight Non-I/O Objects",
+  "category": "Resource Capacity Blindness",
+  "damaged_code": "```rust\nstruct Point { x: i32, y: i32 }\n// Creating an complex thread-safe pool for small, cheap structs\nlet point_pool = object_pool::Pool::new(1024, || Point { x: 0, y: 0 });\n```",
+  "pattern": "Implementing or instantiating thread-safe object pools (e.g., lock-guarded pools) for lightweight, short-lived memory structures that do not represent external system sockets, threads, or descriptors.",
+  "why_bad": "Object pooling introduces significant bookkeeping, synchronization, and atomic instruction overhead [237]. For ordinary, cheap memory-only objects, the CPU overhead required to synchronize pool checkouts is dramatically worse than simply constructing/allocating the object on the stack or heap [237]. Object pooling should be strictly reserved for heavy I/O connections or OS threads [237].",
+  "detection": "Identify instantiations of object pools where the pooled type does not encapsulate an I/O resource, database connection, or system process thread.",
+  "counterexample": "```rust\nstruct Point { x: i32, y: i32 }\n// Directly allocate small struct on stack/heap\nlet p = Point { x: 10, y: 20 };\n```",
+  "fix": "Do not pool cheap, lightweight, memory-only objects; let the compiler, allocator, and stack handle standard allocation/dropping [238].",
+  "strength": "Strong",
+  "source": "Michael T. Nygard, *Release It!*, Chapter 10 (Keep It Up) / passages [237, 238]."
+}

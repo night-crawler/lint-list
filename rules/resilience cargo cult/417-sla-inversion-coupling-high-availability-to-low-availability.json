@@ -1,0 +1,13 @@
+{
+  "id": 417,
+  "title": "SLA Inversion (Coupling High Availability to Low Availability)",
+  "category": "Resilience Cargo Cult",
+  "damaged_code": "```rust\nfn process_checkout(&self, cart: Cart) -> CheckoutResult {\n    let payment = self.payment_gateway.charge(); // Target SLA: 99.99%\n    self.analytics.log_checkout_sync(cart); // Target SLA: 95% (Sync dependency!)\n    CheckoutResult::Success\n}\n```",
+  "pattern": "Hard-coupling a high-availability system (e.g., checkout or core login targeting 99.99%) to a low-availability service (e.g., recommendation engine or analytics targeting 95% availability) such that failure of the low-availability system causes the high-availability system to fail.",
+  "why_bad": "The aggregate reliability of serial components is the product of their availabilities. A hard dependency on a 95% available system means your core high-availability system cannot exceed 95% availability, regardless of how redundant your core servers are [462].",
+  "detection": "Identify synchronous, blocking calls to external services with lower target availabilities inside critical transaction paths.",
+  "counterexample": "```rust\nfn process_checkout(&self, cart: Cart) -> CheckoutResult {\n    let payment = self.payment_gateway.charge(); \n    let analytics_client = self.analytics.clone();\n    tokio::spawn(async move {\n        let _ = analytics_client.log_checkout_async(cart).await; // Soft dependency\n    });\n    CheckoutResult::Success\n}\n```",
+  "fix": "Decouple from lower-availability services by making them soft dependencies (handling failures gracefully or performing the calls asynchronously outside the critical path).",
+  "strength": "Strong",
+  "source": "Michael T. Nygard, *Release It!*, page 110 / passage [462]."
+}

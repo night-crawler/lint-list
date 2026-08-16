@@ -1,0 +1,13 @@
+{
+  "id": 867,
+  "title": "Mixing Units of Measurement",
+  "category": "Correctness By Convention",
+  "damaged_code": "```rust\n// Javascript-like\nvar start = (new Date()).getTime();\n// ... execute work\nvar elapsed = (new Date()).getTime() - start;\ndocument.writeln(\"Load time was: \" + elapsed + \" seconds\"); // BUG: elapsed is in milliseconds!\n```",
+  "pattern": "Representing a physical measurement (time, bytes, distance) as a raw primitive type without explicitly encoding units in the type or parameter names.",
+  "why_bad": "There is no compiler-enforced check on units. Callers can easily pass milliseconds to functions expecting seconds, or pounds instead of kilograms (e.g. Gimli Glider airplane crash), causing catastrophic calculation or safety failures.",
+  "detection": "Variables storing units (such as seconds, milliseconds, bytes, kilograms) are declared as raw numeric primitives (i32, f64) without unit wrappers or name tags.",
+  "counterexample": "Using custom types or encoding the unit directly in the variable name as a suffix: `elapsed_ms`.",
+  "fix": "Encode the unit suffix in the variable name: `start_ms` and `elapsed_ms`, or use strong units of measure systems.",
+  "strength": "Strong",
+  "source": "The Art of Readable Code, Chapter 2 (Values with Units) [960-961]; or Code Complete, Section 11.2 & 32.3 [863-864]."
+}

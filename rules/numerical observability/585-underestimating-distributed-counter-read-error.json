@@ -1,0 +1,13 @@
+{
+  "id": 585,
+  "title": "Underestimating Distributed Counter Read Error",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\nfn read_total_count(thread_counters: &[AtomicU64]) -> u64 {\n    thread_counters.iter().map(|c| c.load(Ordering::Relaxed)).sum()\n}\n```",
+  "pattern": "Naively summing thread-local counters sequentially to obtain a global total and assuming the read error is zero.",
+  "why_bad": "Because the counter summation is not instantaneous and consumes time ($\\Delta$), and concurrent threads continue to increment at rate ($r$), the values are read out-of-sync. The mathematically expected error in the total count read is $r\\Delta / 2$. Failing to account for this error can lead to system bugs if invariants rely on absolute exact values.",
+  "detection": "Sequential non-synchronized iterations over thread-local counters used for logic checks rather than raw diagnostic stats.",
+  "counterexample": "Valid if the system is fully paused during read, or if absolute precision is not required (e.g., purely statistical counters).",
+  "fix": "Accept that the count is an approximation, or use synchronized read sweeps if exactness is required.",
+  "strength": "Strong` — mathematically demonstrates a non-zero read error bounded by $r\\Delta / 2$.",
+  "source": "*1701.00854v6.pdf*, Answer to Quick Quiz 5.17, Appendix E, p. 492."
+}

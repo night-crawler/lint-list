@@ -1,0 +1,13 @@
+{
+  "id": 168,
+  "title": "Combinatorial Finder Repositories (API Explosion)",
+  "category": "Indirection Astronautics",
+  "damaged_code": "```rust\npub trait CustomerRepository {\n    fn find_by_name(&self, name: &str) -> Vec<Customer>;\n    fn find_by_name_and_age(&self, name: &str, age: u32) -> Vec<Customer>;\n    fn find_by_name_age_and_status(&self, name: &str, age: u32, status: &str) -> Vec<Customer>;\n}\n```",
+  "pattern": "Adding a highly specialized finder query method to a Repository interface for every single combination of parameters required by views, leading to an explosion of repository APIs.",
+  "why_bad": "*   **Bloated Interfaces:** The repository becomes a shallow interface that exposes dozens of highly specific SQL mappings, destroying the clean collection-like abstraction.\n*   **High Coupling:** Every new query parameter forces modifications across both the Repository trait and all its database implementations.",
+  "detection": "A repository interface containing $\\ge 5$ finder methods with names matching combinations of attribute names (e.g., `find_by_A_and_B`).",
+  "counterexample": "**Stable Key Lookups:** Basic lookups by unique primary keys or indexes (e.g., `find_by_id`, `find_by_email`) are valid.",
+  "fix": "Encapsulate query filters using a Query Object or Specification pattern, allowing callers to dynamically build queries on top of a single, clean API.\n```rust\npub struct Query {\n    name: Option<String>,\n    age: Option<u32>,\n    status: Option<String>,\n}\n\nimpl CustomerRepository {\n    pub fn find(&self, query: Query) -> Vec<Customer> {\n        // Builds query dynamically\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Fowler, *Patterns of Enterprise Application Architecture*, Chapter 10 \"Repository\" & Evans, *Domain-Driven Design*, Chapter 6 \"Repositories\"."
+}

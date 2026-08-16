@@ -1,0 +1,13 @@
+{
+  "id": 429,
+  "title": "Stale Snapshot Illusion via Blind Writes",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```sql\n-- Transaction 1\nSELECT price FROM inventory WHERE id = 1; -- Reads $10\n-- Transaction 2 concurrently updates price to $20\n-- Transaction 1 blindly writes back based on stale value\nUPDATE inventory SET price = 10 * 1.1 WHERE id = 1; -- Price set to $11, losing $20\n```",
+  "pattern": "Performing an update to a database row or shared memory value based on a previously read snapshot without checking if the value was modified concurrently.",
+  "why_bad": "It allows stale reads to overwrite up-to-date concurrent writes, causing lost updates and data inconsistency.",
+  "detection": "A read operation followed by a write to the same identifier where the write does not include a comparison to the read value or use a CAS pattern.",
+  "counterexample": "Optimistic concurrency control (OCC) using version stamps or conditional checks.",
+  "fix": "Use a conditional write check on the expected version or value.\n```sql\nUPDATE inventory SET price = 11, version = 2 WHERE id = 1 AND version = 1;\n```",
+  "strength": "Contextual",
+  "source": "Alex Petrov Ch 5, Kleppmann Ch 7"
+}

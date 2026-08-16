@@ -1,0 +1,13 @@
+{
+  "id": 895,
+  "title": "Universal Exception Handlers Swallowing Fatal Failures",
+  "category": "Local Optimization",
+  "damaged_code": "```rust\npub fn init_subsystem() {\n    // Catches and suppresses everything, assuming it makes the system robust.\n    if let Err(e) = std::panic::catch_unwind(|| {\n        allocate_gigantic_buffer();\n    }) {\n        println!(\"Ignored error: {:?}\", e);\n    }\n}\n```",
+  "pattern": "A top-level or library wrapper surrounds all execution paths with a universal \"catch-all\" exception block to prevent any panic/crash, silently continuing execution with fallback state.",
+  "why_bad": "While locally giving the illusion of a highly robust system that \"never crashes,\" it is an anti-pattern. If a system runs out of memory (OOM), out of storage space, or hits a corrupted memory invariant, catching and swallowing the error keeps the process alive in a zombie state. The handler itself might try to allocate memory (which will fail), and the program will enter an infinite error loop. It is always better to fail-fast.",
+  "detection": "A top-level catch-all block swallowing serious, unrecoverable system failures (e.g., OOM, heap exhaustion) or globally suppressing compiler/runtime panics, without immediately terminating the process.",
+  "counterexample": "Catching recoverable transaction-level errors (like a parsed socket timeout) is valid. Mark `Context-dependent`.",
+  "fix": "Let fatal system failures panic and crash the process, relying on an external supervisor process (like systemd, kubernetes, or an Erlang-style supervisor) to cleanly restart the system.\n```rust\npub fn init_subsystem() {\n    // Fail fast on fatal errors\n    let buffer = allocate_gigantic_buffer().expect(\"Fatal: Out of Memory!\");\n}\n```",
+  "strength": "Strong",
+  "source": "John K. Ousterhout, *A Philosophy of Software Design*, Chapter 10 \"Define Errors Out Of Existence\" (p. 48) / Heather Adkins et al., *Building Secure and Reliable Systems*, Chapter 13 \"Designing for Defense\" (p. 221)."
+}

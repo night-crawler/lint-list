@@ -1,0 +1,13 @@
+{
+  "id": 507,
+  "title": "Database N+1 Query Smell (Redundant Roundtrips)",
+  "category": "Performance Smells",
+  "damaged_code": "```ruby\n# ORM ActiveRecord style\nemployees = Employee.all # Query 1\nemployees.each do |employee|\n    skills = employee.skills # Queries N\nend\n```",
+  "pattern": "Accessing a lazy-loaded collection attribute of multiple parent objects inside a loop, triggering one SQL query for the list and then N individual SQL queries to fetch each member.",
+  "why_bad": "Forces N independent network roundtrips to the database engine, incurring massive communication overhead and wasting query optimizer capacity on repetitive queries.",
+  "detection": "Loops iterating over a persistent database entity array where each step triggers a database query based on the current element's primary or foreign key.",
+  "counterexample": "The database is fully cached in memory, or the collection is tiny (< 2 elements). `Context-dependent`.",
+  "fix": "Eager-load or join the dependent collections in a single SQL query (`SELECT ... JOIN ...`) or compile-time views.",
+  "strength": "Strong",
+  "source": "*Release It!*, Section 9.7 (p. 246 / 537) and *Patterns of Enterprise Application Architecture*, Structural Mapping Patterns (p. 563-565)."
+}

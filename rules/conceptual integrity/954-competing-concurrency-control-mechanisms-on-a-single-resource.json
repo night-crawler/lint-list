@@ -1,0 +1,13 @@
+{
+  "id": 954,
+  "title": "Competing Concurrency-Control Mechanisms on a Single Resource",
+  "category": "Conceptual Integrity",
+  "damaged_code": "```rust\nstatic mut PIE_COUNT: u32 = 10;\nstatic PIE_MUTEX: Mutex<u32> = Mutex::new(10);\n\nfn take_slice_waiter1() {\n    let mut count = PIE_MUTEX.lock().unwrap();\n    *count -= 1;\n}\nfn take_slice_waiter2() {\n    unsafe { PIE_COUNT -= 1; } // Race condition bypasses mutex!\n}\n```",
+  "pattern": "Accessing or protecting a shared resource using different concurrency or synchronization mechanisms in different parts of the system.",
+  "why_bad": "It breaks the data safety guarantee. If even a single call site bypasses the lock or transaction convention, the entire resource is exposed to data races and memory corruption.",
+  "detection": "Identify raw pointer, `unsafe`, or non-synchronized accesses to a static variable that is elsewhere protected by a standard mutex or lock wrapper.",
+  "counterexample": "None. Mixing locked and lock-free writes on the same raw memory breaks safety. `Strong`.",
+  "fix": "Encapsulate the raw resource completely, exposing only a synchronized API that forces all callers to acquire the lock.",
+  "strength": "Strong",
+  "source": "*The Pragmatic Programmer, 20th Anniversary Edition* by Andrew Hunt and David Thomas (2019), p. 354."
+}

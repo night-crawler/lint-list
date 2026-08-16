@@ -1,0 +1,13 @@
+{
+  "id": 849,
+  "title": "Phased State Mutation without Barriers",
+  "category": "Operational Architecture Smells",
+  "damaged_code": "```rust\n// Thread 1\nunsafe { BE_CAREFUL = true; } // Compiler stores could be fused or reordered\n// Thread 2\nif unsafe { BE_CAREFUL } { cco_carefully(); } else { cco_quickly(); }\n```",
+  "pattern": "Reading or writing global flags used to coordinate concurrent transitions using raw stores without memory barriers or acquire-release semantics.",
+  "why_bad": "The compiler may optimize out the stores (fusing successive writes) or reorder instructions, causing concurrent readers to miss state changes and access unsafe or freed memory, resulting in undefined behavior or memory corruption.",
+  "detection": "Using non-atomic global variables or relaxed writes to signal system-wide phase changes in multi-core environments.",
+  "counterexample": "Local variables inside a single thread where hardware memory consistency is guaranteed.",
+  "fix": "Use proper atomic primitives with appropriate memory ordering (e.g., `smp_store_release` / `smp_load_acquire` or explicit barriers).",
+  "strength": "Strong",
+  "source": "*1701.00854v6.pdf*, p. 166."
+}

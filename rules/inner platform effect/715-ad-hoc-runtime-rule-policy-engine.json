@@ -1,0 +1,13 @@
+{
+  "id": 715,
+  "title": "Ad-Hoc Runtime Rule/Policy Engine",
+  "category": "Inner Platform Effect",
+  "damaged_code": "```\n// A dynamic list of uncompiled \"Rule\" structs executed sequentially via runtime evaluation\nstruct Rule {\n    name: String,\n    condition_field: String,\n    threshold: i32,\n    action_type: String,\n}\n\nfn process_rules(rules: &[Rule], account: &mut Account) {\n    for rule in rules {\n        if rule.condition_field == \"balance\" {\n            if account.balance < rule.threshold && rule.action_type == \"charge_fee\" {\n                account.balance -= 5;\n            }\n        }\n    }\n}\n```",
+  "pattern": "Defining business logic as dynamic data rows (containing strings representing fields, values, and actions) evaluated sequentially by a loop.",
+  "why_bad": "It breaks cohesion by scattering business policies across database records and uncompiled code. The execution order of rules can cause silent side effects or circular dependency loops, and any change to logic bypasses compilation type safety.",
+  "detection": "A collection of rules loaded from files or database tables at runtime, evaluated dynamically inside an iterative loop that performs string matching on field names.",
+  "counterexample": "`Context-dependent`. If business logic is modified daily by end-users or operations staff who cannot deploy new binaries, an externalized, sandboxed rules engine is necessary.",
+  "fix": "Implement rules as statically checked, polymorphic structures or functions in the domain model using the Specification pattern.\n\n```\n// A static, type-safe specification validated at compile-time\npub trait Specification<T> {\n    fn is_satisfied_by(&self, candidate: &T) -> bool;\n}\n\npub struct LowBalanceFeeSpecification;\n\nimpl Specification<Account> for LowBalanceFeeSpecification {\n    fn is_satisfied_by(&self, candidate: &Account) -> bool {\n        candidate.balance < 100\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Eric Evans - _Domain-Driven Design - Tackling Complexity in the Heart of Software_ (2003, Addison Wesley).pdf, Chapter 9 \"Specifying with Rules\" & Chapter 10 \"Rules Engines\"."
+}

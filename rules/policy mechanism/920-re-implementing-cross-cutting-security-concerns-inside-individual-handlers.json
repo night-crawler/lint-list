@@ -1,0 +1,13 @@
+{
+  "id": 920,
+  "title": "Re-implementing Cross-Cutting Security Concerns inside Individual Handlers",
+  "category": "Policy Mechanism",
+  "damaged_code": "```rust\nfn handle_get_profile(req: Request) -> Response {\n    // Manual authentication check inside each handler\n    let Some(user) = authenticate_request(&req) else {\n        return Response::unauthorized();\n    };\n    // Business logic...\n}\n```",
+  "pattern": "A system manually duplicates authentication, authorization, request logging, or throttling checks inside every individual service handler or business function.",
+  "why_bad": "High redundancy and prone to human error. A developer adding a new handler can easily forget to include the checks, or implement them inconsistently, creating severe security and reliability gaps.",
+  "detection": "Manual replication of authentication/logging functions across multiple separate handler entry-points.",
+  "counterexample": "One-off custom validation checks unique to a single endpoint. Marked `Context-dependent`.",
+  "fix": "Leverage an application framework, interceptors, or middleware wrappers to enforce security and access policies centrally and declaratively.\n```rust\n// Configured centrally via middleware or interceptors\n#[authenticated(Role::User)]\nfn handle_get_profile(req: Request, user: AuthenticatedUser) -> Response {\n    // Only business logic remains\n}\n```",
+  "strength": "Strong",
+  "source": "Google SRE, *Building Secure and Reliable Systems* (2020), Chapter 6, \"Breaking Down Complexity\", p. 103, 110-111."
+}

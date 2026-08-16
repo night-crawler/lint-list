@@ -1,0 +1,13 @@
+{
+  "id": 17,
+  "title": "Shallow Module",
+  "category": "Accidental Complexity",
+  "damaged_code": "```rust\nstruct AttributeManager;\n\nimpl AttributeManager {\n    pub fn add_null_value(data: &mut HashMap<String, Option<String>>, attr: String) {\n        data.insert(attr, None);\n    }\n}\n```",
+  "pattern": "An empty struct or interface boundary whose public methods contain zero local logic, simply delegating directly to a standard library or collection operation with no signature transformations.",
+  "why_bad": "It increases the system's interface complexity without hiding any internal complexity (low depth). Callers must learn and maintain a verbose, custom API for a trivial, self-explanatory operation, adding boilerplate and cognitive load without any encapsulation benefit.",
+  "detection": "An empty `struct` or a module containing functions that have a 1:1 signature and delegation mapping directly to standard library/collection operations with zero additional control flow or transformations.",
+  "counterexample": "`Context-dependent`. Thin wrappers implementing standard interface traits (like `io::Write` or `Default`) or thin wrappers designed specifically to isolate a volatile external dependency at an API boundary.",
+  "fix": "Inline the method's behavior at all call sites and delete the shallow helper struct or function. This restores deep interfaces.",
+  "strength": "Strong",
+  "source": "John K. Ousterhout, *A Philosophy of Software Design* (2018), Chapter 4 (\"Modules Should Be Deep\"), pp. 25, 290–292."
+}

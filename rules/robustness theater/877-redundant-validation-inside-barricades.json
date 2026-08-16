@@ -1,0 +1,13 @@
+{
+  "id": 877,
+  "title": "Redundant Validation inside Barricades",
+  "category": "Robustness Theater",
+  "damaged_code": "```rust\nstruct ValidatedUser {\n    username: String, // Invariant: Must be non-empty and lowercase\n}\n\nimpl ValidatedUser {\n    pub fn new(raw_name: String) -> Result<Self, UserError> {\n        if raw_name.is_empty() { return Err(UserError::Empty); }\n        Ok(Self { username: raw_name.to_lowercase() })\n    }\n\n    // Inside the barricade (private helper)\n    fn update_internal_profile(&self) {\n        // Redundant validation check of an invariant already enforced by the type system!\n        if self.username.is_empty() {\n            panic!(\"Invariant violated!\"); \n        }\n        db::write_profile(&self.username);\n    }\n}\n```",
+  "pattern": "Routines inside a trusted boundary (private helper methods) repeat parameter sanitization and validation checks on inputs that are structurally guaranteed by the type system or constructor.",
+  "why_bad": "It duplicates effort (violating DRY), makes invariants less clear, and indicates that developers do not trust their own type system or class boundaries. This lack of trust leads to a spaghetti of redundant verification paths.",
+  "detection": "Validation conditions checking invariants inside private or internal methods when those invariants are already strictly checked by the public constructor/boundary methods.",
+  "counterexample": "```rust\n// Correct: Trust the type system inside the barricade\nfn update_internal_profile(&self) {\n    db::write_profile(&self.username); // Safely assuming non-emptiness by design\n}\n```",
+  "fix": "Remove the redundant checks. Rely on the constructor validation as the sole source of truth for the type's invariants.",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete*, Section 8.5 (\"Relationship Between Barricades and Assertions\")."
+}

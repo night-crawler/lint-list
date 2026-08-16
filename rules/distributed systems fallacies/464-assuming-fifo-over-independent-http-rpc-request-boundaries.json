@@ -1,0 +1,13 @@
+{
+  "id": 464,
+  "title": "Assuming FIFO Over Independent HTTP/RPC Request Boundaries",
+  "category": "Distributed Systems Fallacies",
+  "damaged_code": "```rust\n// Emitting async requests assuming they arrive and process in the order sent\nasync fn update_user_status(client: &HttpClient, user_id: u64) {\n    // Send primary state update\n    client.post_json(\"http://api/user/status\", &Status::Active).await.ok();\n    \n    // Send immediate follow-up status update\n    client.post_json(\"http://api/user/status\", &Status::Suspended).await.ok();\n    // BUG: Suspended status request could reach server BEFORE Active request \n    // due to network routing, retries, or server concurrency.\n}\n```",
+  "pattern": "Invoking multiple asynchronous network requests or RPCs sequentially that modify the same remote entity state, without embedding monotonically increasing sequence numbers or causal dependency markers inside the request payloads.",
+  "why_bad": "Unreliable networks delay, reorder, or lose packets arbitrarily [20, 21]. Even if requests are sent in order, a network hiccup or parallel server-side processing can cause a later request to arrive first [20, 203]. Without sequence identifiers, the receiver cannot reconstruct the original emission order, leading to permanent state corruption (e.g., a user remaining `Active` instead of `Suspended`) [34, 127].",
+  "detection": "Identify sequential invocations of asynchronous remote writes/updates against the same logical target in the same code path, where the payloads do not contain structural ordering invariants (e.g., sequence counters, logical clock versions, or causal markers).",
+  "counterexample": "```rust\nstruct SequentialUpdate {\n    status: Status,\n    sequence_number: u64, // Receiver uses this to discard stale updates\n}\n\nasync fn update_user_status(client: &HttpClient, user_id: u64, seq: &mut u64) {\n    *seq += 1;\n    client.post_json(\"http://api/user/status\", &SequentialUpdate { status: Status::Active, sequence_number: *seq }).await.ok();\n    *seq += 1;\n    client.post_json(\"http://api/user/status\", &SequentialUpdate { status: Status::Suspended, sequence_number: *seq }).await.ok();\n}\n```",
+  "fix": "Always include a monotonically increasing sequence identifier, transaction ID, or version vector in every state-modifying payload so the recipient can detect and discard out-of-order stale requests [34, 127, 209].",
+  "strength": "Strong",
+  "source": "Alex Petrov, *Database Internals*, Chapter 8 / passages [20, 34]; Martin Kleppmann, *Designing Data-Intensive Applications*, Chapter 11 / passages [202, 203, 204]."
+}

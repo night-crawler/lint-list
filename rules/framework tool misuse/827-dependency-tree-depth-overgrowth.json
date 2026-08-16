@@ -1,0 +1,13 @@
+{
+  "id": 827,
+  "title": "Dependency Tree Depth Overgrowth",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n# Map of dependencies goes 5 levels deep\ndirect_dep -> dep_b -> dep_c -> dep_d -> dep_e\n```",
+  "pattern": "Importing a large number of fine-grained packages recursively without limit, creating a highly complex dependency graph.",
+  "why_bad": "It results in high maintenance overhead, extreme vulnerability to supply-chain attacks, and a massive build graph that slows down compilation.",
+  "detection": "A dependency manifest where direct packages pull in a long trail of transitive packages, exceeding 3 levels of depth.",
+  "counterexample": "Depending strictly on stable, consolidated standard library packages.",
+  "fix": "Audit and prune the dependency tree, replacing micro-packages with direct implementations of basic tasks.",
+  "strength": "Strong",
+  "source": "*Kill It with Fire (Bellotti), Chapter 4, p. 69 [470, 473]*"
+}

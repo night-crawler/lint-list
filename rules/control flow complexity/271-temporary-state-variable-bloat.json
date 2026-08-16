@@ -1,0 +1,13 @@
+{
+  "id": 271,
+  "title": "Temporary State Variable Bloat",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```rust\nlet base_price = quantity * item_price;\nlet discount = if base_price > 1000 { base_price * 0.1 } else { 0.0 };\nlet total = base_price - discount;\n```",
+  "pattern": "Creating a cascade of intermediate temporary variables to pass state between contiguous code blocks in a single long function.",
+  "why_bad": "Temp clutter limits extraction. Makes it difficult to partition logic because variables couple contiguous statements together.",
+  "detection": "Long methods containing many localized variables whose scopes overlap sequentially.",
+  "counterexample": "Well-commented mathematical algorithms where variables explain the intermediate calculations of a single formula.",
+  "fix": "Inline the variables or extract calculations into small, pure helper functions:\n```rust\nfn get_total(quantity: f64, item_price: f64) -> f64 {\n    let base = get_base_price(quantity, item_price);\n    base - get_discount(base)\n}\n```",
+  "strength": "Context-dependent",
+  "source": "Martin Fowler, *Refactoring*, \"Replace Temp with Query\"; Robert C. Martin, *Clean Code*."
+}

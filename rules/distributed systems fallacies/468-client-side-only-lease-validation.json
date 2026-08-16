@@ -1,0 +1,13 @@
+{
+  "id": 468,
+  "title": "Client-Side-Only Lease Validation",
+  "category": "Distributed Systems Fallacies",
+  "damaged_code": "```rust\nstruct ClientLease {\n    valid_until: std::time::Instant,\n}\n\nimpl ClientLease {\n    fn is_valid(&self) -> bool {\n        std::time::Instant::now() < self.valid_until\n    }\n}\n\n// Validating lease locally immediately before executing remote task\nfn run_exclusive_task(lease: &ClientLease) {\n    if lease.is_valid() {\n        // BUG: We assume execution here is instantaneous.\n        // Thread preemption, disk I/O, or page fault can pause us,\n        // making the lease invalid by the time the actual operation completes.\n        perform_exclusive_payload();\n    }\n}\n```",
+  "pattern": "Checking a local lease's temporal expiration status (e.g., using `Instant::now()` vs. `valid_until`) to gate execution of an exclusive task, under the assumption that the time between the validation check and task completion is negligible or zero.",
+  "why_bad": "It assumes instantaneous execution, ignoring that local processes can pause for several seconds due to GC, operating system kernel interrupts, swapping, or CPU frequency throttling [14, 23, 158]. Gating state mutation on client-side time checks alone cannot prevent operations from executing after the lease has expired, violating mutual exclusion invariants [158, 159].",
+  "detection": "Identify `if` conditions that query methods returning temporal lease validity status immediately prior to executing blocks containing side-effects or network calls, without intervening synchronization or server-side token checks.",
+  "counterexample": "```rust\nfn run_exclusive_task_fenced(lease: &ClientLease, coordinator: &Coordinator) {\n    // The coordinator or target service validates the lease token atomically with execution.\n    coordinator.execute_with_token(lease.token_id, || {\n        perform_exclusive_payload();\n    });\n}\n```",
+  "fix": "Never rely on temporal local checks for mutual exclusion safety. Structure the lease system around logical tokens or validate lease correctness atomically on the target server with each execution step [91, 159, 164].",
+  "strength": "Strong",
+  "source": "Martin Kleppmann, *Designing Data-Intensive Applications*, Chapter 8 / passages [14, 158, 159]; Alex Petrov, *Database Internals*, Chapter 14 / passage [82]; Heather Adkins et al., *Building Secure and Reliable Systems*, Chapter 14 / passage [91]."
+}

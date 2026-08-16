@@ -1,0 +1,13 @@
+{
+  "id": 604,
+  "title": "Lax Enum Deserialization Fall-Through (ENUM_LAX_DESERIALIZATION)",
+  "category": "Protocol Parsing Serialization Smells",
+  "damaged_code": "```rust\nenum Color {\n    Red,\n    Green,\n    Blue,\n    Unknown,\n}\n\nfn deserialize_color(dto_val: u32) -> Color {\n    match dto_val {\n        1 => Color::Red,\n        2 => Color::Green,\n        3 => Color::Blue,\n        _ => Color::Unknown, // Wildcard fall-through masks unexpected values\n    }\n}\n```",
+  "pattern": "Matching serialized enum index values and using a default/wildcard pattern-match that silently returns an \"Unknown\" or default variant without raising a syntax or schema validation error.",
+  "why_bad": "It silently hides schema drift. If a newer system introduces a new variant (e.g., `Yellow = 4`), the older receiving system will silently convert it to `Unknown` and continue execution, leading to invalid program states without flagging the protocol mismatch.",
+  "detection": "Look for wildcard matches (`_` or default) in deserialization functions mapping integer/string codes to internal Enum variants, where the default branch does not return an `Err` result.",
+  "counterexample": "```rust\n// Valid: Explicit parsing with error result on unrecognized enum variant\nfn deserialize_color(dto_val: u32) -> Result<Color, String> {\n    match dto_val {\n        1 => Ok(Color::Red),\n        2 => Ok(Color::Green),\n        3 => Ok(Color::Blue),\n        x => Err(format!(\"Color code {} is not one of Red, Green, Blue\", x)),\n    }\n}\n```",
+  "fix": "Return a `Result<Enum, Error>` during enum mapping. Fail fast upon encountering unrecognized tags so that integration drift is immediately identified.",
+  "strength": "Strong",
+  "source": "*Scott Wlaschin - Domain Modeling made Functional (2017)*, Chapter 11."
+}

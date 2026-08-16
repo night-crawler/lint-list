@@ -1,0 +1,13 @@
+{
+  "id": 87,
+  "title": "Trivial Accessors (Boilerplate Getters/Setters)",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nstruct User {\n    age: u32,\n}\nimpl User {\n    pub fn get_age(&self) -> u32 {\n        self.age\n    }\n    pub fn set_age(&mut self, val: u32) {\n        self.age = val;\n    }\n}\n```",
+  "pattern": "Public getter/setter methods that provide direct, unvalidated access to private fields with no invariants or encapsulation benefits.",
+  "why_bad": "In Rust, if fields require no invariant enforcement (e.g., any value is valid), public fields are far simpler and more idiomatic than Java-style boilerplate accessors.",
+  "detection": "Pair of get/set methods that do nothing but return a copy/reference of a field and assign a parameter to that field, respectively.",
+  "counterexample": "Setters that validate invariants (e.g., validating an age is within range) or getters returning computed/cached values.",
+  "fix": "Make the field public, or construct the struct directly.",
+  "strength": "Contextual",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 24 (\"Refactoring - Class Implementation Refactorings\"), p. 187; Fowler, *Refactoring*, Chapter 3."
+}

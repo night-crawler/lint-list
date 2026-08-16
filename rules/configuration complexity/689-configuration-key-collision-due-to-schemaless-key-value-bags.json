@@ -1,0 +1,13 @@
+{
+  "id": 689,
+  "title": "Configuration Key Collision due to Schemaless Key-Value Bags",
+  "category": "Configuration Complexity",
+  "damaged_code": "```rust\n// Dynamic dictionary where spelling errors or key conflicts cause silent bugs\nstruct UserSession {\n    configs: HashMap<String, String>,\n}\n```",
+  "pattern": "Representing entity configurations as un-typed, schemaless key-value dictionaries attached to domain aggregates.",
+  "why_bad": "Allows spelling mistakes in configuration keys to compile and execute without errors. It relies on runtime string lookups that fail silently when keys are missing, returning invalid default states.",
+  "detection": "The widespread utilization of string-keyed maps (such as `HashMap<String, String>`) to control active execution behaviors or domain policies.",
+  "counterexample": "```rust\nstruct UserSession {\n    // Strongly typed, compiler-validated settings\n    theme: ThemeMode,\n    quota_bytes: u64,\n}\n```",
+  "fix": "Expose configurations as strongly typed, domain-specific structures verified by the compiler at compile time.",
+  "strength": "Strong",
+  "source": "Marianne Bellotti - *Kill It with Fire* (2021, No Starch Press).pdf, Chapter 3."
+}

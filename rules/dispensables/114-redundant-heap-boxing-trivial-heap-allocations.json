@@ -1,0 +1,13 @@
+{
+  "id": 114,
+  "title": "Redundant Heap Boxing (Trivial Heap Allocations)",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nlet val = Box::new(42);\n```",
+  "pattern": "Wrapping small, lightweight, fixed-size primitives or inline structs in `Box` for no polymorphic or recursive reason.",
+  "why_bad": "Incurs expensive heap allocation, pointer overhead, and cache misses for tiny types that should reside on the fast stack.",
+  "detection": "Allocating non-recursive, non-polymorphic basic types in a `Box`.",
+  "counterexample": "Boxing types to implement trait objects (`Box<dyn Trait>`) or defining recursive data structures (like linked lists or trees).",
+  "fix": "Remove the `Box` and allocate the value directly on the stack.",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust For Rustaceans* (2021); Alex Petrov, *Database Internals* (2019)."
+}

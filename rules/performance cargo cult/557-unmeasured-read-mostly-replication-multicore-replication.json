@@ -1,0 +1,13 @@
+{
+  "id": 557,
+  "title": "Unmeasured Read-Mostly Replication (Multicore Replication)",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\n// Replicating a frequently written config structure to every CPU core's memory bank\n```",
+  "pattern": "Replicating mutable data structures across all active CPU threads/cores to avoid lock contention on reads.",
+  "why_bad": "If updates are not extremely rare, replication triggers massive cache invalidation traffic across the CPU interconnect bus (false sharing) and heavy synchronization write penalties to keep the replicas in sync. This runs much slower than a single shared structure [3, 7].",
+  "detection": "The replication and tracking of mutable configuration tables or statistics counters across thread-local stores where updates occur regularly.",
+  "counterexample": "Read-only static maps (such as timezone tables) that are never updated after initialization. `Contextual`.",
+  "fix": "Use a single shared data structure backed by an adaptive Reader-Writer lock (`std::sync::RwLock`).",
+  "strength": "Strong",
+  "source": "*1701.00854v6.pdf*, Section 2.3 (p. 3), Section 2.3.3 (p. 7)."
+}

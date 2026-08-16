@@ -1,0 +1,13 @@
+{
+  "id": 216,
+  "title": "Query-Driven Domain Leakage",
+  "category": "Low Cohesion",
+  "damaged_code": "```rust\nstruct PaymentCalculator;\n\nimpl PaymentCalculator {\n    fn get_total_due_for_active_accounts(&self, db: &Database) -> u64 {\n        // Domain rule \"active accounts are non-suspended with positive balance\"\n        // is embedded entirely inside the SQL query string.\n        let query = \"SELECT SUM(balance) FROM accounts WHERE suspended = 0 AND balance > 0\";\n        db.query_scalar(query)\n    }\n}\n```",
+  "pattern": "Business definitions and rules (e.g., who qualifies as an \"active user\") are embedded entirely inside SQL queries or database views, rather than inside the domain objects.",
+  "why_bad": "It dilutes the domain model, turning entities into mere data containers. Changes to business rules require finding and refactoring SQL strings, which are often not checked by compile-time type systems.",
+  "detection": "SQL string literals or query builders contain complex conditional criteria filtering on business states or calculations.",
+  "counterexample": "Simple identity or primary-key lookups where database retrieval is purely mechanical and carries no business evaluation.",
+  "fix": "Run basic queries to fetch candidate objects, and run the actual business logic / validation rules inside the domain models.\n```rust\nimpl Account {\n    fn is_active(&self) -> bool {\n        !self.suspended && self.balance > 0\n    }\n}\n```",
+  "strength": "Contextual",
+  "source": "*Eric Evans - Domain-Driven Design, Chapter 6, Section \"REPOSITORIES\"*"
+}

@@ -1,0 +1,13 @@
+{
+  "id": 707,
+  "title": "Hardcoded Buffer Pool Capacities",
+  "category": "Configuration Complexity",
+  "damaged_code": "```rust\n// Fixed-size page buffer, assuming standard transactional workloads\nconst PAGE_SIZE_BYTES: usize = 4096;\n```",
+  "pattern": "Hardcoding fixed buffer block sizes, page layouts, or disk sector segments deep within database or storage engines.",
+  "why_bad": "Forces excessive logical-to-physical I/O inflating if the underlying storage hardware record size differs (e.g. SSD page sizes are larger). It degrades system bandwidth and induces severe cache thrashing.",
+  "detection": "The existence of unaligned, hardcoded buffer or page constant variables in low-level I/O engines.",
+  "counterexample": "```rust\nfn determine_block_size() -> usize {\n    // Queries filesystem page metrics at run time to match hardware\n    query_filesystem_block_size()\n}\n```",
+  "fix": "Determine actual filesystem record and sector layouts dynamically at database initialization, adjusting internal page pools to align perfectly.",
+  "strength": "Strong",
+  "source": "Alex Petrov - *Database Internals_ A Deep Dive Into How Distributed Data Systems Work* (2019, O'Reilly Media).pdf, Chapter 11."
+}

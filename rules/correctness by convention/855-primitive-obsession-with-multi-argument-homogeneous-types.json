@@ -1,0 +1,13 @@
+{
+  "id": 855,
+  "title": "Primitive Obsession with Multi-Argument Homogeneous Types",
+  "category": "Correctness By Convention",
+  "damaged_code": "```rust\n// Rust\nfn add_user_to_group(user: String, group: String) {}\n// Call site\nadd_user_to_group(\"root-users\".to_string(), \"alice\".to_string()); // BUG: Swapped parameters!\n```",
+  "pattern": "A function signature contains consecutive parameters of the same primitive type, requiring callers to manually match the positional order.",
+  "why_bad": "The compiler cannot verify if the arguments are swapped. Senders must memorize the positional convention, leading to silent and hard-to-detect logic bugs.",
+  "detection": "A function signature has consecutive parameters of identical types (e.g., multiple strings or doubles) with distinct semantic meanings.",
+  "counterexample": "Using single-variant enums or strong newtype wrappers to differentiate parameters.",
+  "fix": "Wrap parameters in distinct newtypes: `fn add(user: User, group: Group)` where `User` and `Group` are separate tuple structs.",
+  "strength": "Strong",
+  "source": "Martin, Clean Code, p. 189 [189]; or Heather Adkins, p. 265 [374-375]."
+}

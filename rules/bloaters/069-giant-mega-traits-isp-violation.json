@@ -1,0 +1,13 @@
+{
+  "id": 69,
+  "title": "Giant Mega-Traits (ISP Violation)",
+  "category": "Bloaters",
+  "damaged_code": "```rust\ntrait StorageEngine {\n    fn write_byte(&mut self, addr: u32, val: u8);\n    fn read_byte(&self, addr: u32) -> u8;\n    fn format_disk(&mut self);\n    fn compress_partitions(&mut self);\n    fn print_diagnostic_report(&self);\n    fn query_database_metadata(&self) -> Vec<String>;\n    // ... 20+ other methods\n}\n```",
+  "pattern": "Defining a single, massive trait with dozens of methods covering highly distinct logical responsibilities (such as low-level I/O, maintenance, diagnostics, and high-level queries).",
+  "why_bad": "Violates the Interface Segregation Principle (ISP). Any struct wanting to implement the trait is forced to write boilerplate implementations or stub methods for unrelated operations it does not support. It makes mocking for tests extremely exhausting and couples consumers to a massive, fragile interface contract.",
+  "detection": "Look for trait definitions containing more than 10-15 methods, especially when those methods can be grouped into distinct, independent sub-responsibilities.",
+  "counterexample": "Stable standard library traits (like `Iterator` or `Stream`) that provide many helper methods, though these are typically default-implemented blanket methods building on a single core required method.",
+  "fix": "Decompose the giant trait into multiple, highly cohesive, single-purpose traits (e.g., `Reader`, `Writer`, `DiskFormatter`, `DiagnosticReport`), and compose them using trait bounds when necessary.",
+  "strength": "Strong",
+  "source": "*Robert C. Martin - Clean Architecture (2017)*, Chapter 10, \"ISP\"; *Steve McConnell - Code Complete (2004)*, Chapter 6."
+}

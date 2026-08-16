@@ -1,0 +1,13 @@
+{
+  "id": 661,
+  "title": "Diluted Urgency (Logging Business/Input Validation as ERROR)",
+  "category": "Observability Operability Smells",
+  "damaged_code": "```rust\nfn process_checkout(card: &CreditCard) -> Result<(), PaymentError> {\n    if let Err(e) = validate_card_format(card) {\n        log::error!(\"Invalid credit card format: {:?}\", e);\n        return Err(PaymentError::InvalidFormat(e));\n    }\n    // ...\n}\n```",
+  "pattern": "Invoking `log::error!` or `log::severe!` for user input errors, predictable validation failures, or expected business logic dead-ends.",
+  "why_bad": "Dilutes the meaning of `ERROR` levels, causing SRE/operator alert fatigue. Anything logged as `ERROR` or `SEVERE` should strictly indicate a system-level degradation requiring manual human intervention to resolve [283, 692].",
+  "detection": "Presence of `error!` level logger calls inside parsing, input validation, or parameter checking routines.",
+  "counterexample": "```rust\nfn process_checkout(card: &CreditCard) -> Result<(), PaymentError> {\n    if let Err(e) = validate_card_format(card) {\n        log::warn!(\"Invalid credit card format: {:?}\", e);\n        return Err(PaymentError::InvalidFormat(e));\n    }\n}\n```",
+  "fix": "Downgrade user or client-side validation failures to the `warn!` or `info!` logging levels.",
+  "strength": "Strong",
+  "source": "*Release It!*, page 283 [283, 692]."
+}

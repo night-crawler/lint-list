@@ -1,0 +1,13 @@
+{
+  "id": 797,
+  "title": "Missing DB Version Table",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```rust\nasync fn start_app(db: &Database) -> Result<(), Error> {\n    // App boots and immediately fires queries blindly without checking schema version\n    db.execute(\"SELECT first_name, last_name FROM users\").await?; \n    Ok(())\n}\n```",
+  "pattern": "An application service booting up and executing queries against a database instance without validating that the database's schema revision matches the application's expected revision.",
+  "why_bad": "If a schema migration has failed, is incomplete, or is out of sync with the application version, the app will throw strange runtime SQL errors or, worse, silently write corrupted data, leading to transaction rollbacks and production outages [378, 379, 782, 783].",
+  "detection": "An application boot sequence containing database client initialization but lacking any query to a schema metadata version table.",
+  "counterexample": "Valid for schemaless document databases where the application fully handles schema-on-read parsing and defaults safely [173, 626]. Mark as `Context-dependent`.",
+  "fix": "Introduce a metadata schema version table in the database and assert that the application matches this version at startup, failing fast if a mismatch is detected [379, 783].\n```rust\nasync fn start_app(db: &Database) -> Result<(), Error> {\n    let current_version = db.get_schema_version().await?;\n    if current_version != EXPECTED_VERSION {\n        return Err(Error::SchemaMismatch); // Fail fast\n    }\n    Ok(())\n}\n```",
+  "strength": "Strong",
+  "source": "Release It!, \"Adaptable Enterprise Architecture\" [378, 379, 782, 783]"
+}

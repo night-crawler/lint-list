@@ -1,0 +1,13 @@
+{
+  "id": 394,
+  "title": "Bad Input Assertion Panic",
+  "category": "Error Handling Pathologies",
+  "damaged_code": "```rust\nfn parse_user_request(bytes: &[u8]) -> Request {\n    assert!(bytes.len() >= 8); // Panics on bad input data!\n    let cmd = bytes[0];\n    // ...\n}\n```",
+  "pattern": "Using assertions (`assert!`), panics (`panic!`), or unwraps (`.unwrap()`) to validate external or untrusted data instead of returning a formal error type.",
+  "why_bad": "Crashing/Panicking is appropriate for internal program bugs (programmer errors), but bad external data is an expected runtime occurrence. Panicking on bad input data exposes the application to trivial Denial of Service (DoS) attacks. [28, Section 8.2 & 8.5]",
+  "detection": "`assert!`, `panic!`, `unwrap()`, or `expect()` statements used to validate data passed into public or boundary functions from untrusted sources (e.g., network, files, user input).",
+  "counterexample": "Assertions inside internal private utility functions where the data has already been sanitized by a gateway barricade. `Context-dependent`",
+  "fix": "Perform explicit data validation and return a clean `Result`.\n```rust\nfn parse_user_request(bytes: &[u8]) -> Result<Request, ParseError> {\n    if bytes.len() < 8 {\n        return Err(ParseError::MalformedInput);\n    }\n    // ...\n}\n```",
+  "strength": "Strong",
+  "source": "*Steve McConnell - Code Complete*, Section 8.2 & 8.5 [28]"
+}

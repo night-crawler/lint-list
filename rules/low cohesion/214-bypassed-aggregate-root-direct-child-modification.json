@@ -1,0 +1,13 @@
+{
+  "id": 214,
+  "title": "Bypassed Aggregate Root (Direct Child Modification)",
+  "category": "Low Cohesion",
+  "damaged_code": "```rust\nstruct OrderLine { id: u64, price: u64 }\nstruct Order {\n    // Public vector allows clients to modify lines independently\n    pub lines: Vec<OrderLine>, \n}\n\nfn bypass_aggregate(order: &mut Order) {\n    // Modifies child directly, bypassing order-level validations (e.g., limit checks)\n    order.lines.push(OrderLine { id: 9, price: 50000 });\n}\n```",
+  "pattern": "An aggregate's child entities are exposed as public collections, allowing clients to add, remove, or modify children without navigating through the Aggregate Root's API.",
+  "why_bad": "It breaks the aggregate boundary. The parent `Order` can no longer enforce overall invariants (such as maximum order amounts or duplicate checks) because clients can mutate the child collection directly, leading to data corruption.",
+  "detection": "A collection of entities inside a struct is marked public, or exposed via public getters returning mutable references, allowing arbitrary external mutations.",
+  "counterexample": "Simple data structures with no business invariants or validation rules where raw collections are acceptable.",
+  "fix": "Make the collection private and enforce all modifications through explicit methods on the Aggregate Root.\n```rust\nstruct Order {\n    lines: Vec<OrderLine>,\n}\n\nimpl Order {\n    fn add_line(&mut self, line: OrderLine) -> Result<(), &'static str> {\n        if self.total_price() + line.price > 10000 { return Err(\"Limit exceeded\"); }\n        self.lines.push(line);\n        Ok(())\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Eric Evans - Domain-Driven Design, Chapter 6 (Managing the Life Cycle of a Domain Object), Section \"AGGREGATES\"*"
+}

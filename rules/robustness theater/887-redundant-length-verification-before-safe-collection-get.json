@@ -1,0 +1,13 @@
+{
+  "id": 887,
+  "title": "Redundant Length Verification Before Safe Collection Get",
+  "category": "Robustness Theater",
+  "damaged_code": "```rust\nfn get_user_at(users: &[User], index: usize) -> Option<&User> {\n    // Redundant pre-check\n    if index < users.len() {\n        users.get(index) // Safe accessor performs bounds check internally anyway!\n    } else {\n        None\n    }\n}\n```",
+  "pattern": "Manually checking bounds or size constraints on a collection immediately before calling a safe access API (like `Option` yielding `.get()`) that naturally performs bounds checking internally.",
+  "why_bad": "It writes redundant branch statements that degrade readability and performance, while duplicating the exact boundaries check already performed at the machine/system library level.",
+  "detection": "The pattern of checking `index < collection.len()` preceding a safe, non-panicking query of that same element index.",
+  "counterexample": "```rust\n// Correct: Trust the safe library accessor\nfn get_user_at(users: &[User], index: usize) -> Option<&User> {\n    users.get(index)\n}\n```",
+  "fix": "Remove the manual length conditional entirely, allowing the safe library accessor to handle bounds checks natively.",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete*, Section 8.1 (\"Protecting Your Program from Invalid Inputs\") / Section 8.8."
+}

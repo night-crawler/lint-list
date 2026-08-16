@@ -1,0 +1,13 @@
+{
+  "id": 357,
+  "title": "Use Case Optimal Queries Returning Unstructured Tuples",
+  "category": "Boundary Representation",
+  "damaged_code": "```rust\nfn get_user_dashboard(id: u64) -> (String, i64, f64) {\n    database::query_tuple(\"SELECT name, orders_count, balance FROM ...\")\n}\n```",
+  "pattern": "Bypassing domain models to fetch custom display datasets, but returning raw, un-named tuples (e.g., `(String, i64, f64)`) directly to higher layers.",
+  "why_bad": "It is highly fragile. Any change in SQL projection column ordering causes compile-time mismatches or silent runtime semantic bugs (e.g., swapping count and balance).",
+  "detection": "Database querying functions returning raw generic tuples containing 3 or more primitive fields.",
+  "counterexample": "Two-element helper tuples (such as key-value pairs `(u64, String)`) in local collections. Mark as `Context-dependent`.",
+  "fix": "Define a structured, named value object or struct specifically representing the optimal query result layout.\n```rust\nstruct UserDashboardView {\n    name: String,\n    orders_count: i64,\n    balance: f64,\n}\n```",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design* by Vaughn Vernon (Chapter 12, p. 228, 517)."
+}

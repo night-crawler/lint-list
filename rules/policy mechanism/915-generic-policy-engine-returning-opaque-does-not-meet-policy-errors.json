@@ -1,0 +1,13 @@
+{
+  "id": 915,
+  "title": "Generic Policy Engine Returning Opaque \"Does Not Meet Policy\" Errors",
+  "category": "Policy Mechanism",
+  "damaged_code": "```rust\nimpl PolicyEngine {\n    pub fn verify_deployment(&self, request: &DeploymentRequest) -> Result<(), Error> {\n        if !self.matches_source_uri(request) || !self.has_valid_provenance(request) {\n            return Err(Error::DoesNotMeetPolicy); // Opaque error\n        }\n        Ok(())\n    }\n}\n```",
+  "pattern": "A policy evaluation, validation, or compliance engine returns a single, generic \"does not meet policy\" error without including specific detail about which rules failed or the mismatched values.",
+  "why_bad": "Awkward user experience. When a deployment or validation is rejected, operators are left confused and must manually inspect database states or trace internal code execution to figure out the fix.",
+  "detection": "A policy enforcement point returns constant, unparameterized error variants upon failing complex conditional validation chains.",
+  "counterexample": "Simple, low-level binary validation checkers where any failure simply means \"corrupt input.\" Marked `Context-dependent`.",
+  "fix": "Structure the policy engine to yield descriptive, actionable feedback identifying the exact rule violation and the observed vs. expected attributes.\n```rust\npub struct PolicyViolation {\n    pub rule_name: String,\n    pub expected: String,\n    pub observed: String,\n}\n```",
+  "strength": "Strong",
+  "source": "Google SRE, *Building Secure and Reliable Systems* (2020), Chapter 14, \"Deploying Code\", p. 114, 370."
+}

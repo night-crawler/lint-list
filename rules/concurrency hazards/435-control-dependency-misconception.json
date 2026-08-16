@@ -1,0 +1,13 @@
+{
+  "id": 435,
+  "title": "Control Dependency Misconception",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```c\n// Thread 1\nr1 = READ_ONCE(x);\nif (r1 == 1) {\n    barrier(); // BUG: Compiler barrier is not a hardware fence!\n    WRITE_ONCE(y, 1);\n}\n```",
+  "pattern": "Assuming that a compiler `barrier()` or a control flow branch (`if (r1 == 1)`) prevents a weakly ordered CPU from reordering a subsequent store before the conditional load.",
+  "why_bad": "A CPU can speculative-execute branches, calculating and queuing the store in its store buffer before the load from `x` is finalized. Without an explicit memory barrier (like `smp_mb()`), the store can become globally visible before the load completes.",
+  "detection": "A conditional block containing a compiler barrier (`barrier()`) but lacking a hardware memory barrier or acquire/release instructions.",
+  "counterexample": "Using proper release-acquire primitives or an explicit hardware memory barrier (`smp_mb()`).",
+  "fix": "Use an explicit hardware release store.\n```c\nr1 = READ_ONCE(x);\nif (r1 == 1) {\n    smp_store_release(&y, 1);\n}\n```",
+  "strength": "Strong",
+  "source": "Paul McKenney 15.2.5 (p. 331)"
+}

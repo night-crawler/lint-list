@@ -1,0 +1,13 @@
+{
+  "id": 231,
+  "title": "Split Range Primitives (Naked Range)",
+  "category": "Primitive Obsession",
+  "damaged_code": "```rust\nfn check_availability(start_date: NaiveDate, end_date: NaiveDate) { ... }\n```",
+  "pattern": "Representing ranges (dates, currency limits, physical boundaries) as separate, adjacent primitive fields.",
+  "why_bad": "It allows the creation of invalid ranges (e.g., `start_date > end_date`), requiring every consuming method to write redundant validations checking lower and upper bounds.",
+  "detection": "Function arguments or struct fields representing upper and lower bounds (e.g., `start_` and `end_`, `min_` and `max_`) of the same primitive type.",
+  "counterexample": "Passing completely independent timestamps that do not define an interval logic or limit invariant.",
+  "fix": "Group the boundaries into a single cohesive type that enforces the range invariant inside its constructor.\n```rust\nstruct DateRange {\n    start: NaiveDate,\n    end: NaiveDate,\n}\n\nimpl DateRange {\n    pub fn new(start: NaiveDate, end: NaiveDate) -> Result<Self, String> {\n        if start <= end {\n            Ok(DateRange { start, end })\n        } else {\n            Err(\"Start date must be before or equal to end date\".into())\n        }\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Refactoring* by Martin Fowler (p. 278); *Patterns of Enterprise Application Architecture* (p. 268)."
+}

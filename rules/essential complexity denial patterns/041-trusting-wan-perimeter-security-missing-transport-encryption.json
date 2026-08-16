@@ -1,0 +1,13 @@
+{
+  "id": 41,
+  "title": "Trusting WAN Perimeter Security (Missing Transport Encryption)",
+  "category": "Essential Complexity Denial Patterns",
+  "damaged_code": "```rust\n// Sending sensitive user data across internal network assuming perimeter security\nlet rpc_channel = Channel::from_static(\"http://10.0.1.52:50051\").connect().await?;\n```",
+  "pattern": "Transmitting sensitive or administrative domain payloads in plaintext (HTTP or unencrypted TCP) based on the assumption that the internal subnet or virtual private network is completely secure.",
+  "why_bad": "The network is not secure [231:231]. Perimeter boundaries are routinely compromised by insider threats, misconfigured firewalls, or lateral movement attacks. Transmitting internal secrets or user PII in the clear enables network sniffer exploits and compromises zero-trust integrity [13:163].",
+  "detection": "Establishing raw, unencrypted TCP or HTTP connections to endpoints representing separate host instances or subnets [13:163].",
+  "counterexample": "```rust\nlet tls_config = ClientTlsConfig::new().ca_certificate(ca_cert);\nlet rpc_channel = Channel::from_static(\"https://internal.service:50051\")\n    .tls_config(tls_config)?\n    .connect().await?;\n```",
+  "fix": "Configure Transport Layer Security (mTLS or HTTPS) for all node-to-node and service-to-service communication [13:163].",
+  "strength": "Strong",
+  "source": "*Building Secure and Reliable Systems* (Adkins), Chapter 5 [13:101]; *Fundamentals of Software Architecture* (Richards & Ford) [21:123]."
+}

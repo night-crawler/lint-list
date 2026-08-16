@@ -1,0 +1,13 @@
+{
+  "id": 106,
+  "title": "Unused Imports and Modules",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nuse std::collections::HashSet; // imported but never used\nfn process_vec() {}\n```",
+  "pattern": "Importing modules, traits, or structs that are never referenced or utilized in the current file.",
+  "why_bad": "Clutters the top of the file, increases compiling dependencies, and confuses readers regarding what external libraries are actually relied on.",
+  "detection": "Import statements (`use` declarations) that are completely unreferenced in the downstream code.",
+  "counterexample": "Importing traits purely for their blanket implementations or macro registrations (e.g., in some serialization crates).",
+  "fix": "Delete the unused import statement.",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 17 (\"Smells and Heuristics - G9: Dead Code\"), p. 168."
+}

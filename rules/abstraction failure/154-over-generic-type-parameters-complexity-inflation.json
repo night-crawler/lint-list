@@ -1,0 +1,13 @@
+{
+  "id": 154,
+  "title": "Over-Generic Type Parameters (Complexity Inflation)",
+  "category": "Abstraction Failure",
+  "damaged_code": "```rust\nfn process_any_data<T, U, V>(input: T) -> V\nwhere\n    T: IntoIterator<Item = U>,\n    U: AsRef<str> + std::fmt::Debug,\n    V: FromIterator<String>,\n{\n    // ...\n    todo!()\n}\n```",
+  "pattern": "Declaring excessively complex generic type parameters and trait bounds on helper functions to unify algorithms that are structurally similar but conceptually distinct.",
+  "why_bad": "It makes the code unreadable and inflates the cognitive load of using or modifying the function. The compiler errors on trait bound mismatches become extremely difficult to debug, slowing down development.",
+  "detection": "A function with 3 or more generic type parameters and complex trait bounds (e.g., 4 or more bounds in a `where` clause) used only for standard business logic workflows.",
+  "counterexample": "Low-level library primitives or foundational mathematical/parsing crates where highly abstract generic algorithms are necessary for universal compatibility.",
+  "fix": "Write separate, concrete, highly optimized functions for each specific domain type, or simplify the bounds by using concrete DTOs.",
+  "strength": "Contextual",
+  "source": "Titus Winters et al., *Software Engineering at Google* (2020), Chapter 13; Sandi Metz, *Practical Object-Oriented Design* (2019)."
+}

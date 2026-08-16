@@ -1,0 +1,13 @@
+{
+  "id": 820,
+  "title": "Programmatic Argument Permutation Helpers",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Custom permutation routine to rearrange arguments for a standard function\npub fn apply_with_reordered_args<F>(f: F, x: i32, y: i32) -> i32 \nwhere F: Fn(i32, i32) -> i32 {\n    f(y, x)\n}\n```",
+  "pattern": "Writing custom procedurally interpreted permutation code to re-order standard API arguments for a single localized use case.",
+  "why_bad": "It introduces unnecessary abstraction layers and run-time interpretation costs for simple arguments shuffling.",
+  "detection": "A routine whose sole purpose is to capture arguments, re-order them, and forward them to another callable.",
+  "counterexample": "Creating a generic combinator library designed to handle late-bound functions specialization.",
+  "fix": "Use a simple lambda closure/anonymous function wrapper to bind and re-order the arguments statically.",
+  "strength": "Contextual",
+  "source": "*Software Design for Flexibility (Hanson & Sussman), Chapter 2, p. 10 [10]*"
+}

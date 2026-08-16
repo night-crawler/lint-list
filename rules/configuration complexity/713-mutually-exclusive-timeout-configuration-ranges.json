@@ -1,0 +1,13 @@
+{
+  "id": 713,
+  "title": "Mutually Exclusive Timeout Configuration Ranges",
+  "category": "Configuration Complexity",
+  "damaged_code": "```rust\nstruct SocketConfig {\n    // Configured independently; setting connect_timeout > request_timeout breaks invariants\n    connect_timeout_ms: u64,\n    request_timeout_ms: u64,\n}\n```",
+  "pattern": "Defining timeout or limits configuration properties that can be set to logically conflicting ranges, lacking internal assertion checks.",
+  "why_bad": "Creates invalid execution states. If an operator sets the connection timeout higher than the absolute request limit, requests fail instantly on congested routes, causing opaque, hard-to-trace connection dropouts.",
+  "detection": "Two related configuration parameters evaluated independently without corresponding range assertions at loading time.",
+  "counterexample": "```rust\nfn validate_config(config: &SocketConfig) {\n    assert!(config.request_timeout_ms >= config.connect_timeout_ms,\n        \"Absolute request limit must exceed connection window\");\n}\n```",
+  "fix": "Implement strict range and invariant assertions in the configuration parsing phase, failing early and crashing the server if conflict thresholds are met.",
+  "strength": "Strong",
+  "source": "Gregg, Brendan - *Systems Performance_ Enterprise and the Cloud* (2013, Pearson Education Limited (US titles)_Prentice Hall).pdf, Chapter 10; Ousterhout, John K - *A Philosophy of Software Design* (2018_2019, Yaknyam Press).pdf, Section 8.2."
+}

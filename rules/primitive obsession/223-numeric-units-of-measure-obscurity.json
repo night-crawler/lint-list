@@ -1,0 +1,13 @@
+{
+  "id": 223,
+  "title": "Numeric Units of Measure Obscurity",
+  "category": "Primitive Obsession",
+  "damaged_code": "```rust\nfn set_temperature(temp: f64) { ... }\n```",
+  "pattern": "Passing raw numeric primitives as function arguments representing physical attributes without type-enforced units.",
+  "why_bad": "It pushes semantic interpretation of the unit (e.g., Celsius vs. Fahrenheit, Kilograms vs. Pounds) into developer memory. Swapping units at compile-time is undetected, leading to severe computational errors at runtime.",
+  "detection": "Function signatures with raw numeric parameters whose names imply physical measurements (`temp`, `speed`, `weight`, `length`) lacking unit types.",
+  "counterexample": "Raw mathematical calculations where values are abstract scalers without associated physical dimensions.",
+  "fix": "Represent the physical attribute as a dedicated type that encodes the unit.\n```rust\nstruct Fahrenheit(f64);\nstruct Celsius(f64);\n\nfn set_temperature(temp: Fahrenheit) { ... }\n```",
+  "strength": "Strong",
+  "source": "*Domain Modeling made Functional* by Scott Wlaschin (p. 83); *The Pragmatic Programmer* (p. 54)."
+}

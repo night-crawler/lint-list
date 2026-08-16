@@ -1,0 +1,13 @@
+{
+  "id": 501,
+  "title": "Repeated Array Indexing inside Loop (Unnecessary Address Calculation)",
+  "category": "Performance Smells",
+  "damaged_code": "```cpp\nfor (int i = 0; i < count; i++) {\n    rate[i] = rate[i] * discount[discount_type]; // rate[i] and discount checked twice\n}\n```",
+  "pattern": "Accessing the exact same array element multiple times inside a loop using an unchanging index parameter.",
+  "why_bad": "Forces the CPU/compiler to repeatedly compute memory offsets (pointer arithmetic) and execute array bounds checks, wasting clock cycles on redundant assembly.",
+  "detection": "Identical array subscripts appearing multiple times within the body of a tight loop.",
+  "counterexample": "Highly aggressive optimizing compilers successfully inline the pointer arithmetic. `Context-dependent`.",
+  "fix": "Store the array element in a local temporary variable before the loop or inside the iteration.",
+  "strength": "Strong",
+  "source": "*Code Complete*, Chapter 26, \"Minimize Array References\" (p. 197-198)."
+}

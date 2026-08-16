@@ -1,0 +1,13 @@
+{
+  "id": 45,
+  "title": "ABA Problem in Lock-Free Reclamation",
+  "category": "Essential Complexity Denial Patterns",
+  "damaged_code": "```rust\n// Simple CAS loop on reclaimed node pointer (susceptible to ABA)\nlet current_head = self.head.load(Ordering::Relaxed);\nlet next_node = unsafe { (*current_head).next };\nif self.head.compare_exchange(current_head, next_node, Ordering::SeqCst, Ordering::SeqCst).is_ok() {\n    // Node popped and potentially recycled/freed immediately\n}\n```",
+  "pattern": "Performing a Compare-And-Swap (CAS) on a raw shared pointer where nodes are freed or recycled back to an allocator immediately after a successful exchange.",
+  "why_bad": "If Thread 1 reads pointer `A`, then gets suspended, and other threads pop `A`, free it, push a new node `B`, and then reuse the memory of `A` to push a new node, the pointer address becomes `A` again. When Thread 1 resumes, CAS succeeds because the address matches, but the linked target `next_node` points to outdated memory, causing silent heap corruption [21:22].",
+  "detection": "Performing raw pointer CAS operations in concurrent structures without incorporating epoch-based reclamation (EBR), hazard pointers, or garbage collection abstractions [21:22].",
+  "counterexample": "Use standard libraries such as `crossbeam-epoch` which defer reclamation until no thread holds references to the epoch [21:23].",
+  "fix": "Incorporate Epoch-Based Reclamation (EBR) or hazard pointers to ensure nodes cannot be recycled until all active readers have completed their traversals [21:23].",
+  "strength": "Strong",
+  "source": "*Locking & Deferred Processing* (LKMM), Chapter 9: seqlocks vs RCU [21:22]."
+}

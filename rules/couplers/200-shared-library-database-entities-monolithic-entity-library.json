@@ -1,0 +1,13 @@
+{
+  "id": 200,
+  "title": "Shared Library Database Entities (Monolithic Entity Library)",
+  "category": "Couplers",
+  "damaged_code": "```rust\n// Shared Crate used by Service A, Service B, and Service C\npub struct UsersTable {\n    pub id: u32,\n    pub email: String,\n    pub billing_address: String, // Added for Service C\n}\n```",
+  "pattern": "Multiple independent services compile against a single shared custom library containing all database table entity structures and schema definitions.",
+  "why_bad": "Any schema modification (e.g., Service C adds `billing_address`) forces a version update of the shared library, requiring a complete rebuild and redeployment of unrelated services (Service A, which does not care about billing).",
+  "detection": "An external shared library containing database-mapping models imported by multiple distinct service projects.",
+  "counterexample": "Shared data-transfer libraries containing strictly defined, versioned API protocol schemas (like Protobuf types) that are designed for wire transfer compatibility.",
+  "fix": "Logically partition the entity objects or let each service define its own specific schema mapping containing only the fields it consumes.\n```rust\n// Service A defines its own localized DB query struct\nstruct UserEmail { id: u32, email: String }\n```",
+  "strength": "Strong",
+  "source": "Mark Richards & Neal Ford, *Fundamentals of Software Architecture* (2020), Chapter 13 (\"Database Partitioning\")."
+}

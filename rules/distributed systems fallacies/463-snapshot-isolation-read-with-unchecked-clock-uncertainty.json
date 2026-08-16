@@ -1,0 +1,13 @@
+{
+  "id": 463,
+  "title": "Snapshot Isolation Read with Unchecked Clock Uncertainty",
+  "category": "Distributed Systems Fallacies",
+  "damaged_code": "```rust\n// Querying a snapshot database assuming linearizability without clock wait\nfn query_snapshot_vulnerable(db: &DistributedDb, query_key: &str) -> Option<Value> {\n    // BUG: TrueTime or NTP clock uncertainty is ignored.\n    // If we read immediately at current_timestamp, we might miss in-flight \n    // transactions that actually occurred earlier but have overlapping uncertainty bands.\n    let current_timestamp = db.get_local_timestamp();\n    db.read_at_snapshot(query_key, current_timestamp)\n}\n```",
+  "pattern": "Reading or committing versioned snapshot data in a clock-coordinated distributed database (such as Spanner or CockroachDB equivalents) at the current local system timestamp without factoring in or waiting out the clock's confidence interval or uncertainty bound (\\(\\epsilon\\)).",
+  "why_bad": "In clock-synchronized distributed systems, every clock reading has a confidence interval \\([earliest, latest]\\) representing the physical clock uncertainty [152, 154]. If two transactions occur within the uncertainty interval of each other (overlapping confidence intervals), their relative order is ambiguous [154, 155]. Reading immediately without waiting out \\(\\epsilon\\) violates transaction causality and external consistency (linearizability), potentially serving stale reads or missing committed writes [66, 154].",
+  "detection": "Identify invocations of database reads or writes utilizing physical timestamps as snapshot boundaries, where the code does not enforce a sleep/wait duration equal to or greater than the clock uncertainty bound (e.g., TrueTime's `limit = latest - earliest`), or does not use explicit transaction coordinates.",
+  "counterexample": "```rust\nfn query_snapshot_safe(db: &DistributedDb, query_key: &str) -> Option<Value> {\n    let truetime = db.get_truetime(); // Returns [earliest, latest]\n    let wait_time = truetime.latest - truetime.earliest;\n    // Explicitly wait out the clock uncertainty before serving/reading\n    std::thread::sleep(wait_time);\n    db.read_at_snapshot(query_key, truetime.latest)\n}\n```",
+  "fix": "Enforce an artificial slowdown/wait time equal to the clock uncertainty interval (the TrueTime wait strategy) before committing or reading, or utilize consensus-driven logical epoch systems to eliminate physical clock dependencies [66, 92, 155].",
+  "strength": "Strong",
+  "source": "Martin Kleppmann, *Designing Data-Intensive Applications*, Chapter 8 / passages [152, 154, 155]; Alex Petrov, *Database Internals*, Chapter 13 / passage [66]."
+}

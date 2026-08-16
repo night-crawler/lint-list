@@ -1,0 +1,13 @@
+{
+  "id": 251,
+  "title": "Cache Participating in System Correctness",
+  "category": "State Mutation",
+  "damaged_code": "```rust\nstruct AuthoritativeCache {\n    config_map: HashMap<String, String>,\n}\n\nimpl AuthoritativeCache {\n    pub fn get_user_role(&self, user_id: u32) -> String {\n        // Core business logic directly depends on the cache value being correct.\n        // If the database changes user roles, the cache serves stale, incorrect data.\n        self.config_map.get(&user_id.to_string()).unwrap().clone()\n    }\n}\n```",
+  "pattern": "An intermediate cache is treated as an authoritative source of truth for critical logic (such as user security roles or configuration) rather than a pure performance optimization.",
+  "why_bad": "If cache invalidation is slow, buggy, or interrupted, the application directly executes incorrect behavior (e.g., granting unauthorized access) because correctness is tightly coupled to cache state.",
+  "detection": "High-level security or domain validation checks fetch values directly from a mutable cache where cache stale state leads to a domain invariant violation.",
+  "counterexample": "The cache is purely a read-through optimizer, and state modifications always write immediately and synchronously to the database of truth:\n```rust\n// Authorized changes bypass cache or force direct synchronous database verification\n```",
+  "fix": "Structure the system so that correctness is determined solely by the database/source of truth; use caches strictly as non-authoritative read-through optimizations.\n```rust\n// Fallback to database or enforce database verification for authoritative actions.\n```",
+  "strength": "Contextual",
+  "source": "*Kill It with Fire: Manage Aging Computer Systems* by Marianne Bellotti (Chapter 10, \"Cache stampedes\"); *Release It!* by Michael T. Nygard (Shared State)."
+}

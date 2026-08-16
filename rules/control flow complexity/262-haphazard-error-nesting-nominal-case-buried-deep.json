@@ -1,0 +1,13 @@
+{
+  "id": 262,
+  "title": "Haphazard Error Nesting (Nominal Case Buried Deep)",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```rust\nfn load_config() -> Result<Config> {\n    if let Ok(file) = File::open(\"config.json\") {\n        if let Ok(data) = read_data(file) {\n            if let Ok(config) = parse(data) {\n                Ok(config)\n            } else {\n                Err(Error::Parse)\n            }\n        } else {\n            Err(Error::Read)\n        }\n    } else {\n        Err(Error::Open)\n    }\n}\n```",
+  "pattern": "Deep nesting structures where nominal success logic is buried at the deepest level, and error recovery/returns are deferred to trailing `else` clauses.",
+  "why_bad": "The \"happy path\" is obscured. The reader must wade through multiple layers of conditions and mentally stack them to understand the success flow.",
+  "detection": "Nominal success logic nested deeper than error check branches, with error logic postponed to outer-scope `else` blocks.",
+  "counterexample": "Deep nesting required for complex algorithmic branching where both paths are equally likely nominal flows.",
+  "fix": "Invert conditions to handle and return error states immediately, placing success logic at the top level:\n```rust\nfn load_config() -> Result<Config> {\n    let file = File::open(\"config.json\").map_err(|_| Error::Open)?;\n    let data = read_data(file).map_err(|_| Error::Read)?;\n    parse(data).map_err(|_| Error::Parse)\n}\n```",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete*, Section 15.1 (Figure 15-1)."
+}

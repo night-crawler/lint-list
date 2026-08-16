@@ -1,0 +1,13 @@
+{
+  "id": 391,
+  "title": "Discarding XML/JSON Validation during DTO Assembly",
+  "category": "Information Loss",
+  "damaged_code": "```rust\nfn map_dto_to_domain(dto: serde_json::Value) -> Result<DomainModel, String> {\n    // Directly accesses fields without validating schema or format!\n    let username = dto[\"username\"].as_str().ok_or(\"Missing username\")?;\n    Ok(DomainModel { username: username.to_string() })\n}\n```",
+  "pattern": "Directly converting raw dynamic nested payloads (like JSON or XML trees) into domain models without performing intermediate format validation or DTD/Schema checks.",
+  "why_bad": "It leaves the domain model exposed to malformed or incomplete payloads, pushing validation checks downstream into business logic where they complicate error resolution.",
+  "detection": "Conversion code extracting fields from generic unstructured JSON/XML trees directly into domain objects.",
+  "counterexample": "Validating schema at the entry boundary first:\n```rust\nlet schema: Schema = ...;\nschema.validate(&dto)?;\n```",
+  "fix": "Introduce strongly typed DTO structs with declarative validation rules before converting to domain types.\n```rust\n#[derive(Deserialize)]\nstruct UserDto {\n    #[serde(deserialize_with = \"validate_username\")]\n    username: String,\n}\n```",
+  "strength": "Strong",
+  "source": "*Patterns of Enterprise Application Architecture* by Martin Fowler (p. 392)."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 523,
+  "title": "Premature Caching/Memoization of Cheap Computations",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\nstruct CheapCalculator {\n    cache: std::collections::HashMap<(i32, i32), i32>,\n}\nimpl CheapCalculator {\n    fn add(&mut self, a: i32, b: i32) -> i32 {\n        // Caching simple addition\n        *self.cache.entry((a, b)).or_insert_with(|| a + b)\n    }\n}\n```",
+  "pattern": "Storing the results of basic arithmetic, bitwise operations, or short memory reads in a hash map or cache to \"avoid recomputing.\"",
+  "why_bad": "The overhead of hash map key generation, hash computation, bucket collisions, and dynamic allocation is orders of magnitude slower than basic CPU mathematical instructions. A simple add takes < 1 ns, whereas a cache lookup takes 10–50 ns [351, 360, 362].",
+  "detection": "Introduction of a dictionary or map cache for functions that only perform primitive arithmetic (`+`, `-`, `*`, `/`), basic bitwise logic, or simple struct reads.",
+  "counterexample": "Caching transcendental math operations (`Math.pow()`, `sin()`, `log()`) or file I/O operations where execution time is genuinely expensive. `Context-dependent`.",
+  "fix": "```rust\nfn add(a: i32, b: i32) -> i32 {\n    a + b\n}\n```",
+  "strength": "Strong",
+  "source": "*Code Complete*, Section 26.4 (p. 351, 360, 362)."
+}

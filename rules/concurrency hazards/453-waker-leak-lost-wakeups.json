@@ -1,0 +1,13 @@
+{
+  "id": 453,
+  "title": "Waker Leak (Lost Wakeups)",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```rust\nimpl Future for MyFuture {\n    type Output = ();\n    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {\n        if self.is_ready() {\n            Poll::Ready(())\n        } else {\n            // BUG: Fails to store cx.waker(). The future returns Pending,\n            // but the executor has no way of knowing when to poll again!\n            Poll::Pending \n        }\n    }\n}\n```",
+  "pattern": "Returning `Poll::Pending` from a custom `Future` implementation without storing or coordinating with the `cx.waker()`.",
+  "why_bad": "It violates the core contract of the `Future` poll model. If a future returns `Pending` without registering the waker to be triggered upon resource readiness, the future will sleep forever, causing a permanent lost wakeup and hang.",
+  "detection": "A custom `poll` implementation returning `Poll::Pending` where `cx.waker()` is not cloned, stored, or passed to a child future.",
+  "counterexample": "The future delegates the polling to an inner future which is guaranteed to register the waker.",
+  "fix": "Register the waker with the underlying event source before returning `Pending`.\n```rust\nfn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {\n    if self.is_ready() {\n         Poll::Ready(())\n    } else {\n         self.waker = Some(cx.waker().clone());\n         Poll::Pending\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Jon Gjengset Ch 9 (p. 238)"
+}

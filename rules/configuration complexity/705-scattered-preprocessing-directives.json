@@ -1,0 +1,13 @@
+{
+  "id": 705,
+  "title": "Scattered Preprocessing Directives",
+  "category": "Configuration Complexity",
+  "damaged_code": "```rust\nfn process_payment() {\n    #[cfg(feature = \"mock_api\")]\n    {\n        execute_mock_payment();\n    }\n    #[cfg(not(feature = \"mock_api\"))]\n    {\n        execute_real_payment();\n    }\n}\n```",
+  "pattern": "Repetitive use of platform-specific conditional compilation attributes (such as `#[cfg]` in Rust or `#ifdef` in C/C++) directly inside functional logic blocks.",
+  "why_bad": "Creates multiple disjoint compilation branches in a single file, destroying readability and hiding compilation errors on uncompiled tracks. It makes test coverage mapping impossible.",
+  "detection": "Conditional preprocessor checks located inside function bodies rather than at file or module boundaries.",
+  "counterexample": "```rust\ntrait PaymentProvider {\n    fn pay(&self);\n}\n// Implementations are cleanly separated into distinct platform/mock modules\n```",
+  "fix": "Isolate platform-specific logic behind clear interfaces or traits; resolve the correct implementation at the compilation boundary (module-level) or linker stage.",
+  "strength": "Strong",
+  "source": "[Robert C. Martin Series] Robert C. Martin - *Clean Architecture_ A Craftsman’s Guide to Software Structure and Design* (2017, Prentice Hall).pdf, Chapter 28; [Robert C. Martin series] Feathers, Michael C - *Working effectively with legacy code* (2013, Prentice Hall PTR).pdf, Chapter 21."
+}

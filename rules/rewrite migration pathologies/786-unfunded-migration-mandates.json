@@ -1,0 +1,13 @@
+{
+  "id": 786,
+  "title": "Unfunded Migration Mandates",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```rust\n// In internal core library cargo.toml update\n// Churning a fundamental internal dependency and forcing all downstreams to manually adapt\npub fn connect_v2(url: Url, credentials: NewAuthToken) {} // Removed OldAuthToken support\n```",
+  "pattern": "Infrastructure or platform teams releasing backwards-incompatible API changes and pushing the migration work onto downstream customer teams under a strict deadline.",
+  "why_bad": "It creates a highly inefficient \"unfunded mandate.\" Every downstream team must waste engineering hours learning the context and manually rewriting code, leading to duplicated effort, release delays, and resentment across the organization [725, 746, 747].",
+  "detection": "The introduction of a breaking change in an internal shared dependency that requires manual downstream code modification across multiple repositories.",
+  "counterexample": "Valid in small organizations where the total number of dependencies is low enough to be managed organically.",
+  "fix": "Establish the \"Churn Rule\": the team introducing the breaking change is responsible for authoring and running automated transformations (Large Scale Changes) to migrate all callers themselves [714, 747, 748].",
+  "strength": "Strong",
+  "source": "Software Engineering at Google, Chapter 1, 15, and 22 [270, 713, 714, 725, 746, 747, 748]"
+}

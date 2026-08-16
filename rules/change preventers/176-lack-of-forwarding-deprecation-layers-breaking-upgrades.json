@@ -1,0 +1,13 @@
+{
+  "id": 176,
+  "title": "Lack of Forwarding/Deprecation Layers (Breaking Upgrades)",
+  "category": "Change Preventers",
+  "damaged_code": "```rust\n// Library version 1.0\npub fn calculate_tax(amount: f64) -> f64 { amount * 0.1 }\n\n// Library version 2.0 - directly modifying the public method signature\npub fn calculate_tax(amount: f64, rate: f64) -> f64 { amount * rate }\n```",
+  "pattern": "Directly modifying or deleting a public type, method, or parameter in a minor or patch upgrade, rather than providing an incremental transition path.",
+  "why_bad": "It breaks downstream consumer builds instantly upon upgrade, preventing incremental adoption and creating a cascade of compile failures. It forces consumers to halt feature work to fix breaking dependencies.",
+  "detection": "Modifying the signature of any public symbol without marking the old symbol as `#[deprecated]` or providing a forwarding function.",
+  "counterexample": "Major version upgrades (breaking changes) where breaking backward compatibility is expected and documented.",
+  "fix": "Provide a deprecation layer. Keep the old method signature, mark it with `#[deprecated]`, and have its body calculate the default and delegate to the new method.",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust for Rustaceans* (2021), Chapter 4 (\"Type Modifications\"), pp. 91-94; Titus Winters et al., *Software Engineering at Google* (2020), Chapter 22 (\"Language Support\")."
+}

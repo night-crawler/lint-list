@@ -1,0 +1,13 @@
+{
+  "id": 654,
+  "title": "Hardcoded Environmental Assumptions (Brittle Context)",
+  "category": "Test Smells",
+  "damaged_code": "```rust\n#[test]\nfn test_read_database_config() {\n    // Fragile assumption on local filesystem paths and database presence\n    let config = Config::load_from_file(\"/Users/developer/projects/app/config.json\").unwrap();\n    assert_eq!(config.db_host, \"localhost\");\n}\n```",
+  "pattern": "Tests that assume specific local directory paths, exact clock dates, local time zones, or local system permissions.",
+  "why_bad": "Tests fail immediately when run on other team members' machines, in continuous integration pipelines, or inside sandboxed build engines [178].",
+  "detection": "Hardcoded absolute file paths, system usernames, or machine IP addresses in test bodies [269].",
+  "counterexample": "Relative paths constructed dynamically using build environment variables: `env!(\"CARGO_MANIFEST_DIR\")`.",
+  "fix": "Use virtual resources, mock system clocks, relative paths, or environment variables to inject context dynamically during test execution [269].",
+  "strength": "Strong",
+  "source": "*   *The Pragmatic Programmer*, \"Unreliable things\" (p. 269) [269, 572]\n*   *Software Engineering at Google*, \"Hermetic Tests\" (p. 218) [507]"
+}

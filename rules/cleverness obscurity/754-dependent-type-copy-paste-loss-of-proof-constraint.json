@@ -1,0 +1,12 @@
+{
+  "id": 754,
+  "title": "Dependent Type Copy-Paste (Loss of Proof Constraint)",
+  "category": "Cleverness Obscurity",
+  "damaged_code": "```coq\n(* Coq *)\nmatch n with\n| O => fun => Reduce (P1 dec \"\" && P2 dec s)\n| S n' => fun => (P1 dec (substring 0 (S n') s) && P2 dec (substring (S n') (length s - S n') s)) || F n'\nend\n```",
+  "pattern": "Duplicating complex type structures (e.g., repeating `S n'` instead of using a unified binder variable `n`) inside branches because the type-checker fails to carry over structural constraints.",
+  "why_bad": "It degrades code maintainability. Copy-pasting long structural branches increases code volume and prevents centralized optimization.",
+  "detection": "Duplicate pattern definitions inside nested branches of dependent match statements.",
+  "fix": "Bind the branch variable or use helper definitions to hide duplicate structural terms.\n```coq\nmatch n with\n| O => fun => Reduce (P1 dec \"\" && P2 dec s)\n| S n' => fun => let n := S n' in (P1 dec (substring 0 n s) && P2 dec (substring n (length s - n) s)) || F n'\nend\n```",
+  "strength": "Strong",
+  "source": "*Certified Programming with Dependent Types*, Chapter 11 (p. 160)."
+}

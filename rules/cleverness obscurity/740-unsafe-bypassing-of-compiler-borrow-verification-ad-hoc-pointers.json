@@ -1,0 +1,13 @@
+{
+  "id": 740,
+  "title": "Unsafe Bypassing of Compiler Borrow Verification (Ad-Hoc Pointers)",
+  "category": "Cleverness Obscurity",
+  "damaged_code": "```rust\n// Rust\nfn mutate_data(data: &Data) {\n    let raw_ptr = data as *const Data as *mut Data;\n    unsafe { (*raw_ptr).value = 42; } // Unsafely bypass read-only reference\n}\n```",
+  "pattern": "Casting read-only references to raw mutable pointers inside `unsafe` blocks to bypass the borrow checker's aliasing rules.",
+  "why_bad": "It actively violates Rust's core memory safety guarantees. Mutating data through a shared reference (`&T`) is undefined behavior, as the compiler assumes the underlying memory is immutable, leading to memory corruption.",
+  "detection": "An `unsafe` block containing reference-to-raw-pointer casts (`as *const T as *mut T`) that mutate fields.",
+  "counterexample": "Low-level synchronization primitives implementing standard interior mutability (such as `UnsafeCell`) that are thoroughly audited. `Context-dependent`.",
+  "fix": "Use safe interior mutability patterns like `RefCell` or `Mutex` to manage mutable state across shared boundaries.\n```rust\nstruct Data {\n    value: Cell<i32>,\n}\nfn mutate_data(data: &Data) {\n    data.value.set(42);\n}\n```",
+  "strength": "Strong",
+  "source": "*Rust for Rustaceans*, Chapter 9 (Unsafe) / *Building Secure and Reliable Systems*, Chapter 12."
+}

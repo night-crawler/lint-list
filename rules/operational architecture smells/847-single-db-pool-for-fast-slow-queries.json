@@ -1,0 +1,13 @@
+{
+  "id": 847,
+  "title": "Single DB Pool for Fast & Slow Queries",
+  "category": "Operational Architecture Smells",
+  "damaged_code": "```rust\n// Shared global connection pool used for both dashboard exports and login checks\nlet conn = DB_POOL.get_conn();\n```",
+  "pattern": "Sharing a single database connection pool between fast online user requests and slow, analytical background transactions.",
+  "why_bad": "Slow, long-running database transactions check out all connections from the pool and hold them. Fast requests block indefinitely waiting for a connection, causing catastrophic user-facing latency.",
+  "detection": "Slow and fast database transactions executing against the same global connection pool instance.",
+  "counterexample": "Separate, dedicated pools for OLTP (Online Transaction Processing) and OLAP (Online Analytical Processing) queries.",
+  "fix": "Create two separate pools: one small pool with short timeouts for fast user-facing transactions, and a separate pool with a low connection count for slow, background batch reporting.",
+  "strength": "Strong",
+  "source": "*Release It!*, \"Resource Pool Contention,\" p. 176."
+}

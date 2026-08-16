@@ -1,0 +1,13 @@
+{
+  "id": 696,
+  "title": "Non-Hermetic Builds",
+  "category": "Configuration Complexity",
+  "damaged_code": "```bash\n# Makefile\n# Depends on whatever arbitrary compiler version happens to exist on the host OS\nbuild:\n\tgcc main.c -o app\n```",
+  "pattern": "Compiling application code using the host operating system's system-installed compilers, tools, or global environment libraries.",
+  "why_bad": "Results in non-reproducible builds. Compile behavior will vary silently across developer workstations and CI agents, introducing subtle performance drifts or ABI mismatch crashes in production.",
+  "detection": "Build scripts executing global binary paths (such as raw `gcc` or `rustc`) without pinned toolchains or cryptographic hash manifests for tools.",
+  "counterexample": "```toml\n# rust-toolchain.toml\n[toolchain]\nchannel = \"1.72.0\" # Statically lock the compiler toolchain version\n```",
+  "fix": "Statically declare all compilation toolchain versions, libraries, and dependencies in project files, ensuring builds run inside hermetic environments like Bazel or Docker.",
+  "strength": "Strong",
+  "source": "Titus Winters, Tom Manshreck, Hyrum Wright - *Software Engineering at Google_ Lessons Learned from Programming Over Time* (2020, O'Reilly Media).pdf, Chapter 14."
+}

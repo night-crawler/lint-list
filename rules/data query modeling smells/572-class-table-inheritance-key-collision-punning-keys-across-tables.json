@@ -1,0 +1,13 @@
+{
+  "id": 572,
+  "title": "Class Table Inheritance Key Collision (Punning Keys Across Tables)",
+  "category": "Data Query Modeling Smells",
+  "damaged_code": "```sql\n-- Subclass tables using native auto-incrementing keys independently\nCREATE TABLE footballers (\n    id INT AUTO_INCREMENT PRIMARY KEY,\n    club VARCHAR(50)\n);\nCREATE TABLE cricketers (\n    id INT AUTO_INCREMENT PRIMARY KEY,\n    batting_avg DOUBLE\n);\n```",
+  "pattern": "Concrete subclass tables in a Class Table Inheritance hierarchy generating their own independent auto-incrementing surrogate keys without a shared sequence registry.",
+  "why_bad": "Key collisions. If `footballers` and `cricketers` both assign key `101`, any collection or polymorphic join on the parent `players` table will load incorrect rows or cause primary key constraint violations when merging records in memory [328, 645].",
+  "detection": "Child tables in a class table inheritance structure using independent `AUTO_INCREMENT` or separate database-level sequences for their primary keys.",
+  "counterexample": "Single table inheritance where all rows share a single primary key sequence.",
+  "fix": "Use a single parent key generator or share a common sequence across all subclasses to ensure key uniqueness.",
+  "strength": "Strong",
+  "source": "*Patterns of Enterprise Application Architecture (Fowler), p. 328 [328, 645]*"
+}

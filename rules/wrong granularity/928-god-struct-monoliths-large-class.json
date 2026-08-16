@@ -1,0 +1,13 @@
+{
+  "id": 928,
+  "title": "God Struct Monoliths (Large Class)",
+  "category": "Wrong Granularity",
+  "damaged_code": "```rust\nstruct SystemManager {\n    db_conn: DbConnection,\n    smtp_client: SmtpClient,\n    active_users: Vec<User>,\n    cache: Cache,\n    config: Config,\n    log_file: File,\n    // Contains 30+ separate business functions acting on different fields\n}\n```",
+  "pattern": "A massive struct aggregating dozens of unrelated fields and responsibilities, acting as the centralized coordinator for the entire application.",
+  "why_bad": "Fails the Common Closure Principle and SRP. Any change to logging, database schemas, cache invalidation, or config formatting forces a rewrite and redeployment of the entire `SystemManager`. It creates a massive convergence of dependencies, making compile-time parallelization impossible.",
+  "detection": "Measure structs containing numerous fields from disparate architectural layers (DB, Network, Log, Business Entities) combined with dozens of public methods.",
+  "counterexample": "`Context-dependent`. Centralized application states in small CLI tools or tiny prototypes where simplicity outweighs separation of concerns.",
+  "fix": "Break down the God struct into isolated, highly cohesive components that coordinate through clear interfaces.\n```rust\nstruct DatabaseFacade {\n    conn: DbConnection,\n    cache: Cache,\n}\n\nstruct NotificationEngine {\n    smtp: SmtpClient,\n}\n```",
+  "strength": "Strong",
+  "source": "*Robert C. Martin - Clean Code (2008)*, Chapter 10, \"Classes\" (Too Many Responsibilities); *Steve McConnell - Code Complete (2004)*, Chapter 6; *Martin Fowler - Refactoring (1999)*, Chapter 3, \"Large Class\"."
+}

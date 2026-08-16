@@ -1,0 +1,13 @@
+{
+  "id": 339,
+  "title": "Evaluation Order Dependency in Function Arguments",
+  "category": "Semantic Ambiguity",
+  "damaged_code": "```rust\nlet mut n = 5;\nprint_coords(increment_and_return(&mut n), n + 2); // Ambiguous argument values\n```",
+  "pattern": "Passing multiple expressions as arguments to a function call where at least one expression mutates a state that another argument expression relies on.",
+  "why_bad": "The evaluation order of function arguments is compiler-dependent in many compiled languages (like C/C++), which can evaluate `n + 2` either before or after `increment_and_return`. While Rust defines left-to-right evaluation, relying on it creates fragile, highly unreadable, and non-portable logic.",
+  "detection": "A function call where one argument mutates a variable via reference or side effect, and another argument reads that same variable.",
+  "counterexample": "Sequentially binding variables before calling the function:\n```rust\nlet first = increment_and_return(&mut n);\nlet second = n + 2;\nprint_coords(first, second);\n```",
+  "fix": "Explicitly evaluate and bind each argument to an intermediate variable before making the function call.\n```rust\nlet mut n = 5;\nlet first_coord = increment_and_return(&mut n); // 6\nlet second_coord = n + 2; // 8, guaranteed\nprint_coords(first_coord, second_coord);\n```",
+  "strength": "Strong",
+  "source": "*Code Complete* by Steve McConnell (p. 211)."
+}

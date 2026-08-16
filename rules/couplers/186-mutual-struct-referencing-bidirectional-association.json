@@ -1,0 +1,13 @@
+{
+  "id": 186,
+  "title": "Mutual Struct Referencing (Bidirectional Association)",
+  "category": "Couplers",
+  "damaged_code": "```rust\nuse std::rc::Rc;\nuse std::cell::RefCell;\n\nstruct Parent {\n    child: Option<Rc<RefCell<Child>>>,\n}\nstruct Child {\n    parent: Option<Rc<RefCell<Parent>>>,\n}\n```",
+  "pattern": "Two structures maintain direct references to each other, creating a cyclic dependency graph at the type level.",
+  "why_bad": "In Rust, this leads to memory leaks (reference cycles) and forces the use of verbose, run-time mutation wrappers (`Rc<RefCell<T>>`). It also prevents independent testing and reuse.",
+  "detection": "Struct `A` contains a field referring to struct `B`, and struct `B` contains a field referring to struct `A` (directly or transitively).",
+  "counterexample": "Inherent cyclic data structures like doubly-linked lists or tree nodes with parent pointers, though these are typically localized inside safe internal abstractions.",
+  "fix": "Break the cycle by converting the bidirectional association into a unidirectional one, or introduce an intermediate coordinator/index map.\n```rust\nstruct RelationshipMap {\n    parent_to_child: Vec<(usize, usize)>,\n}\n```",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Refactoring* (1999), Chapter 3 (\"Inappropriate Intimacy\"); Steve McConnell, *Code Complete* (2004), Chapter 5 (\"Circular Dependencies\")."
+}

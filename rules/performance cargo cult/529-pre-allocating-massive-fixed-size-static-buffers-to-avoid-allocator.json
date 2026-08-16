@@ -1,0 +1,13 @@
+{
+  "id": 529,
+  "title": "Pre-allocating Massive Fixed-Size Static Buffers to Avoid Allocator",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\nstatic mut BUFFER: [u8; 10_000_000] = [0; 10_000_000]; // 10MB static array\n```",
+  "pattern": "Declaring huge fixed-size global arrays or arrays on the stack (`[T; N]`) to completely avoid heap allocator overhead.",
+  "why_bad": "Huge static buffers bloat the executable's binary size and resident set size (RSS), causing cold-start delay due to virtual memory page faults when first accessed. If done on the stack, it easily triggers catastrophic stack overflows [111, 317].",
+  "detection": "Static or thread-local byte arrays initialized with very large dimensions (e.g., > 1 MB) without dynamic heap backing.",
+  "counterexample": "Embedded systems or microcontrollers with no operating system or heap allocator where absolute fixed-size memory maps are mandatory. `Contextual`.",
+  "fix": "```rust\nlet buffer = vec![0u8; 10_000_000]; // Dynamically allocated on heap\n```",
+  "strength": "Strong",
+  "source": "*Systems Performance*, Chapter 2 (p. 111); *A Philosophy of Software Design*, Chapter 20 (p. 317)."
+}

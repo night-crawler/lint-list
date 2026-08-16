@@ -1,0 +1,13 @@
+{
+  "id": 466,
+  "title": "Deduplication Check Lacking Single-Write Atomicity (Read-Then-Write TOCTOU)",
+  "category": "Distributed Systems Fallacies",
+  "damaged_code": "```rust\n// TOCTOU race condition in message processing deduplication\nasync fn process_message(msg: Message, db: &Database) {\n    // 1. Read check\n    if db.has_processed_message(&msg.id).await {\n        return; // Ignore duplicate\n    }\n    \n    // PREEMPTION POINT: Concurrent worker receives duplicate message here\n    \n    // 2. Perform business side-effect\n    execute_non_idempotent_billing(&msg);\n    \n    // 3. Write record\n    db.insert_processed_message(&msg.id).await;\n}\n```",
+  "pattern": "Checking if a unique network message or transaction ID has been processed, and then executing a state-modifying action and recording the message ID as \"processed\" in separate, non-atomic database steps.",
+  "why_bad": "Under concurrent execution (e.g., multiple workers processing from a shared partition), duplicate messages can be processed simultaneously [16]. Because the read check and write record are separate operations, both threads can execute step 1 before either writes the ID in step 3. Both threads will conclude the message is new and execute the non-idempotent side-effect, causing double processing [16].",
+  "detection": "Identify message handlers containing a read query on a transaction/message ID followed by write queries to a database, where the read and write operations are not performed atomically under an exclusive database lock, a unique primary key constraint write, or a SQL transaction.",
+  "counterexample": "```rust\nasync fn process_message(msg: Message, db: &Database) {\n    // Atomic insert of the processed message ID using unique constraint\n    if let Err(_) = db.try_insert_processed_message_id(&msg.id).await {\n        return; // Constraint violation: message already processed/processing\n    }\n    // Safe to perform business side-effect\n    execute_non_idempotent_billing(&msg);\n}\n```",
+  "fix": "Enforce atomic check-and-write semantics. For example, insert the unique message ID into a dedicated table with a `UNIQUE` primary key constraint as the very first step, proceeding only if the insertion succeeds, or perform the check and update within a serialized transaction [48, 49, 133].",
+  "strength": "Strong",
+  "source": "Alex Petrov, *Database Internals*, Concurrency Control / passages [15, 16, 48, 49]; Martin Kleppmann, *Designing Data-Intensive Applications*, Chapter 7 / passage [133]."
+}

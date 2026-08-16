@@ -1,0 +1,13 @@
+{
+  "id": 336,
+  "title": "Empty vs. Null Collection Ambiguity",
+  "category": "Semantic Ambiguity",
+  "damaged_code": "```rust\nfn get_orders(&self) -> Option<Vec<Order>> { ... } // Does None mean empty or error?\n```",
+  "pattern": "Returning `Option<Vec<T>>` or `Option<HashMap<K, V>>` where `None` is used simply to represent the absence of elements.",
+  "why_bad": "It introduces semantic ambiguity: does `None` mean \"no orders were found\" (which is semantically identical to an empty vector) or \"an error/unauthorized state occurred\"? This forces callers to perform redundant checks for both `None` and `is_empty()`.",
+  "detection": "Functions returning `Option<C>` where `C` is a collection type, unless `None` specifically denotes a distinct semantic state (like \"cache miss\" or \"permission denied\").",
+  "counterexample": "Returning a plain collection where empty represents zero results:\n```rust\nfn get_orders(&self) -> Vec<Order> { Vec::new() }\n```",
+  "fix": "Return an empty collection directly to represent the absence of elements, or use `Result` if the failure to fetch is an error state.\n```rust\nfn get_orders(&self) -> Vec<Order> {\n    self.orders.clone() // Returns empty Vec if no orders exist\n}\n```",
+  "strength": "Strong",
+  "source": "*Refactoring* by Martin Fowler (p. 131); *Clean Code* by Robert C. Martin (p. 109)."
+}

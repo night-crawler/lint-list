@@ -1,0 +1,13 @@
+{
+  "id": 948,
+  "title": "Symmetry Breaking in Standard Event Side Effects",
+  "category": "Conceptual Integrity",
+  "damaged_code": "```rust\nimpl OrderManager {\n    fn place_order(&self, order: Order) {\n        self.db.save(order);\n        self.pubsub.publish(\"order_placed\", order.id);\n    }\n    fn cancel_order(&self, id: OrderId) {\n        self.db.delete(id);\n        self.pubsub.publish(\"order_cancelled\", id);\n    }\n    // Asymmetric: missing the event dispatch!\n    fn update_shipping_address(&self, id: OrderId, addr: Address) {\n        self.db.update_address(id, addr);\n    }\n}\n```",
+  "pattern": "A controller or coordinator class executes similar state-altering operations, but some paths fail to perform the standard cross-cutting side effects (such as event publication, audit logging, or cache invalidation) implemented by the others.",
+  "why_bad": "It breaks the expected structural symmetry of use cases. Downstream subsystems that rely on the missing side-effect (e.g., updating shipping details on labels when the address is updated) are silently left in an inconsistent state.",
+  "detection": "Analyze methods of a single service or manager that write to a database. Flag any method that does not invoke the same event-publishing or auditing channels used by other writing methods in that same class.",
+  "counterexample": "Operations that are explicitly local and documented as having zero external side-effects (e.g., intermediate drafts). Marked `Context-dependent`.",
+  "fix": "Restore structural symmetry by dispatching the corresponding `OrderAddressUpdated` event in the update method.",
+  "strength": "Strong",
+  "source": "*Righting Software* by Juval Löwy (2019), p. 111, 503."
+}

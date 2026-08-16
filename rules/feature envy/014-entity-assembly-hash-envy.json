@@ -1,0 +1,13 @@
+{
+  "id": 14,
+  "title": "Entity-Assembly Hash Envy",
+  "category": "Feature Envy",
+  "damaged_code": "```rust\nstruct Bicycle {\n    tire_size: String,\n    chain: String,\n}\nstruct SparesService;\nimpl SparesService {\n    fn spares(&self, bike: &Bicycle) -> HashMap<&'static str, String> {\n        let mut map = HashMap::new();\n        map.insert(\"tire_size\", bike.tire_size.clone());\n        map.insert(\"chain\", bike.chain.clone());\n        map\n    }\n}\n```",
+  "pattern": "An external service or helper compiles a hash map or configuration dictionary of another object's internal properties.",
+  "why_bad": "The assembling logic is tightly coupled to the entity's attributes. Any additions of parts/properties require updating this assembler. The creation of this structure belongs directly in the entity.",
+  "detection": "A method that populates a generic data structure (like a `HashMap` or `Vec`) solely with properties extracted from a single foreign struct.",
+  "counterexample": "A generic JSON serializer that automatically handles arbitrary types via reflection.",
+  "fix": "Move the assembly behavior to the entity.\n```rust\nimpl Bicycle {\n    fn spares(&self) -> HashMap<&'static str, String> {\n        let mut map = HashMap::new();\n        map.insert(\"tire_size\", self.tire_size.clone());\n        map.insert(\"chain\", self.chain.clone());\n        map\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Sandi Metz, *Practical Object-Oriented Design* (2019), Chapter 6."
+}

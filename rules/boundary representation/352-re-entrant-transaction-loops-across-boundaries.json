@@ -1,0 +1,13 @@
+{
+  "id": 352,
+  "title": "Re-entrant Transaction Loops Across Boundaries",
+  "category": "Boundary Representation",
+  "damaged_code": "```rust\n// Inside transactional context:\nfn update_user(user: &mut User) {\n    user.status = Status::Active;\n    user.log_activity(); // Internally starts its own SQL transaction\n}\n```",
+  "pattern": "An active transaction context calling a boundary service which in turn re-enters the transaction scope or invokes a parallel transaction on the same database.",
+  "why_bad": "It causes database lock contentions, deadlocks, and transaction isolation failures. It also breaks aggregate consistency boundary invariants.",
+  "detection": "Nested transactional blocks (e.g., `#[transactional]` attributes) on methods that invoke each other transitively within the same execution path.",
+  "counterexample": "Explicit, independent database connections managed by a coordinator pool. Mark as `Context-dependent`.",
+  "fix": "Separate transactional persistence calls from in-memory aggregate behavior. Batch updates and run db flushes at the absolute end of the application use case.",
+  "strength": "Contextual",
+  "source": "*Patterns of Enterprise Application Architecture* by Martin Fowler (p. 291, \"Re-entrant behavior problems\")."
+}

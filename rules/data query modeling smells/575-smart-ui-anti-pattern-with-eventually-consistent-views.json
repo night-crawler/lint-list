@@ -1,0 +1,13 @@
+{
+  "id": 575,
+  "title": "Smart UI Anti-pattern with Eventually Consistent Views",
+  "category": "Data Query Modeling Smells",
+  "damaged_code": "```rust\n// Application view layer emulating business calculations on stale query data\nif query_model.status == \"PENDING\" && is_expired(query_model.timestamp) {\n    view.display_status = \"EXPIRED\"; // UI guessing domain state\n}\n```",
+  "pattern": "Placing complex domain logic or state transitions inside the User Interface/View layer to compensate for stale data caused by eventually consistent query model lag.",
+  "why_bad": "Leakage of domain logic into the presentation layer. It creates duplicated, fragile logic that easily falls out of sync with actual business rules and leads to inconsistencies when query updates are delayed [251, 539].",
+  "detection": "Presence of conditionals implementing domain business rules (e.g., calculations or status transitions) inside the front-end or view controller code.",
+  "counterexample": "Flat projections or timestamps printed directly to inform users of the query model's age.",
+  "fix": "Keep domain rules on the server/domain layer and let the UI simply display the stale status along with a \"last updated\" indicator.",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design (Vernon), p. 471 [251, 539]*"
+}

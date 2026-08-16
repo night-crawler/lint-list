@@ -1,0 +1,13 @@
+{
+  "id": 183,
+  "title": "Giant Configuration Struct (Config coupling)",
+  "category": "Change Preventers",
+  "damaged_code": "```rust\n// Giant central config struct\npub struct AppConfig {\n    pub db_url: String,\n    pub smtp_server: String,\n    pub payment_gateway_key: String,\n    pub logging_level: String,\n}\n\npub struct EmailSender {\n    config: AppConfig, // Bound to the entire world's config\n}\n```",
+  "pattern": "A single, massive configuration structure contains every environment variable, credential, and tuning flag for every subsystem in the entire application, and is passed wholesale as a dependency to every class or constructor.",
+  "why_bad": "It violates interface segregation. A minor configuration change or the addition of a flag for a specific subsystem (e.g., adding an option to the DB configuration) forces re-evaluating and re-compiling all unrelated modules that depend on the giant config, causing unnecessary compilation delay and high change friction.",
+  "detection": "A struct holding unrelated configuration parameters (e.g., DB URLs alongside email keys) being imported and held by simple, specialized utility classes.",
+  "counterexample": "A centralized configuration reader that parses the configuration file at the application root and immediately splits and distributes specialized sub-config blocks.",
+  "fix": "Segregate the configurations. Break down the configuration into small, cohesive structs (`struct SmtpConfig`, `struct DbConfig`) and pass only the relevant, sub-config blocks to the corresponding sub-systems.",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 5 (\"What should I hide?\"); Robert C. Martin, *Clean Architecture* (2017), Chapter 10."
+}

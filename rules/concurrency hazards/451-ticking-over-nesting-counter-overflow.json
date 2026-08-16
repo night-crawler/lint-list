@@ -1,0 +1,13 @@
+{
+  "id": 451,
+  "title": "Ticking-Over Nesting Counter Overflow",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```c\n// Toy RCU Nesting\nvoid rcu_read_lock() {\n    // BUG: Plain counter increment can overflow if nested too deeply!\n    rcu_reader.nesting_count++; \n}\n```",
+  "pattern": "Tracking nested resource acquisitions or read-side lock nesting using a plain, bounded integer counter without overflow checks.",
+  "why_bad": "If nesting exceeds the maximum value of the integer (e.g., 255 for a `uint8_t`), the counter ticks over to zero. The next unlock statement will see the count as zero, incorrectly signaling a quiescent state and freeing active memory while nesting still exists.",
+  "detection": "An integer-based nesting counter incremented without assertions or bitwise boundaries.",
+  "counterexample": "Using bitwise markers (such as reserving high bits for nesting and checking for overflow).",
+  "fix": "Assert on nesting limits or use overflow-safe counter operations.\n```c\nvoid rcu_read_lock() {\n    rcu_reader.nesting_count++;\n    assert(rcu_reader.nesting_count > 0); // Detect overflow\n}\n```",
+  "strength": "Strong",
+  "source": "Paul McKenney Appendix B.8, Quick Quiz B.21"
+}

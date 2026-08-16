@@ -1,0 +1,13 @@
+{
+  "id": 64,
+  "title": "Divergent Change (Multi-Role Structs)",
+  "category": "Bloaters",
+  "damaged_code": "```rust\nstruct OrderManager {\n    orders: Vec<Order>,\n    db: PgPool,\n}\n\nimpl OrderManager {\n    fn add_order(&mut self, order: Order) {\n        self.orders.push(order);\n    }\n\n    fn calculate_tax(&self, amount: f64) -> f64 {\n        // Hardcoded federal and local tax formulas\n        amount * 0.15\n    }\n\n    fn generate_invoice_pdf(&self, order: &Order) -> Vec<u8> {\n        // High-level layout code drawing lines and rendering fonts\n        todo!()\n    }\n}\n```",
+  "pattern": "A single class or struct that is constantly modified for completely unrelated business reasons (such as changing a tax rate formula AND updating a PDF layout format).",
+  "why_bad": "Direct violation of the Single Responsibility Principle. The struct is highly fragile; changing the PDF layout code can introduce compilation or logic errors that break core tax calculation routines. It forces extensive re-testing of the entire class for unrelated changes, increasing code friction.",
+  "detection": "Observe a single source file being modified under disparate, unrelated commit headings (e.g., \"Fix PDF layout\" and \"Fix tax brackets\") over time.",
+  "counterexample": "`Context-dependent`. Centralized system dispatchers or routers that act purely as structural links and naturally touch multiple parts of the application, although they should still contain no actual business logic.",
+  "fix": "Split the struct into smaller, highly cohesive, single-purpose structs (e.g., `TaxCalculator`, `InvoiceRenderer`, and `OrderRepository`).",
+  "strength": "Strong",
+  "source": "*Martin Fowler - Refactoring (1999)*, Chapter 3, \"Divergent Change\"; *Sandi Metz - Practical Object-Oriented Design (2019)*, Chapter 2."
+}

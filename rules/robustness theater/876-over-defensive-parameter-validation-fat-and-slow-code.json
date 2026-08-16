@@ -1,0 +1,13 @@
+{
+  "id": 876,
+  "title": "Over-Defensive Parameter Validation (Fat and Slow Code)",
+  "category": "Robustness Theater",
+  "damaged_code": "```rust\nfn calculate_interest(principal: f64, rate: f64, periods: u32) -> Result<f64, Error> {\n    if principal.is_nan() || principal.is_infinite() { return Err(Error::InvalidInput); }\n    if principal < 0.0 { return Err(Error::NegativeValue); }\n    if rate.is_nan() || rate.is_infinite() { return Err(Error::InvalidInput); }\n    if rate < 0.0 || rate > 1.0 { return Err(Error::InvalidRate); }\n    if periods == 0 { return Err(Error::InvalidPeriods); }\n    \n    Ok(principal * (1.0 + rate).powi(periods as i32))\n}\n```",
+  "pattern": "Checking parameters in every conceivable way at the entrance of *every* internal function, regardless of whether the inputs have already been validated by the calling boundary.",
+  "why_bad": "It makes the codebase fat and slow with redundant branches. Defensive code is just as prone to bugs as business code. If validation is scattered everywhere, it obscures the primary business logic and degrades execution performance.",
+  "detection": "Extensive chains of simple parameter range, null, and boundary checks repeating across multiple layered internal function calls.",
+  "counterexample": "`Context-dependent`. Mandatory on public API borders or network boundaries. Redundant inside trusted boundaries.\n```rust\n// Inside trusted zone: Leverage type safety or simple assertions\nfn calculate_interest(principal: f64, rate: f64, periods: u32) -> f64 {\n    debug_assert!(principal >= 0.0 && rate >= 0.0 && periods > 0);\n    principal * (1.0 + rate).powi(periods as i32)\n}\n```",
+  "fix": "Designate strict \"barricade\" boundaries where data is sanitized once. Internal private functions can then assume clean data and use simple assertions rather than complex branch-and-return error handling.",
+  "strength": "Contextual",
+  "source": "Steve McConnell, *Code Complete*, Section 8.8 (\"Being Defensive About Defensive Programming\") and Section 8.5 (\"Barricade Your Program\")."
+}

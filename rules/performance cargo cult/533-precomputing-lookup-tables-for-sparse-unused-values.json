@@ -1,0 +1,13 @@
+{
+  "id": 533,
+  "title": "Precomputing Lookup Tables for Sparse/Unused Values",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\nlazy_static::lazy_static! {\n    // Precomputing trigonometry values for all 360,000 millidegree increments\n    static ref TRIG_TABLE: Vec<f64> = (0..360_000).map(|x| (x as f64 / 1000.0).to_radians().sin()).collect();\n}\n```",
+  "pattern": "Computing a large, dense multidimensional array of values at application startup for operations that are only sparsely or rarely requested at runtime.",
+  "why_bad": "It severely degrades application startup performance, consumes valuable DRAM cache space, and forces page table allocation for results that may never be read. Modern CPU FPU calculations are extremely fast, often matching or beating memory latency [361, 364].",
+  "detection": "Generating massive constant tables or array caches at startup (`lazy_static!`, `once_cell`, or loop initializers) for functions with sparse domain footprints.",
+  "counterexample": "Hard real-time systems where runtime latency variation (jitter) must be mathematically zero, justifying high startup costs. `Context-dependent`.",
+  "fix": "Compute values dynamically on-demand when requested.",
+  "strength": "Strong",
+  "source": "*Code Complete*, Section 26.4 (p. 361, 364)."
+}

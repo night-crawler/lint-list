@@ -1,0 +1,13 @@
+{
+  "id": 379,
+  "title": "Using Raw Primitives for Domain Identifiers",
+  "category": "Information Loss",
+  "damaged_code": "```rust\nfn enroll_student(student_id: u64, class_id: u64) {\n    //student_id and class_id are easily swappable!\n}\n```",
+  "pattern": "Using the same generic integer or UUID primitive (`u64`, `Uuid`) for distinct domain entity identifiers.",
+  "why_bad": "It strips identifier context. Callers can easily pass a `class_id` as the `student_id` parameter, compiling perfectly but causing silent data corruption and runtime logical errors.",
+  "detection": "Function signatures taking multiple parameters of the exact same primitive numeric/UUID type whose names imply distinct domain IDs.",
+  "counterexample": "General math coordinates or indices where values are raw bounds:\n```rust\nfn get_matrix_element(row: usize, col: usize) { ... }\n```",
+  "fix": "Declare distinct tuple structs (newtypes) for each domain identifier.\n```rust\nstruct StudentId(u64);\nstruct ClassId(u64);\n\nfn enroll_student(student_id: StudentId, class_id: ClassId) {}\n```",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design* by Vaughn Vernon (Chapter 10, p. 325); *Domain Modeling made Functional* (p. 83)."
+}

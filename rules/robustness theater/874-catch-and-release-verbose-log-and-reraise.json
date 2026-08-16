@@ -1,0 +1,13 @@
+{
+  "id": 874,
+  "title": "Catch and Release (Verbose Log-and-Reraise)",
+  "category": "Robustness Theater",
+  "damaged_code": "```rust\nfn fetch_user_data(id: u64) -> Result<User, DbError> {\n    match db::query_user(id) {\n        Ok(user) => Ok(user),\n        Err(err) => {\n            // Noise: Catching, logging, and re-raising without value\n            log::error!(\"Database query failed: {:?}\", err); \n            Err(err)\n        }\n    }\n}\n```",
+  "pattern": "Intermediate layers of a call stack catch every error variant, write a redundant log entry, and immediately re-raise or return the exact same error unchanged.",
+  "why_bad": "It bloats the codebase with duplicate error-handling code, tightly couples intermediate functions to specific lower-level error types, and floods system logs with multiple duplicate, non-actionable entries for a single failure.",
+  "detection": "`match` blocks or `.map_err()` calls whose only action in the error branch is to call a logging macro before returning the error unaltered.",
+  "counterexample": "`Context-dependent`. Intermediate logging is valid only if the intermediate layer adds critical local context (e.g., matching the database ID to the failing task) before propagating.\n```rust\n// Correct: Adding high-level context instead of raw duplication\nfn fetch_user_data(id: u64) -> Result<User, AppError> {\n    db::query_user(id).map_err(|e| {\n        AppError::UserContext(format!(\"Failed to retrieve profile for user {}\", id), e)\n    })\n}\n```",
+  "fix": "Allow the error to propagate naturally up the call stack to a single centralized boundary handler that logs the error once with its full backtrace.",
+  "strength": "Strong",
+  "source": "Andrew Hunt & David Hurst Thomas, *The Pragmatic Programmer*, Topic 24 (\"Catch and Release is for Fish\")."
+}

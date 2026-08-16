@@ -1,0 +1,13 @@
+{
+  "id": 947,
+  "title": "Grab-Bag Interface Contracts (Incoherent Service Traits)",
+  "category": "Conceptual Integrity",
+  "damaged_code": "```rust\ntrait Scanner {\n    fn open_port(&mut self);\n    fn close_port(&mut self);\n    fn read_code(&mut self) -> String;\n    fn get_hardware_diagnostic(&self) -> DiagnosticReport;\n}\n```",
+  "pattern": "A single trait or interface contract that combines high-level business operations with low-level infrastructure, port, or lifecycle management.",
+  "why_bad": "It breaks cohesive contract principles. Clients who only need to consume business data are forced to depend on, mock, and handle low-level device port initialization. This tight coupling degrades reuse and leaks technical volatility into the domain.",
+  "detection": "Traits containing a mixture of methods operating at different levels of concern (e.g., low-level I/O alongside high-level domain workflows).",
+  "counterexample": "Traits that represent genuine unified hardware-controller interfaces where lifecycle and operations are intrinsically inseparable, though split is still preferred. Marked `Context-dependent`.",
+  "fix": "Segregate the trait into distinct, highly cohesive traits, allowing clients to depend only on the narrow interfaces they actually require.",
+  "strength": "Strong",
+  "source": "*Righting Software* by Juval Löwy (2019), p. 118, 423."
+}

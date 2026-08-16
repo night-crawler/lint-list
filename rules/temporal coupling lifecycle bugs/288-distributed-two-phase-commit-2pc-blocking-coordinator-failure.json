@@ -1,0 +1,13 @@
+{
+  "id": 288,
+  "title": "Distributed Two-Phase Commit (2PC) Blocking Coordinator Failure",
+  "category": "Temporal Coupling Lifecycle Bugs",
+  "damaged_code": "```rust\n// Rust/Pseudocode\nfn prepare_phase(coordinator: &Coordinator, cohort: &mut Cohort) {\n    cohort.prepare_write();\n    cohort.lock_local_resources();\n    cohort.send_vote(Vote::Yes);\n    // BUG: If coordinator crashes here, cohort remains in-doubt indefinitely holding locks!\n}\n```",
+  "pattern": "A distributed transaction participant (cohort) votes \"yes\" to prepare a write, but the coordinator crashes before sending the final \"commit\" or \"abort\" decision.",
+  "why_bad": "Because 2PC is a blocking protocol, the cohort is left indefinitely in-doubt, holding lock resources on its local database forever and preventing subsequent queries from executing.",
+  "detection": "Implementation of standard distributed 2PC where participant nodes block indefinitely on resource locks without a fallback consensus recovery protocol or transaction manager timeout resolution.",
+  "counterexample": "Using decentralized consensus algorithms (such as Paxos, Raft, or RAMP) or 3-Phase Commit (3PC) which resolve in-doubt participants on timeouts.",
+  "fix": "Migrate from a standard blocking 2PC to a decentralized consensus algorithm (such as Paxos, Raft, or RAMP) or use a three-phase commit (3PC) with participant-side timeouts.",
+  "strength": "Strong",
+  "source": "Alex Petrov, *Database Internals*, page 259 / passage [70, 74, 228, 350, 351]."
+}

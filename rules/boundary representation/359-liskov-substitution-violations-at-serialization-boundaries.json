@@ -1,0 +1,13 @@
+{
+  "id": 359,
+  "title": "Liskov Substitution Violations at Serialization Boundaries",
+  "category": "Boundary Representation",
+  "damaged_code": "```rust\n#[derive(Serialize)]\n#[serde(tag = \"type\")]\nenum PaymentMethod {\n    CreditCard { number: String },\n    Cash, // No details\n}\n\n// Downstream mapping layer crashes if PaymentMethod is Cash\n```",
+  "pattern": "Representing polymorphic inheritance or choice structures at boundaries where certain variants lack semantic properties or violate subtype expectations.",
+  "why_bad": "It causes serialization failures and runtime crashes when downstream processors receive a valid subclass/variant that cannot fulfill the structural contract.",
+  "detection": "Deserializers mapping enums or polymorphic constructs where certain variants trigger panics or return empty errors during downstream map processing.",
+  "counterexample": "Purely algebraic data types handled exhaustively in local pattern matching. Mark as `Context-dependent`.",
+  "fix": "Ensure all variants serialized across boundaries satisfy the substitution contract, or use explicit, flat union representations.",
+  "strength": "Contextual",
+  "source": "*Practical Object-Oriented Design* by Sandi Metz (Liskov Substitution Principle at boundaries, p. 125)."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 19,
+  "title": "Temporal Decomposition",
+  "category": "Accidental Complexity",
+  "damaged_code": "```rust\nstruct ConfigReader;\nimpl ConfigReader {\n    pub fn read_file(path: &str) -> String { \n        std::fs::read_to_string(path).unwrap() \n    }\n}\n\nstruct ConfigParser;\nimpl ConfigParser {\n    pub fn parse_kv(raw: &str) -> HashMap<String, String> {\n        raw.lines()\n           .filter_map(|l| l.split_once('='))\n           .map(|(k, v)| (k.to_string(), v.to_string()))\n           .collect()\n    }\n}\n```",
+  "pattern": "The system structure is organized to match the chronological order of execution steps (first read, then parse), forcing multiple modules to deal with the same underlying raw data representation.",
+  "why_bad": "It causes information leakage. The chronological stages are forced to share knowledge about the exact same data format or protocol. If the format changes, multiple sequentially-decomposed classes/structs must change together, breaking encapsulation.",
+  "detection": "Distinct structs or modules named after sequential execution phases (e.g., `Reader` -> `Parser` -> `Writer`) that pass raw, un-abstracted representation formats (like raw strings, raw buffers) from one to the next.",
+  "counterexample": "`Context-dependent`. Standardized compilers or multi-stage pipelines where intermediate representations (like ASTs or bytecode) are explicitly typed and stable.",
+  "fix": "Combine the chronological steps that share the same representation details into a single, cohesive module that hides these details from the rest of the application.",
+  "strength": "Strong",
+  "source": "John K. Ousterhout, *A Philosophy of Software Design* (2018), Chapter 5 (\"Information Hiding - Temporal Decomposition\"), pp. 32, 302–303."
+}

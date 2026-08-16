@@ -1,0 +1,13 @@
+{
+  "id": 897,
+  "title": "High-Frequency Instrumentation Overhead (Observability Distortion)",
+  "category": "Local Optimization",
+  "damaged_code": "```rust\n// Heavy clock read inside a tiny, high-frequency mathematical routine\npub fn checksum_block(data: &[u8]) -> u32 {\n    let start = std::time::Instant::now(); // System clock read\n    let mut sum = 0;\n    for &byte in data {\n        sum = sum.wrapping_add(byte as u32);\n    }\n    log_duration(\"checksum\", start.elapsed());\n    sum\n}\n```",
+  "pattern": "A tiny, high-frequency function that executes in a few CPU cycles is instrumented with fine-grained time measurements (like `Instant::now()` or `rdtsc`) to capture telemetry for a dashboard.",
+  "why_bad": "While locally improving \"observability\" of the function's duration, it introduces severe measurement bias. The instrumentation call itself might take 50 cycles (requiring kernel transitions or memory barriers) to measure a function that takes only 10 cycles. This severely distorts the system under test, slowing it down by 5x and masking the actual performance bottlenecks.",
+  "detection": "High-frequency functions or loops that perform system-time reads or telemetry logging inside their critical loops.",
+  "counterexample": "Valid when measuring large, slow operations (like a remote RPC call taking 5ms). Mark `Context-dependent`.",
+  "fix": "Inline or avoid instrumenting trivial, high-frequency functions. Use aggregate counters instead, or apply sampling (e.g., measuring only 1 out of 1000 calls).\n```rust\npub fn checksum_block(data: &[u8]) -> u32 {\n    let mut sum = 0;\n    for &byte in data {\n        sum = sum.wrapping_add(byte as u32);\n    }\n    sum\n} // Profilers can capture this externally via hardware sampling (perf).\n```",
+  "strength": "Strong",
+  "source": "Richard L. Sites, *Understanding Software Dynamics*, Chapter 21, \"The Mystery of High-Frequency Tracing\" (p. 272)."
+}

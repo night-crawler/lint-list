@@ -1,0 +1,13 @@
+{
+  "id": 859,
+  "title": "Destructive Move from Mutable Reference",
+  "category": "Correctness By Convention",
+  "damaged_code": "```rust\n// Rust\nfn replace_value(s: &mut Box<i32>) {\n    let was = *s; // BUG: s is temporarily empty/uninitialized!\n    *s = Box::new(was);\n}\n```",
+  "pattern": "Moving a value out from behind a mutable reference (&mut T) without immediately replacing it with a valid instance.",
+  "why_bad": "If a panic or exception occurs before a new value is written back, the compiler will attempt to drop uninitialized or duplicate memory, leading to a catastrophic double-free or memory corruption.",
+  "detection": "Dereferencing a mutable reference to move the inner value (`let x = *s;`) without using std::mem::take or std::mem::replace.",
+  "counterexample": "Using std::mem::take or std::mem::swap to safely swap the value out while leaving a default value behind.",
+  "fix": "Use `std::mem::take` to safely swap the value while leaving a valid default behind: `let was = std::mem::take(s);`.",
+  "strength": "Strong",
+  "source": "Rust For Rustaceans, Chapter 2 (std::mem::take) [395-396]."
+}

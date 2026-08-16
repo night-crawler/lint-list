@@ -1,0 +1,13 @@
+{
+  "id": 934,
+  "title": "Chatty Microservices (Service Explosion)",
+  "category": "Wrong Granularity",
+  "damaged_code": "```rust\n// User Service, Profile Service, and Address Service are separate microservices\nfn get_user_full_details(user_id: u64) -> FullDetails {\n    let user = http::get(format!(\"http://user-service/{}\", user_id));\n    let profile = http::get(format!(\"http://profile-service/{}\", user_id));\n    let address = http::get(format!(\"http://address-service/{}\", user_id));\n    FullDetails::merge(user, profile, address)\n}\n```",
+  "pattern": "Decomposing an application into an excessive number of tiny services (nanoservices) such that a single user request requires multiple synchronous network hops to assemble basic state.",
+  "why_bad": "Network calls are orders of magnitude slower than local method calls. This granularity choice devastates latency, introduces multiple failure points, makes distributed tracing mandatory, and creates high operational costs to run and coordinate countless small containers.",
+  "detection": "Identify services whose primary execution pattern consists of issuing multiple blocking synchronous RPC/HTTP requests to peer services to serve a single incoming call.",
+  "counterexample": "Highly optimized asynchronous event-driven pipelines designed to process streams of data in parallel.",
+  "fix": "Merge the tightly coupled nanoservices into a single, cohesive service running inside a single process boundary.\n```rust\nfn get_user_full_details(user_id: u64) -> FullDetails {\n    // Database query executing a single local join across tables\n    self.db.get_user_profile_and_address(user_id)\n}\n```",
+  "strength": "Contextual",
+  "source": "*Juval Löwy - Righting Software (2019)*, Chapter 2, \"AVOID FUNCTIONAL DECOMPOSITION\" (Too many services / Explosion of services, p. 14 & Appendix B, p. 407); *Mark Richards, Neal Ford - Fundamentals of Software Architecture (2020)*, Chapter 17, \"Microservices\"."
+}

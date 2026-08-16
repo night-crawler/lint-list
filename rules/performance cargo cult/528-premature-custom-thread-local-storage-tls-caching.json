@@ -1,0 +1,13 @@
+{
+  "id": 528,
+  "title": "Premature Custom Thread-Local Storage (TLS) Caching",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\nuse std::cell::RefCell;\nthread_local! {\n    static TLS_CACHE: RefCell<Vec<i32>> = RefCell::new(Vec::with_capacity(100));\n}\n```",
+  "pattern": "Using OS-level or compiler-level Thread-Local Storage to store transient scratch vectors or local caches to avoid mutex or allocation overhead without profiling.",
+  "why_bad": "The lookup overhead of thread-local variables (which involves operating-system-specific register swaps or segment pointer calculations) can easily exceed the cost of simple parameters or standard stack-allocated data. It also severely complicates testing, thread joining, and leaks memory if threads are created dynamically [111, 223].",
+  "detection": "Excessive use of the `thread_local!` macro or `#[thread_local]` attributes to store state or collections that could simply be passed as function references or are uncontended.",
+  "counterexample": "High-performance profiling tools, CPU counters, or random number generator states (`rand::ThreadRng`) where true per-thread independent isolation is required. `Contextual`.",
+  "fix": "Pass mutable scratch buffers directly to functions as arguments (`&mut Vec<i32>`), allowing threads to manage allocations cleanly on the call stack.",
+  "strength": "Contextual",
+  "source": "*Systems Performance*, Chapter 2 (p. 111); *Herlihy, Maurice*, Chapter 17 (p. 223)."
+}

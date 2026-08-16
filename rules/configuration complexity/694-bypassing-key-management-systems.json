@@ -1,0 +1,13 @@
+{
+  "id": 694,
+  "title": "Bypassing Key Management Systems",
+  "category": "Configuration Complexity",
+  "damaged_code": "```rust\nstruct AuthConfig {\n    // Exposes raw private key material in plain configuration memory\n    raw_private_pem: String,\n}\n```",
+  "pattern": "Exposing raw cryptographic private keys, passphrases, or tokens as plaintext strings inside application configuration structures.",
+  "why_bad": "Significantly broadens the blast radius of a credential compromise. Any debugging dump, heap scan, or logged configuration error leaks active administrative secrets.",
+  "detection": "Public API or struct fields holding un-encrypted private key strings or plaintext credentials instead of abstract handles.",
+  "counterexample": "```rust\nstruct AuthConfig {\n    // Abstract KMS key reference, loaded securely by the crypto framework\n    kms_key_arn: String,\n}\n```",
+  "fix": "Accept only abstract resource names or key identifiers; delegate decryption and credential loading entirely to a dedicated Key Management Service (KMS) or secure agent.",
+  "strength": "Strong",
+  "source": "Heather Adkins et al., - *Building Secure and Reliable Systems* (2020, O'Reilly Media).pdf, Chapter 5."
+}

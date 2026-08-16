@@ -1,0 +1,13 @@
+{
+  "id": 301,
+  "title": "Representational Schema-to-Struct Duplication",
+  "category": "Duplication",
+  "damaged_code": "```rust\n// Manual SQL insert mapping\nfn insert_person(conn: &Connection, name: &str, age: i32) {\n    conn.execute(\n        \"INSERT INTO Person (name, age) VALUES (?1, ?2)\",\n        params![name, age],\n    );\n}\n\n// Duplicate representation of DB model in code\nstruct Person {\n    name: String,\n    age: i32,\n}\n```",
+  "pattern": "Manually duplicating DB table layouts, columns, and entity relations inside raw string queries and language struct definitions.",
+  "why_bad": "Changing a database field type or adding a column requires a synchronized manual edit of language structures, serialization tags, and inline queries, causing fragile database mapping errors.",
+  "detection": "The manual mapping of database field structures in raw string queries matching manual compiled-language structure definitions.",
+  "counterexample": "Bespoke, hand-crafted queries built strictly for performance optimizations where standard schema validation is unfeasible.",
+  "fix": "Drive the struct generation and query validation from the database schema itself at build-time using schema validation macros.",
+  "strength": "Strong",
+  "source": "*The Pragmatic Programmer* (20th Anniversary Edition), Topic 9: \"Representational Duplication\", p. 204-205."
+}

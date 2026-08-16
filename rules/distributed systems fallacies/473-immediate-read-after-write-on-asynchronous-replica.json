@@ -1,0 +1,13 @@
+{
+  "id": 473,
+  "title": "Immediate Read-After-Write on Asynchronous Replica",
+  "category": "Distributed Systems Fallacies",
+  "damaged_code": "```rust\n// Writing to master and immediately reading from asynchronous replica\nasync fn update_profile(client: &DbClient, profile: Profile) {\n    // Write request routed to Primary database node\n    client.write_primary(&profile).await.unwrap();\n    \n    // BUG: Replication lag! Read request is immediately routed to replica.\n    // The replica hasn't caught up, so the user sees their old profile data.\n    let fetched = client.read_replica(profile.user_id).await.unwrap();\n}\n```",
+  "pattern": "Performing a state-modifying write operation against a primary database node, followed immediately by query reads for that same entity routed to an asynchronous follower replica.",
+  "why_bad": "Asynchronous replication introduces a non-zero propagation delay (replication lag) before writes on the primary are reflected on followers [116]. Reading immediately from a replica results in observing outdated data, making the user's recently submitted updates appear to have been lost or deleted, violating read-after-write (read-your-writes) consistency [117, 130].",
+  "detection": "Identify sequential execution paths where a write method on a primary database reference is immediately followed by a read method on a read-only or replica database reference querying the exact same resource key.",
+  "counterexample": "```rust\nasync fn update_profile_safe(client: &DbClient, profile: Profile) {\n    client.write_primary(&profile).await.unwrap();\n    \n    // Force reads of the user's own profile to be served from Primary node,\n    // routing replica queries only for other users' profiles.\n    let fetched = client.read_primary(profile.user_id).await.unwrap();\n}\n```",
+  "fix": "Route any reads of data that the user has recently modified back to the primary database node, or enforce replica tracking that blocks read execution until the replica's replication sequence matches the write transaction's log sequence [117, 130, 206].",
+  "strength": "Strong",
+  "source": "Martin Kleppmann, *Designing Data-Intensive Applications*, Chapter 5 (Replication Lag) / passages [116, 117, 130, 206]; Alex Petrov, *Database Internals*, Chapter 11 / passage [53]."
+}

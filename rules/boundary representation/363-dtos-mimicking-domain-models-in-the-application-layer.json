@@ -1,0 +1,13 @@
+{
+  "id": 363,
+  "title": "DTOs Mimicking Domain Models in the Application Layer",
+  "category": "Boundary Representation",
+  "damaged_code": "```rust\nstruct MergeService {\n    customer_dto: CustomerDto,\n    order_dto: OrderDto,\n}\nimpl MergeService {\n    fn calculate_dashboard(&self) -> DashboardView {\n        // Business logic running directly on raw DTO combinations\n        let total = self.customer_dto.credit + self.order_dto.amount;\n        ...\n    }\n}\n```",
+  "pattern": "Application services acting as a \"bargain-basement Bounded Context\" by assembling and performing business rules directly on combinations of raw boundary DTOs.",
+  "why_bad": "It leads to domain model anemia and leaks context definitions. It turns the application layer into a procedural transaction script, locking rules away from the core model.",
+  "detection": "Application layer classes managing business logic by combining and evaluating fields from multiple distinct DTO payloads.",
+  "counterexample": "Thin orchestrators whose single role is combining already-computed values for view builders.",
+  "fix": "Map DTOs to their respective domain types first, coordinate them within the domain model, and return a clean domain-grounded view.",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design* by Vaughn Vernon (Chapter 14, p. 532)."
+}

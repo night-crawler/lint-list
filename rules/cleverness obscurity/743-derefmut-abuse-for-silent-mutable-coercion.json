@@ -1,0 +1,12 @@
+{
+  "id": 743,
+  "title": "DerefMut Abuse for Silent Mutable Coercion",
+  "category": "Cleverness Obscurity",
+  "damaged_code": "```rust\n// Rust\nimpl DerefMut for Manager {\n    fn deref_mut(&mut self) -> &mut Self::Target {\n        &mut self.employee // Exposes raw mutable internal state\n    }\n}\n```",
+  "pattern": "Implementing the `DerefMut` trait on domain models to allow callers to unsafely and implicitly mutate internal fields.",
+  "why_bad": "It breaks the encapsulation of mutable state. Callers can modify inner attributes without traversing the outer struct's business rules or invariants, leading to silent state corruption.",
+  "detection": "An implementation of `DerefMut` where the outer type is a business domain model rather than a standard memory wrapper or smart pointer.",
+  "fix": "Expose explicit, well-named mutation methods that enforce validation.\n```rust\nimpl Manager {\n    pub fn promote_employee(&mut self) {\n        self.employee.grade += 1;\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Rust for Rustaceans*, Chapter 1."
+}

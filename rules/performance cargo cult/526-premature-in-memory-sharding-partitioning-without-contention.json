@@ -1,0 +1,13 @@
+{
+  "id": 526,
+  "title": "Premature In-Memory Sharding (Partitioning without Contention)",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\nuse std::sync::{Arc, Mutex};\n// Prematurely splitting data into 256 shards to \"avoid lock contention\"\nstruct ShardedMap {\n    shards: Vec<Arc<Mutex<std::collections::HashMap<String, String>>>>,\n}\n```",
+  "pattern": "Splitting an in-memory collection or state store into a large array of locks (shards) before observing or profiling any thread lock contention.",
+  "why_bad": "Sharding introduces significant architectural complexity, memory allocation overhead, and complicates global operations (like resizing, clearing, or listing elements) which must lock all shards sequentially, potentially causing deadlocks and worse performance [9, 12, 104].",
+  "detection": "Using a vector or array of mutexes/read-write locks (`Vec<Mutex<T>>`) accessed via key hashing where a single lock over the collection is sufficient for low-concurrency or single-threaded use.",
+  "counterexample": "High-throughput systems (such as high-traffic web servers with 64+ cores) where lock profiling explicitly demonstrates that lock acquisition wait times exceed 20% of thread execution time. `Contextual`.",
+  "fix": "```rust\nstruct SafeMap {\n    data: Arc<Mutex<std::collections::HashMap<String, String>>>,\n}\n```",
+  "strength": "Strong",
+  "source": "*1701.00854v6.pdf*, Chapter 6, Section 6.4 (p. 12); *Thinking in Systems*, Section 3.2 (p. 104); *Database Internals*, Chapter 1."
+}

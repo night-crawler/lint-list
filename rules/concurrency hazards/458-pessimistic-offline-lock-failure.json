@@ -1,0 +1,13 @@
+{
+  "id": 458,
+  "title": "Pessimistic Offline Lock Failure",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```rust\n// User locks an order for editing\nlock_manager.acquire_offline_lock(\"order_123\");\n// User shuts down laptop without releasing the lock\n// Order 123 remains permanently locked, halting productivity!\n```",
+  "pattern": "Acquiring an offline, database-backed lock across business transactions (which can span minutes or hours) without implementing an automatic expiration timeout.",
+  "why_bad": "If a user's session is abruptly terminated, the offline lock remains active in the database permanently. This blocks all other users from modifying that resource, bringing business workflows to a halt.",
+  "detection": "Offline lock tables or lock managers that lack creation timestamps, expiration parameters, or background cleanup routines.",
+  "counterexample": "Implementing offline locks with a strict TTL (time-to-live) expiration.",
+  "fix": "Enforce a TTL timeout on all offline locks.\n```rust\nlock_manager.acquire_offline_lock(\"order_123\", Duration::from_mins(30));\n```",
+  "strength": "Contextual",
+  "source": "Martin Fowler (PEEAA) Ch 15 (p. 172)"
+}

@@ -1,0 +1,13 @@
+{
+  "id": 930,
+  "title": "Mega-Aggregate (Large-Cluster Aggregate)",
+  "category": "Wrong Granularity",
+  "damaged_code": "```rust\nstruct Product {\n    id: ProductId,\n    description: String,\n    backlog_items: Vec<BacklogItem>, // Enclosed inside Product\n    releases: Vec<Release>,           // Enclosed inside Product\n    sprints: Vec<Sprint>,             // Enclosed inside Product\n}\n```",
+  "pattern": "Designing a domain aggregate to encapsulate a massive tree of related entities that can be edited independently, treating them all as a single transactional unit.",
+  "why_bad": "Causes extreme transactional lock contention. If user A updates a `Sprint` while user B adds a `BacklogItem`, they both lock the root `Product`, leading to database transaction aborts or rollbacks. It causes severe memory overhead because loading a single `Product` forces loading hundreds of unrelated backlog items, releases, and sprints.",
+  "detection": "Identify aggregate roots that contain large collections (`Vec`, `HashMap`, `HashSet`) of other complex Entities (objects with their own lifetime and IDs).",
+  "counterexample": "Cohesive parent-child relationships where the child cannot exist or be modified apart from the parent, and collections are naturally small (e.g., `Order` and `OrderLine`).",
+  "fix": "Refactor the large aggregate into a cluster of small, independent aggregates that reference each other strictly by unique IDs rather than direct object references.\n```rust\nstruct Product {\n    id: ProductId,\n    description: String,\n}\n\nstruct BacklogItem {\n    id: BacklogItemId,\n    product_id: ProductId, // Reference by ID\n}\n```",
+  "strength": "Strong",
+  "source": "*Vaughn Vernon - Implementing Domain-Driven Design (2013)*, Chapter 10, \"Aggregates\" (Small Aggregate Design, p. 355 & Reference Other Aggregates by Identity, p. 359)."
+}

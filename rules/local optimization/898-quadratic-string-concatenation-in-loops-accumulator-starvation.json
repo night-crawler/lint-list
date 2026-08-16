@@ -1,0 +1,13 @@
+{
+  "id": 898,
+  "title": "Quadratic String Concatenation in Loops (Accumulator Starvation)",
+  "category": "Local Optimization",
+  "damaged_code": "```rust\npub fn build_csv(rows: &[Vec<String>]) -> String {\n    let mut csv = String::new();\n    for row in rows {\n        // Creates a new string allocation on each iteration\n        csv = csv + &row.join(\",\") + \"\\n\";\n    }\n    csv\n}\n```",
+  "pattern": "A string or vector is constructed incrementally in a loop by repeatedly using the `+` operator, creating a new allocated string/vector and copying the accumulated data on each iteration.",
+  "why_bad": "While locally appearing \"simple\" and clear, it has quadratic $O(N^2)$ complexity. Each string addition allocates fresh heap memory, copies the old data into the new buffer, and deallocates the old buffer. For thousands of elements, this causes severe garbage collection and heap fragmentation pressure.",
+  "detection": "Loops that repeatedly append data using concatenation (`+` operator on strings) instead of utilizing a single pre-allocated mutable builder or accumulator buffer.",
+  "counterexample": "Concatenating 2 or 3 static strings is perfectly fine and often optimized by the compiler.",
+  "fix": "Pre-allocate a single mutable builder (like `String::with_capacity`) and use a collecting parameter pattern (or `write!` macro) to accumulate data without reallocation.\n```rust\npub fn build_csv(rows: &[Vec<String>]) -> String {\n    let mut csv = String::with_capacity(rows.len() * 128); // Pre-allocated\n    for row in rows {\n        csv.push_str(&row.join(\",\"));\n        csv.push_str(\"\\n\");\n    }\n    csv\n}\n```",
+  "strength": "Strong",
+  "source": "Joshua Kerievsky, *Refactoring to Patterns*, \"Collecting Parameter\" (p. 379) / Martin Fowler, *Refactoring*, \"Removing Temps\" (p. 586)."
+}

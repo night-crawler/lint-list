@@ -1,0 +1,13 @@
+{
+  "id": 320,
+  "title": "Shared Mutable State as Duplication Prevention",
+  "category": "Dry Abuse",
+  "damaged_code": "```rust\nstatic mut GLOBAL_FORMATTER: Option<Formatter> = None; // Shared mutable static to \"avoid duplicating\" instances\n```",
+  "pattern": "Sharing a single global mutable instance of a utility class (like a cache or formatter) across multiple threads/modules solely to avoid \"duplicating\" instances.",
+  "why_bad": "It creates subtle temporal coupling and data races. Trying to avoid memory allocation or instance duplication introduces severe thread synchronization issues and unsafe blocks.",
+  "detection": "The use of `static mut` global variables or unsynchronized singletons to share state across distinct system components.",
+  "counterexample": "Explicitly synchronized read-only thread pools or thread-local storage caches.",
+  "fix": "Initialize instances locally or use safe, read-only thread-safe wrappers (like `Arc<Mutex<T>>`) if global sharing is strictly required.\n```rust\nstruct Worker {\n    formatter: Formatter, // Owned locally\n}\n```",
+  "strength": "Strong",
+  "source": "*The Pragmatic Programmer* (20th Anniversary Edition), Topic 34: \"Shared State Is Incorrect State\", p. 267, 251."
+}

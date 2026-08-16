@@ -1,0 +1,13 @@
+{
+  "id": 422,
+  "title": "Self-Deadlock via RCU Nesting and synchronize_rcu",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```c\nvoid reader_updater_collision() {\n    rcu_read_lock();\n    synchronize_rcu(); // Deadlock!\n    rcu_read_unlock();\n}\n```",
+  "pattern": "Invoking a synchronous grace-period wait (like `synchronize_rcu`) from inside an RCU read-side critical section.",
+  "why_bad": "`synchronize_rcu` blocks until all pre-existing RCU read-side critical sections complete. Because it is invoked inside an active RCU reader, it waits for itself to unlock, resulting in a permanent self-deadlock.",
+  "detection": "Control flow path demonstrating an active RCU read-side critical section scope enclosing a synchronous grace-period API call.",
+  "counterexample": "Using asynchronous callback scheduling (`call_rcu`) which registers a callback and returns immediately without blocking the reader.",
+  "fix": "Move the synchronous wait outside the RCU read-side critical section.\n```c\nrcu_read_lock();\n// read work\nrcu_read_unlock();\nsynchronize_rcu();\n```",
+  "strength": "Strong",
+  "source": "Paul McKenney Quick Quiz 9.64, Quick Quiz B.26"
+}

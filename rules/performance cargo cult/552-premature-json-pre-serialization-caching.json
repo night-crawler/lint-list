@@ -1,0 +1,13 @@
+{
+  "id": 552,
+  "title": "Premature JSON Pre-serialization Caching",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\nstruct Post {\n    id: i32,\n    cached_json: String, // Caching pre-serialized JSON to \"avoid serialization overhead\"\n}\n```",
+  "pattern": "Pre-serializing database records or struct fields into JSON strings and caching them in database columns or memory to avoid serialization costs.",
+  "why_bad": "Pre-serialized JSON prevents database indexing, complicates updates (forcing raw string parsing or rebuilding on every field change), and introduces inconsistency. Modern serialization libraries (like `serde` in Rust) are incredibly fast, taking nanoseconds [299].",
+  "detection": "Database schemas or memory models containing cached string records of JSON objects alongside raw fields.",
+  "counterexample": "A static asset pipeline or CMS generating static JSON files that are directly served by web servers without modification. `Context-dependent`.",
+  "fix": "Store data in structured fields and serialize to JSON on-demand using highly optimized serializers.",
+  "strength": "Strong",
+  "source": "*Designing Data-Intensive Applications*, Chapter 1 (p. 299)."
+}

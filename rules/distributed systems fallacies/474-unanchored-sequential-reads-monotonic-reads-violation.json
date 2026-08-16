@@ -1,0 +1,13 @@
+{
+  "id": 474,
+  "title": "Unanchored Sequential Reads (Monotonic Reads Violation)",
+  "category": "Distributed Systems Fallacies",
+  "damaged_code": "```rust\n// Querying random replica nodes across different steps in the same user request\nasync fn get_timeline(client: &DbClient, user_id: u64) -> Vec<Post> {\n    // First query goes to replica 1 (caught up)\n    let p1 = client.read_replica_node(1, user_id).await.unwrap();\n    \n    // Second query goes to replica 2 (lagging behind)\n    let p2 = client.read_replica_node(2, user_id).await.unwrap();\n    // BUG: Timeline p2 might contain FEWER posts than p1, making time\n    // appear to run backward for the client!\n    p2\n}\n```",
+  "pattern": "Querying different replica nodes dynamically and sequentially within the same client session or user operation without anchoring the client's session to a single replica or using a sequence sync token.",
+  "why_bad": "Replicas fall behind the master at different rates [116, 118]. If a client first queries a highly up-to-date replica and then subsequently queries a lagging replica, they will observe data \"disappear\" or observe state revert to a previous point in time [118]. This violates monotonic reads, creating jarring and confusing user experiences [118, 130].",
+  "detection": "Identify consecutive read calls targeting replica collections where the replica node identifier is chosen randomly, via round-robin, or without session affinity logic.",
+  "counterexample": "```rust\nasync fn get_timeline_safe(client: &DbClient, user_id: u64, session_replica: usize) -> Vec<Post> {\n    // Route reads to a pinned replica node assigned to the user's session\n    client.read_replica_node(session_replica, user_id).await.unwrap()\n}\n```",
+  "fix": "Pin each user's session affinity to a specific replica node (e.g., via hashing their user ID), or track the highest version read so that subsequent reads are only executed on replicas that have processed at least up to that version [118, 130].",
+  "strength": "Strong",
+  "source": "Martin Kleppmann, *Designing Data-Intensive Applications*, Chapter 5 (Replication Lag Anomalies) / passages [116, 118, 130]; Alex Petrov, *Database Internals*, Chapter 11 / passages [53, 54, 56]."
+}

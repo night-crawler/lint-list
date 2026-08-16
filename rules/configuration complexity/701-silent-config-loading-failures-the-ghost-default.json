@@ -1,0 +1,13 @@
+{
+  "id": 701,
+  "title": "Silent Config Loading Failures (The Ghost Default)",
+  "category": "Configuration Complexity",
+  "damaged_code": "```rust\nfn load_config() -> AppConfig {\n    // Silent fallback to standard defaults if reading fails\n    std::fs::read_to_string(\"/etc/app/config.json\")\n        .map(|s| serde_json::from_str(&s).unwrap_or_default())\n        .unwrap_or_default()\n}\n```",
+  "pattern": "Suppressing file-system or parser errors during application startup, failing silently and falling back to default states without operator warning.",
+  "why_bad": "An operator supplying a typo (e.g. `p0rt: 8080`) will find the system starts up anyway, but binds to a default port (like 80) or connects to a staging database instead of production, triggering catastrophic failures.",
+  "detection": "Error suppression or `unwrap_or_default` calls inside configuration loading functions.",
+  "counterexample": "```rust\nfn load_config() -> Result<AppConfig, ConfigError> {\n    let content = std::fs::read_to_string(\"/etc/app/config.json\")?;\n    let config = serde_json::from_str(&content)?;\n    Ok(config)\n}\n```",
+  "fix": "Abruptly terminate execution (crash) on startup if any configuration file is missing, unreadable, or contains syntax/logical errors, returning actionable diagnostics.",
+  "strength": "Strong",
+  "source": "Ousterhout, John K - *A Philosophy of Software Design* (2018_2019, Yaknyam Press).pdf, Section 8.2; Titus Winters, Tom Manshreck, Hyrum Wright - *Software Engineering at Google_ Lessons Learned from Programming Over Time* (2020, O'Reilly Media).pdf, Chapter 24."
+}

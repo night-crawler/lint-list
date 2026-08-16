@@ -1,0 +1,13 @@
+{
+  "id": 82,
+  "title": "Pointless Doc Comments on Private Helper Routines",
+  "category": "Dispensables",
+  "damaged_code": "```rust\n/// Returns the name of the user.\nfn get_private_name(user: &User) -> &str {\n    &user.name\n}\n```",
+  "pattern": "Documentation comments (`///` or `/**`) placed on private, internal functions that simply restate the function's name and arguments.",
+  "why_bad": "Adds visual noise and documentation maintenance debt to internal utilities that are never exposed as part of a public API.",
+  "detection": "Doc comments on non-public (internal/private) items that merely repeat the signature in sentence form.",
+  "counterexample": "Doc comments on public APIs (`pub` structures or traits) where documentation is rendered as HTML.",
+  "fix": "Delete the doc comment, or convert to a simple internal comment if a complex invariant must be noted.",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 4 (\"Comments - Javadocs in Nonpublic Code\"), p. 71; Trevor Foucher & Dustin Boswell, *The Art of Readable Code* (2012), Chapter 5, p. 48."
+}

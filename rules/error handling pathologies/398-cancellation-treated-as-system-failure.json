@@ -1,0 +1,13 @@
+{
+  "id": 398,
+  "title": "Cancellation Treated as System Failure",
+  "category": "Error Handling Pathologies",
+  "damaged_code": "```rust\nfn listen_for_requests() -> Result<(), SystemError> {\n    if cancellation_token.is_cancelled() {\n        return Err(SystemError::Failure); // Normal cancellation as failure\n    }\n    // ...\n}\n```",
+  "pattern": "Returning a failure `Result` (e.g., `Err(E)`) to represent task cancellation, normal shutdown, or a routine exit condition.",
+  "why_bad": "Control flow hijacking. Cancellation is an expected lifecycle state, not an exceptional system failure. Bumping normal exit codes to error tracks triggers aggressive logging, alerting, and error recovery branches unnecessarily. [15, Chapter 5, \"Special Error Cases\"]",
+  "detection": "A function returning an error variant for a condition that represents standard graceful task shutdown or task completion.",
+  "counterexample": "Low-level synchronization primitives where an aborted operation must strictly raise a cancellation token error to abort a thread-safety pipeline. `Context-dependent`",
+  "fix": "Use option types (`Option<T>`) or return a normal `Ok` with a status indicating graceful termination.\n```rust\nfn listen_for_requests() -> Result<LoopStatus, SystemError> {\n    if cancellation_token.is_cancelled() {\n        return Ok(LoopStatus::Cancelled);\n    }\n    // ...\n}\n```",
+  "strength": "Strong",
+  "source": "*Jon Gjengset - Rust for Rustaceans*, Chapter 5, \"Special Error Cases\", p. 77 [15]"
+}

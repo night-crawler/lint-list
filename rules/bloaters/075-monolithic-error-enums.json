@@ -1,0 +1,13 @@
+{
+  "id": 75,
+  "title": "Monolithic Error Enums",
+  "category": "Bloaters",
+  "damaged_code": "```rust\nenum AppError {\n    DatabaseDisconnect,\n    RowNotFound,\n    InvalidJson(String),\n    ValidationError(String),\n    EmailSendFailed,\n    FileSystemFull,\n    S3Timeout,\n    // A single enum holding errors for database, parsing, validation, and network!\n}\n```",
+  "pattern": "A single, massive error enum containing every I/O, parsing, network, validation, and domain error variant in the entire application codebase.",
+  "why_bad": "Directly violates encapsulation and compile-time boundaries. A minor validation check change forces a recompilation of the entire codebase and couples every module to a single massive error file. It also prevents local reasoning, as a simple validation helper signature implies it can return S3 network timeouts.",
+  "detection": "Look for a single enum containing more than 20 distinct error variants representing disjoint subsystems (such as databases, third-party APIs, and parsing libraries).",
+  "counterexample": "`Context-dependent`. Application-root error adapters inside binary crates that exist solely to map disparate module errors for final logging at the program boundary.",
+  "fix": "Define small, localized error enums for each module or crate, mapping them at boundaries if needed.",
+  "strength": "Strong",
+  "source": "*Robert C. Martin - Clean Architecture (2017)*, Chapter 10; *Steve McConnell - Code Complete (2004)*, Chapter 7."
+}

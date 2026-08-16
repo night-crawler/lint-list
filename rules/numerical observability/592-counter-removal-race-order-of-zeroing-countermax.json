@@ -1,0 +1,13 @@
+{
+  "id": 592,
+  "title": "Counter Removal Race (Order of Zeroing countermax)",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\nfn remove_thread_counter(t: &mut ThreadContext) {\n    t.counter = 0;          // Step 1: Zero the counter\n    t.countermax = 0;       // Step 2: Zero the limit\n}\n```",
+  "pattern": "Zeroing a thread-local counter before zeroing its corresponding safety limit (`countermax`).",
+  "why_bad": "This creates a critical race condition. If the counter is cleared first, a concurrent thread can immediately increment the counter again before the limit `countermax` is set to zero, completely bypassing the safety boundary and resulting in an unchecked leak or overflow.",
+  "detection": "Look for cleanup routines that write to tracking values before writing to their associated limit/validation boundaries.",
+  "counterexample": "Only valid if the local thread is completely blocked or guaranteed thread-isolated during cleanup.",
+  "fix": "Always zero the safety boundary `countermax` first, then safely remove or zero the counter value.\n```rust\nfn remove_thread_counter_correct(t: &mut ThreadContext) {\n    t.countermax = 0;       // Step 1: Zero the limit first\n    // Memory fence here to guarantee visibility\n    t.counter = 0;          // Step 2: Zero the counter\n}\n```",
+  "strength": "Strong` — structural instruction reordering race condition that negates limit-enforcement invariants.",
+  "source": "*1701.00854v6.pdf*, Answer to Quick Quiz 5.34, p. 59."
+}

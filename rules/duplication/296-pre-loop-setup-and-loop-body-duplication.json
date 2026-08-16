@@ -1,0 +1,13 @@
+{
+  "id": 296,
+  "title": "Pre-Loop Setup and Loop-Body Duplication",
+  "category": "Duplication",
+  "damaged_code": "```rust\nget_next_rating(&mut rating_increment);\nrating += rating_increment;\n\nwhile score < target_score && rating_increment != 0 {\n    get_next_score(&mut score_increment);\n    score += score_increment;\n    \n    // Duplicated lines at the end of the loop body\n    get_next_rating(&mut rating_increment);\n    rating += rating_increment;\n}\n```",
+  "pattern": "Repeating sequential initialization logic immediately before a loop and duplicating it at the end of the loop body.",
+  "why_bad": "A developer making subsequent modifications might change one block of statements but neglect to update the other, introducing state synchronization errors.",
+  "detection": "A sequential block of statements preceding a loop that is textually identical to the final statements of that loop.",
+  "counterexample": "Buffering mechanisms where the initial priming read explicitly requires different validation logic from steady-state sequential reads.",
+  "fix": "Restructure using an infinite loop with explicit checks and conditional break statements.\n```rust\nloop {\n    get_next_rating(&mut rating_increment);\n    if rating_increment == 0 { break; }\n    rating += rating_increment;\n    \n    if score >= target_score { break; }\n    get_next_score(&mut score_increment);\n    score += score_increment;\n}\n```",
+  "strength": "Strong",
+  "source": "*Code Complete* (2nd Edition), Chapter 22: \"C++ Example of Duplicated Code That Will Break Down Under Maintenance\", p. 573."
+}

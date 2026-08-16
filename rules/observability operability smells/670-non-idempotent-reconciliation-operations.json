@@ -1,0 +1,13 @@
+{
+  "id": 670,
+  "title": "Non-Idempotent Reconciliation Operations",
+  "category": "Observability Operability Smells",
+  "damaged_code": "```rust\nfn handle_transaction_event(event: &Event) {\n    // Re-delivering this event inserts a duplicate record\n    insert_record_to_ledger(event.amount);\n}\n```",
+  "pattern": "Processing events or queues with raw, non-idempotent inserts, forcing operators to execute manual reconciliation runs or patch database values later.",
+  "why_bad": "Benign network retry events or duplications in MQ pipelines generate false-positive error logs, pollute transaction states, and require human operators to manually audit records [204, 642-645].",
+  "detection": "Database writes in event consumer loops lacking uniqueness constraints or upsert logic.",
+  "counterexample": "```rust\nfn handle_transaction_event(event: &Event) {\n    upsert_record_to_ledger(&event.transaction_id, event.amount);\n}\n```",
+  "fix": "Enforce unique transactional idempotency keys on write endpoints, executing upserts or ignoring duplicates gracefully.",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design*, Chapter 8 [204, 642-645]."
+}

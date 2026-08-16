@@ -1,0 +1,13 @@
+{
+  "id": 601,
+  "title": "Unversioned Binary Serialization / Out-of-Sync DTOs (UNVERSIONED_BINARY_SERIALIZATION)",
+  "category": "Protocol Parsing Serialization Smells",
+  "damaged_code": "```rust\n// Brittle native binary serialization lacks schemas or version numbers\nfn serialize_payload(title: &str, performers: &[String]) -> Vec<u8> {\n    let mut bytes = Vec::new();\n    bytes.extend(&(title.len() as u32).to_ne_bytes());\n    bytes.extend(title.as_bytes());\n    for p in performers {\n        bytes.extend(&(p.len() as u32).to_ne_bytes());\n        bytes.extend(p.as_bytes());\n    }\n    bytes\n}\n```",
+  "pattern": "Serializing structures directly to custom binary streams without encoding version markers, field tag identifiers, or metadata schemas.",
+  "why_bad": "It is highly fragile. Any subsequent code modification (e.g., adding an optional field or reordering elements) completely corrupts historical serializations, causing immediate parsing errors on deserialization.",
+  "detection": "Look for byte packing logic that writes record attributes sequentially without pre-assigned tag numbers, field names, or global format versions.",
+  "counterexample": "```rust\n// Valid: Mapping via tag-based serialization or explicit versioning\n#[derive(serde::Serialize, serde::Deserialize)]\nstruct TrackDTOV2 {\n    #[serde(rename = \"v\")]\n    version: u32,\n    title: String,\n    performers: Vec<String>,\n}\n```",
+  "fix": "Wrap binary messages in a versioned envelope (carrying an integer tag of the schema version) or utilize schema serialization mechanisms (like Protobuf tags) to permit ignored fields.",
+  "strength": "Strong",
+  "source": "*Martin Fowler - Patterns of Enterprise Application Architecture (2002)*, page 401; *Vaughn Vernon - Implementing Domain-Driven Design (2013)*, Chapter 14."
+}

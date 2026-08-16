@@ -1,0 +1,13 @@
+{
+  "id": 452,
+  "title": "Single-Threaded Task Multiplexing Stall",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```rust\nasync fn run_computation() {\n    let mut x = 0;\n    while x < 10_000_000_000u64 {\n        // Tight CPU loop with no yield\n        x += 1; \n    }\n}\n```",
+  "pattern": "Executing a massive, CPU-intensive computation loop within an asynchronous future without yielding back to the executor.",
+  "why_bad": "Asynchronous tasks are cooperative. They only yield control to the executor at `.await` boundaries. A long-running CPU-bound loop without `.await` points monopolizes the executor thread, stalling all other tasks on that thread.",
+  "detection": "Large mathematical loops or complex procedural blocks in an `async fn` that lack `.await` or yield points.",
+  "counterexample": "Spawning the heavy computation on a dedicated blocking thread pool using `spawn_blocking`.",
+  "fix": "Yield voluntarily inside the loop, or offload the task to a dedicated thread pool.\n```rust\nasync fn run_computation() {\n    // Yield periodically\n    for chunk in 0..100 {\n        heavy_compute_chunk(chunk);\n        tokio::task::yield_now().await;\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Jon Gjengset Ch 9 (p. 239)"
+}

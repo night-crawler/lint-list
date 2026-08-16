@@ -1,0 +1,13 @@
+{
+  "id": 160,
+  "title": "Excessive Layering (Multi-Tier Object Splitting)",
+  "category": "Indirection Astronautics",
+  "damaged_code": "```rust\n// One conceptual 'Customer' object split across 4 physical tiers\nstruct CustomerPersistence { id: u64, name: String }\nstruct CustomerBehavior { id: u64 }\nstruct CustomerApplication { behavior: CustomerBehavior }\nstruct CustomerPublicInterface { app: CustomerApplication }\n```",
+  "pattern": "Splitting a single conceptual domain object into numerous highly coupled physical classes or structs representing distinct technical layers (e.g., persistence, behavior, use-case, and presentation representation) without distinct functional boundaries.",
+  "why_bad": "*   **Cascading Changes:** Adding a single field (e.g., adding `email` to `Customer`) requires updating every single layer-specific struct, their translation mappers, and database schemas.\n*   **Loss of Cohesion:** The conceptual object is fragmented across multiple files, increasing cognitive load and scattering invariants.",
+  "detection": "Find groups of $\\ge 3$ structs with identical or nearly identical fields whose names share the same prefix (e.g., `Customer*`) and whose only purpose is mapping data between adjacent layers.",
+  "counterexample": "**Isolated Boundaries:** Separate representations are valid when crossing strict security, serialization, or network boundaries (e.g., translating a private internal database model to a public API wire DTO).",
+  "fix": "Collapse the technical layers into a single, highly cohesive domain entity that manages its own persistence or maps directly to database rows.\n```rust\nstruct Customer {\n    id: u64,\n    name: String,\n    // Behavior and data live together\n}\n```",
+  "strength": "Strong",
+  "source": "Evans, *Domain-Driven Design*, Chapter 4 \"Isolating the Domain: Relating the Layers\" & Chapter 16 \"Large-Scale Structure\"."
+}

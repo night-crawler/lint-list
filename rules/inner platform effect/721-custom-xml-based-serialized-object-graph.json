@@ -1,0 +1,13 @@
+{
+  "id": 721,
+  "title": "Custom XML-Based Serialized Object Graph",
+  "category": "Inner Platform Effect",
+  "damaged_code": "```\n// Writing raw XML parsers and serializers to save state graphs as serialized blocks\nstruct Department {\n    name: String,\n}\n\nfn serialize_departments(deps: &[Department]) -> String {\n    let mut xml = String::from(\"<departments>\");\n    for dep in deps {\n        xml.push_str(&format!(\"<department name=\\\"{}\\\" />\", dep.name));\n    }\n    xml.push_str(\"</departments>\");\n    xml\n}\n```",
+  "pattern": "Constructing custom, uncompiled XML/JSON string builders and parsers to serialize domain graphs into single database columns (LOBs).",
+  "why_bad": "It defeats schema validation, breaks SQL query optimization on nested fields, and leads to massive over-fetching and serialization overhead.",
+  "detection": "The presence of manual string formatting of XML or JSON tags to represent nested structures, stored as a blob in SQL tables.",
+  "counterexample": "`Context-dependent`. If communicating with a legacy system that demands XML payloads.",
+  "fix": "Normalize tables in relational databases, or utilize structured, compiled serialization formats (like Serde) if storage as JSON is required.\n\n```\n// Utilize compiled, standard serialization frameworks\n#[derive(serde::Serialize, serde::Deserialize)]\nstruct Department {\n    name: String,\n}\n```",
+  "strength": "Strong",
+  "source": "[The Addison-Wesley signature series] Martin Fowler - _Patterns of Enterprise Application Architecture_ (2015_2002, Addison-Wesley Professional).pdf, Chapter 10 \"Serialized LOB\"."
+}

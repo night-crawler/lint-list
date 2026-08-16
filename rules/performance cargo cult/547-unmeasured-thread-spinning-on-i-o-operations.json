@@ -1,0 +1,13 @@
+{
+  "id": 547,
+  "title": "Unmeasured Thread Spinning on I/O Operations",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\n// Spinning in a loop while waiting for network packet arrival on a TCP socket\n```",
+  "pattern": "Implementing an active spin loop to await network socket data, disk I/O, or OS-level file operations.",
+  "why_bad": "While spinning avoids thread scheduling latency, I/O operations are fundamentally slow (milliseconds). Spinning for milliseconds burns millions of CPU cycles, wastes energy, and starves other active threads [111, 410].",
+  "detection": "A tight `while` polling loop awaiting a response from an external network stream, socket, or file descriptor.",
+  "counterexample": "Graphics processing or extremely high-speed memory bus monitoring where wait times are mathematically guaranteed to be < 100 ns. `Contextual`.",
+  "fix": "Use standard asynchronous event loops (`tokio` in Rust) or standard blocking read calls with OS-backed thread parking.",
+  "strength": "Strong",
+  "source": "*Systems Performance*, Chapter 2 (p. 111); *Understanding Software Dynamics*, Section 22.3 (p. 410)."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 825,
+  "title": "\"Throw Over the Wall\" Dependency Releases",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Releasing an internal library to OSS without a portability plan\npub fn fetch_internal_config() {\n    // Fails on non-linux or non-internal build machines\n}\n```",
+  "pattern": "Publishing an internal utility as an open-source dependency without a dedicated mandate or plan to support portability across external platforms.",
+  "why_bad": "It creates a disconnected fork, making it impossible to reincorporate external bug fixes into the original codebase and damaging the organization's reputation.",
+  "detection": "OSS projects published by the organization that lack CI testing across target platforms or have unresolved public bug reports.",
+  "counterexample": "Releasing self-contained documentation or static templates that carry no maintenance burden.",
+  "fix": "Establish a clear ownership plan and compatibility guarantees before open-sourcing any codebase.",
+  "strength": "Contextual",
+  "source": "*Software Engineering at Google (Winters et al.), Chapter 21, p. 452 [188-191, 660]*"
+}

@@ -1,0 +1,13 @@
+{
+  "id": 704,
+  "title": "The Unlabeled Configuration Unit",
+  "category": "Configuration Complexity",
+  "damaged_code": "```rust\nstruct CacheConfig {\n    // Is this milliseconds, seconds, or minutes? Bytes or megabytes?\n    timeout: u64,\n    size: usize,\n}\n```",
+  "pattern": "Declaring numeric configuration fields representing temporal durations, storage capacities, or memory thresholds without specifying units in their names.",
+  "why_bad": "Operator error is highly likely. An administrator configuring seconds for a parameter the code interprets as milliseconds will experience catastrophic timeouts or out-of-memory crashes.",
+  "detection": "Struct properties or key fields with generic names like `time`, `size`, or `limit` mapped to un-wrapped numeric primitives.",
+  "counterexample": "```rust\nstruct CacheConfig {\n    timeout_ms: u64,\n    size_bytes: usize,\n}\n```",
+  "fix": "Append explicit unit abbreviations (such as `_ms`, `_seconds`, `_bytes`, or `_kb`) to the configuration variable names.",
+  "strength": "Strong",
+  "source": "Gregg, Brendan - *Systems Performance_ Enterprise and the Cloud* (2013, Pearson Education Limited (US titles)_Prentice Hall).pdf, Chapter 7; [Pragmatic Programmers] Michael T. Nygard - *Release It!_ Design and Deploy Production-Ready Software* (2007, Pragmatic Bookshelf).pdf, Section 14.2."
+}

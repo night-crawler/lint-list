@@ -1,0 +1,13 @@
+{
+  "id": 279,
+  "title": "Non-Atomic Compare-And-Swap Loop",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```rust\nfn lock(&self) {\n    while self.busy {\n        // Spin\n    }\n    self.busy = true;\n}\n```",
+  "pattern": "Reading a lock flag and setting it in distinct, non-atomic steps in a concurrent context.",
+  "why_bad": "High-risk race condition. Multiple threads can check `busy` simultaneously, see `false`, and concurrent executions will enter the critical section.",
+  "detection": "Sequential read and write operations on shared flags in thread-spanning functions without synchronization.",
+  "counterexample": "Single-threaded context flags.",
+  "fix": "Use a single atomic Compare-And-Swap (CAS) step:\n```rust\nfn lock(&self) {\n    while self.busy.compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed).is_err() {\n        // Spin\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Maurice Herlihy, *Monitors and Blocking Synchronization*, Chapter 17."
+}

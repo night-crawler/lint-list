@@ -1,0 +1,13 @@
+{
+  "id": 673,
+  "title": "Telemetry Leak of Sensitive PII",
+  "category": "Observability Operability Smells",
+  "damaged_code": "```rust\nfn authenticate_user(credentials: &Credentials) {\n    log::info!(\"Authenticating user: {}, password: {}\", credentials.username, credentials.password);\n}\n```",
+  "pattern": "Directly formatting raw, unredacted user inputs, passwords, security tokens, or personal identifiers (PII) into telemetry or logging buffers.",
+  "why_bad": "Renders cleartext logging stores highly attractive targets for attackers, violating security constraints and user trust [83, 179].",
+  "detection": "Passing variables matching patterns of passwords, tokens, or personal profiles into log format strings.",
+  "counterexample": "```rust\nfn authenticate_user(credentials: &Credentials) {\n    log::info!(\"Authenticating user: {}\", credentials.username);\n}\n```",
+  "fix": "Sanitize or explicitly redact any sensitive parameters before passing them to the logging macro.",
+  "strength": "Strong",
+  "source": "*Building Secure and Reliable Systems*, Chapter 15 [83, 179]."
+}

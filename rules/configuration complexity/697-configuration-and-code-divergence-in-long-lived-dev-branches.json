@@ -1,0 +1,13 @@
+{
+  "id": 697,
+  "title": "Configuration and Code Divergence in Long-Lived Dev Branches",
+  "category": "Configuration Complexity",
+  "damaged_code": "```yaml\n# Stored on feature/new-database-schema branch for 6 months\ndb_migrations_config:\n  run_legacy_fallback: false # Merging this directly to trunk causes outages\n```",
+  "pattern": "Maintaining environment or behavior configurations across long-lived development branches separate from the master branch.",
+  "why_bad": "Creates severe merge conflicts. It forces developers to resolve complex divergence under pressure, leading to untestable configuration states that crash when merged into trunk.",
+  "detection": "A repository containing configuration files modified on branches that are multiple weeks behind trunk.",
+  "counterexample": "Merging features continuously using Trunk-Based Development, using runtime flag-guarding in trunk rather than branches.",
+  "fix": "Adopt trunk-based development; keep features hidden behind dynamic flags in the main branch, permitting continuous deployment of inactive code.",
+  "strength": "Context-dependent",
+  "source": "Titus Winters, Tom Manshreck, Hyrum Wright - *Software Engineering at Google_ Lessons Learned from Programming Over Time* (2020, O'Reilly Media).pdf, Chapter 16."
+}

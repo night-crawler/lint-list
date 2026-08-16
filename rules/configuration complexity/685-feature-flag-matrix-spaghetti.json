@@ -1,0 +1,13 @@
+{
+  "id": 685,
+  "title": "Feature Flag Matrix Spaghetti",
+  "category": "Configuration Complexity",
+  "damaged_code": "```rust\nfn render() {\n    if config.is_enabled(\"new_header\") {\n        if config.is_enabled(\"holiday_theme\") {\n            render_holiday_header();\n        } else {\n            render_new_header();\n        }\n    } else {\n        render_old_header();\n    }\n}\n```",
+  "pattern": "Scattering raw string-based checks for multiple runtime feature flags across execution pipelines, resulting in complex nested conditional matrices.",
+  "why_bad": "Creates combinatorial state explosions that are impossible to test in aggregate. It prevents dead-code elimination, blocks static refactoring, and forces developers to maintain obsolete logical pathways indefinitely.",
+  "detection": "Nested conditional checks targeting a runtime configuration dictionary or feature flag broker in core rendering or business logic.",
+  "counterexample": "```rust\n// Decoupled runtime strategies mapped once at application bootstrap\nlet header_renderer: Box<dyn Renderer> = select_renderer_strategy(config)?;\n```",
+  "fix": "Resolve feature flag paths into polymorphic strategies at the composition root during application startup, eliminating flag checks from operational functions.",
+  "strength": "Strong",
+  "source": "Titus Winters, Tom Manshreck, Hyrum Wright - *Software Engineering at Google_ Lessons Learned from Programming Over Time* (2020, O'Reilly Media).pdf, Chapter 24; Kent Beck - *Tidy First?* (2023, O'Reilly Media).pdf, Chapter 28."
+}

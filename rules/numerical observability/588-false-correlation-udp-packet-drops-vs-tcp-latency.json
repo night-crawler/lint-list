@@ -1,0 +1,13 @@
+{
+  "id": 588,
+  "title": "False Correlation: UDP packet drops vs. TCP latency",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\nfn run_health_check() {\n    let udp_loss = check_udp_packet_loss(); // e.g. using standard traceroute\n    if udp_loss > 0.05 {\n        alert(\"High network loss detected! Application TCP calls will be slow.\");\n    }\n}\n```",
+  "pattern": "Alerting on application network health or predicting TCP transaction latency based on packet drops observed via UDP traceroute.",
+  "why_bad": "Standard traceroutes use UDP or ICMP, which are designed to be unreliable. Network infrastructure routinely drops these packets by design to prioritize actual TCP traffic. Spurious alerts are triggered on healthy connections, leading to \"alert fatigue\" and wasted troubleshooting cycles.",
+  "detection": "Alert scripts matching traceroute tool calls directly correlated to application TCP SLAs.",
+  "counterexample": "None. UDP measurements should not be used to predict TCP transport-layer latency behavior.",
+  "fix": "Use TCP handshakes or TCP SYN-ACK probes (`tcpping`) to measure realistic connection route latency and packet loss.",
+  "strength": "Strong` — UDP and TCP handle delivery prioritization differently at the network layer.",
+  "source": "Gregg, Brendan - *Systems Performance* (2013), Section 13.1, p. 625."
+}

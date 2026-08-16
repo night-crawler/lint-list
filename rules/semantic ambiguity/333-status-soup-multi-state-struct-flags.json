@@ -1,0 +1,13 @@
+{
+  "id": 333,
+  "title": "Status Soup / Multi-State Struct Flags",
+  "category": "Semantic Ambiguity",
+  "damaged_code": "```rust\nstruct Order {\n    order_id: String,\n    is_validated: bool,\n    is_priced: bool,\n    amount_to_bill: Option<f64>, // Only valid when is_priced is true\n}\n```",
+  "pattern": "A struct representing a multi-stage workflow using multiple boolean flags and optional fields, where certain fields are only valid when certain flags are set.",
+  "why_bad": "The state of the entity is implicit and unverified by the compiler. It allows representing structurally invalid states (e.g., `is_priced: true` but `amount_to_bill: None`), forcing the developer to write endless runtime checks and assertions.",
+  "detection": "A struct containing multiple boolean fields alongside `Option` fields, with comments indicating temporal dependencies between them.",
+  "counterexample": "Representing mutually exclusive state with a clean Rust `enum`:\n```rust\nenum OrderState {\n    Unvalidated,\n    Validated,\n    Priced { amount_to_bill: f64 },\n}\n```",
+  "fix": "Model each distinct workflow stage as its own type, making illegal states structurally unrepresentable at compile time.\n```rust\nstruct UnvalidatedOrder { order_id: String }\nstruct ValidatedOrder { order_id: String }\nstruct PricedOrder {\n    order_id: String,\n    amount_to_bill: f64, // Structurally guaranteed to exist\n}\n```",
+  "strength": "Strong",
+  "source": "*Domain Modeling made Functional* by Scott Wlaschin (Chapter 5, p. 185)."
+}

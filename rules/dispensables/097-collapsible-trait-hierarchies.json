@@ -1,0 +1,13 @@
+{
+  "id": 97,
+  "title": "Collapsible Trait Hierarchies",
+  "category": "Dispensables",
+  "damaged_code": "```rust\ntrait Device {\n    fn power_on(&self);\n}\nstruct Laptop;\nimpl Device for Laptop {\n    fn power_on(&self) { /* power on */ }\n}\n```",
+  "pattern": "A trait hierarchy where the trait and its single implementer are identical, with no alternative implementations or polymorphic calls.",
+  "why_bad": "Unnecessary indirection. Multiple levels of abstraction with no polymorphism add cognitive noise and slow down code navigation.",
+  "detection": "A trait with exactly one implementer whose methods are exactly identical to the trait definitions, with no polymorphic usage.",
+  "counterexample": "Explicit boundaries between packages to isolate unstable third-party code, or testing boundaries for complex IO.",
+  "fix": "Apply Collapse Hierarchy: remove the trait and let consumers use the concrete struct directly.",
+  "strength": "Contextual",
+  "source": "Fowler, *Refactoring*, Chapter 3 (\"Speculative Generality - Collapse Hierarchy\")."
+}

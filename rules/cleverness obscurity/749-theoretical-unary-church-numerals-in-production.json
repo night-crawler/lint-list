@@ -1,0 +1,13 @@
+{
+  "id": 749,
+  "title": "Theoretical Unary Church Numerals in Production",
+  "category": "Cleverness Obscurity",
+  "damaged_code": "```rust\n// Rust\nenum Unary {\n    Zero,\n    Succ(Box<Unary>), // Church-style encoding\n}\n```",
+  "pattern": "Representing natural numbers as nested recursive algebraic unary datatypes in performance-sensitive compiled systems.",
+  "why_bad": "It is a functional puzzle. While theoretically elegant in dependent type checking, unary algebraic representations trigger $O(N)$ memory allocations and recursive stack dereferences for simple arithmetic operations, causing severe performance bottlenecks.",
+  "detection": "Recursive enum types wrapping themselves within nested variants to represent numeric quantities.",
+  "counterexample": "Academic compilers or interactive theorem provers (such as Coq/Idris systems) where structural recursion is mathematically required for correctness proofs. `Context-dependent`.",
+  "fix": "Use standard, primitive compiled integers with bounds constraints.\n```rust\ntype Unary = usize;\n```",
+  "strength": "Strong",
+  "source": "*Types and Programming Languages*, Section 5.2 / *Certified Programming with Dependent Types*."
+}

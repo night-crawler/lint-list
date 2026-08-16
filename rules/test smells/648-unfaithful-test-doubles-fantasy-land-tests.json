@@ -1,0 +1,13 @@
+{
+  "id": 648,
+  "title": "Unfaithful Test Doubles (Fantasy Land Tests)",
+  "category": "Test Smells",
+  "damaged_code": "```rust\ntrait Engine {\n    fn check_oil(&self) -> bool; // Interface changes checking semantics\n}\n\n// Hand-written stub that drifts out of sync with actual database behavior\nstruct StubEngine;\nimpl Engine {\n    fn check_oil(&self) -> bool { true } // Returns old static hardcoded contract\n}\n\n#[test]\nfn test_car_start() {\n    let car = Car::new(StubEngine);\n    assert!(car.try_start().is_ok()); // Passes here, but crashes in production\n}\n```",
+  "pattern": "An hand-written mock, stub, or fake that implements a subset of behavior but is not kept in lockstep with the real production implementation it stands in for.",
+  "why_bad": "It decouples the test from reality [533]. If the real implementation's behavior changes, the mock remains stale, creating false positives where tests pass successfully while the production application is broken [107, 214].",
+  "detection": "The presence of manual stubs/fakes in unit tests that lack corresponding role or contract tests executed against the production implementation [118].",
+  "counterexample": "Using mock configurations that are dynamically verified against schemas or accompanied by shared contract tests [218].",
+  "fix": "Develop contract tests (such as shared test modules) that run identically against both the test double and the real production implementation to guarantee behavioral alignment [118, 121, 218].",
+  "strength": "Strong",
+  "source": "*   *Practical Object-Oriented Design*, \"Using Role Tests to Validate Doubles\" (p. 227-233) [107, 118, 121]\n*   *Software Engineering at Google*, \"Unfaithful doubles\" (p. 283) [213, 214, 533]"
+}

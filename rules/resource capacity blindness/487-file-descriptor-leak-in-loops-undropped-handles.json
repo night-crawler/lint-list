@@ -1,0 +1,13 @@
+{
+  "id": 487,
+  "title": "File Descriptor Leak in Loops (Undropped Handles)",
+  "category": "Resource Capacity Blindness",
+  "damaged_code": "```rust\nuse std::fs::File;\n\nfn scan_directory_files(paths: Vec<String>) {\n    for path in paths {\n        let _file = File::open(path).unwrap();\n        // File remains open if it is stored in a long-lived list or leaked\n        std::mem::forget(_file); \n    }\n}\n```",
+  "pattern": "Opening file descriptors, sockets, or process pipes inside iteration loops and bypassing standard RAII drop behavior (e.g., using `std::mem::forget`, leaking references, or passing to an unbounded global collection).",
+  "why_bad": "Systems enforce strict file descriptor limits per process (e.g., standard POSIX limits of 1024) [394]. Bypassing standard resource cleanup in loop contexts triggers file descriptor leaks, causing subsequent calls to `open()`, `accept()`, or socket creation to fail with EMFILE (\"Too many open files\") errors and crashing process capability [357, 394, 547].",
+  "detection": "Identify calls to file or socket open methods inside a loop that are passed to `std::mem::forget` or collected into a vector that is never drained.",
+  "counterexample": "```rust\nuse std::fs::File;\n\nfn scan_directory_files(paths: Vec<String>) {\n    for path in paths {\n        if let Ok(file) = File::open(path) {\n            // File is automatically closed when it goes out of scope at loop iteration end\n            process_file(file); \n        }\n    }\n}\n```",
+  "fix": "Ensure resource handles are safely scoped so they are dropped and closed immediately after use, or close files explicitly [547].",
+  "strength": "Strong",
+  "source": "Brendan Gregg, *Systems Performance*, Chapter 2 & Chapter 13 / passages [357, 394]; [2nd] Andrew Hunt & David Thomas, *The Pragmatic Programmer*, Chapter 33 / passage [547]."
+}

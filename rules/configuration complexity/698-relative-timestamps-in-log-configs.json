@@ -1,0 +1,13 @@
+{
+  "id": 698,
+  "title": "Relative Timestamps in Log Configs",
+  "category": "Configuration Complexity",
+  "damaged_code": "```rust\n// Custom log formatting that omits timezone and year references\nfn log_event(msg: &str) {\n    println!(\"[+{}] {}\", get_milliseconds_since_start(), msg);\n}\n```",
+  "pattern": "Configuring log outputs or diagnostic metrics to print elapsed relative durations instead of ISO 8601 absolute datetime stamps.",
+  "why_bad": "Prevents temporal alignment during debugging. Operators cannot correlate application events to network issues or database outages on neighboring systems, rendering post-mortem analysis useless.",
+  "detection": "The configuration or log formatter utilizes millisecond or microsecond relative execution offsets as its primary event identifier.",
+  "counterexample": "```rust\nfn log_event(msg: &str) {\n    println!(\"[{}] {}\", chrono::Utc::now().to_rfc3339(), msg);\n}\n```",
+  "fix": "Format all application logs using standardized timezone-aware absolute ISO 8601 timestamps, enabling clean temporal correlation across systems.",
+  "strength": "Strong",
+  "source": "[Addison-Wesley Professional Computing Series] Richard L. Sites - *Understanding Software Dynamics* (2021, Addison-Wesley Professional).pdf, Section 8.5."
+}

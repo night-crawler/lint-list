@@ -1,0 +1,13 @@
+{
+  "id": 817,
+  "title": "Framework-centric Architecture (Invasive Architecture)",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Direct references to web framework features in the business calculations\npub fn calculate_order_tax(order: &Order, req: &rocket::Request) -> f64 {\n    let region = req.headers().get_one(\"X-Region\").unwrap();\n    // ...\n}\n```",
+  "pattern": "Basing the entire core application architecture on a specific framework, allowing framework-specific constructs to dominate the domain model.",
+  "why_bad": "An invasive architecture overwhelms the domain logic, making stories harder to implement, testing difficult without running heavy container mock suites, and compromising TDD velocity.",
+  "detection": "Direct imports or types from web/web-socket/persistence frameworks in the signatures of core business logic routines.",
+  "counterexample": "Web handlers that extract parameters from requests and immediately pass native types to pure business functions.",
+  "fix": "Define business policies as Plain Old Objects (POJOs/POCOs) with clean boundaries, keeping the framework on the outer circles.",
+  "strength": "Strong",
+  "source": "*Clean Code (Martin), Chapter 11, p. 169-171 [101, 102]*"
+}

@@ -1,0 +1,13 @@
+{
+  "id": 269,
+  "title": "Recursive Synchronous Observers (Byzantine Back Channels)",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```rust\nfn on_event_a(&self) {\n    self.service_b.trigger_event_b(self);\n}\n```",
+  "pattern": "Synchronous circular dependency chain where observer notifications result in recursive calls back to the producer to restore consistency.",
+  "why_bad": "Tight coupling and stack overflow hazards. Makes program execution extremely difficult to reconstruct and trace.",
+  "detection": "Synchronous call graphs containing cycles where downstream operations call back upstream components.",
+  "counterexample": "Self-contained, bounded recursive data structure transformations (like composite pattern operations).",
+  "fix": "Decouple notifications via asynchronous event queues or pub/sub channels.",
+  "strength": "Contextual",
+  "source": "Juval Löwy, *Righting Software*, Chapter 2."
+}

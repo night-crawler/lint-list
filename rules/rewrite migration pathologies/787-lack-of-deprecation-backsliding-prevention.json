@@ -1,0 +1,13 @@
+{
+  "id": 787,
+  "title": "Lack of Deprecation Backsliding Prevention",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```rust\n// Deployed by a developer copying an existing legacy code pattern\nfn init() {\n    let _ = legacy_hash(b\"test\"); // New use of a deprecated function introduced\n}\n```",
+  "pattern": "Successfully migrating old call sites of a deprecated API but failing to add static analysis blocks or linters to reject new calls to the deprecated symbol.",
+  "why_bad": "Developers writing new code will copy-paste legacy examples from other areas of the codebase, continuously introducing new dependencies on the obsolete code. The migration becomes an endless, expensive game of \"whack-a-mole\" [337, 733].",
+  "detection": "A deprecated symbol/API that is not registered in a linter rule, build-gate blacklist, or visibility whitelist.",
+  "counterexample": "None. Failing to guard against backsliding of deprecated features is an operational failure.",
+  "fix": "Configure lint rules or build visibility whitelists that trigger compile-time errors if any new calls to the deprecated API are introduced [337, 733, 734, 735].",
+  "strength": "Strong",
+  "source": "Software Engineering at Google, Chapter 15, \"Cleanup - Preventing backsliding\" [337, 733, 734, 735]"
+}

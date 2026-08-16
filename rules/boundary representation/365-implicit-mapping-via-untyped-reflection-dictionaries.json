@@ -1,0 +1,13 @@
+{
+  "id": 365,
+  "title": "Implicit Mapping via Untyped Reflection/Dictionaries",
+  "category": "Boundary Representation",
+  "damaged_code": "```rust\nfn map_fields(dto: &HashMap<String, String>, user: &mut User) {\n    user.name = dto.get(\"name\").cloned().unwrap_or_default(); // String lookup\n}\n```",
+  "pattern": "Mapping boundary DTO values to domain objects using generic, untyped reflection, runtime dictionaries, or string-based field name comparisons.",
+  "why_bad": "It eliminates the safety of static compiled type systems. Renaming a field in a domain struct compiled successfully but causes quiet, runtime bugs or data drops when the mapper fails to locate the string key.",
+  "detection": "Core boundary mapping logic relying on string-keyed hash maps or generic runtime reflection APIs to copy values into domain struct fields.",
+  "counterexample": "Explicit, compiler-checked structural mapping implementations (such as compiled code generated automatically by macros like `serde`).",
+  "fix": "Use explicit, type-safe mapping code or derived compiler macros where mappings are checked and validated at compile time.\n```rust\nimpl From<UserPayload> for User {\n    fn from(payload: UserPayload) -> Self {\n        User { name: payload.name }\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Patterns of Enterprise Application Architecture* by Martin Fowler (p. 353, \"Assembling a Data Transfer Object\")."
+}

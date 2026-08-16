@@ -1,0 +1,13 @@
+{
+  "id": 455,
+  "title": "Lost Wakeup via Signal-Before-Wait",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```cpp\n// Thread A (Signaler)\nlock.lock();\nready = true;\ncond.signal(); // Signal sent before Thread B waits\nlock.unlock();\n\n// Thread B (Waiter)\n// Time gap lets Thread A run first\nlock.lock();\nif (!ready) {\n    // If ready is true, Thread B bypasses wait. \n    // BUT if Thread B has an unconditional wait:\n    cond.wait(lock); // Hangs forever!\n}\nlock.unlock();\n```",
+  "pattern": "A thread waits unconditionally on a condition variable without checking a shared state predicate.",
+  "why_bad": "If the signaling thread sends the signal *before* the waiting thread executes the wait command, the signal is lost. An unconditional wait will block the thread forever, leading to a permanent lost wakeup and hang.",
+  "detection": "CFG demonstrating a path to `wait()` on a condition variable that does not verify a state predicate first.",
+  "counterexample": "A strict `while(!ready)` state check guarding the condition variable wait.",
+  "fix": "Always guard the wait with a state predicate check.\n```cpp\nlock.lock();\nwhile (!ready) {\n    cond.wait(lock);\n}\nlock.unlock();\n```",
+  "strength": "Strong",
+  "source": "Herlihy 8.2"
+}

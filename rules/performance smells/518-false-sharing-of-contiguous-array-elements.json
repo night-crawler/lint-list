@@ -1,0 +1,13 @@
+{
+  "id": 518,
+  "title": "False Sharing of Contiguous Array Elements",
+  "category": "Performance Smells",
+  "damaged_code": "```cpp\nstruct ThreadLock {\n    int lock_state; // Fits in same cache line\n} locks;\n```",
+  "pattern": "Independent variables mutated frequently by separate threads residing within the same physical cache line (typically 64 bytes).",
+  "why_bad": "Writing to one variable invalidates the adjacent thread's cache line, causing massive invalidation traffic and \"ping-ponging\" cache misses even though the threads share no logical variables.",
+  "detection": "Array of structures or contiguous memory buffers accessed concurrently by different threads using separate indices.",
+  "counterexample": "The elements are purely read-only and never modified after initialization. `Context-dependent`.",
+  "fix": "Use alignment directives (`#[repr(align(64))]`) or pad structure elements so that distinct variables are mapped to distinct cache lines.",
+  "strength": "Strong",
+  "source": "*Herlihy - Art of Multiprocessor Programming*, Appendix B (p. 135 / 138) and *Rust For Rustaceans*, Chapter 11 (p. 143 / 434)."
+}

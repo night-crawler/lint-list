@@ -1,0 +1,13 @@
+{
+  "id": 184,
+  "title": "Tangled Inheritance (Multi-Dimensional Type Specialization)",
+  "category": "Change Preventers",
+  "damaged_code": "```rust\n// Hand-coding the combinations of active/passive and tabular/single layouts\nstruct TabularActiveDeal;\nstruct TabularPassiveDeal;\nstruct SingleActiveDeal;\nstruct SinglePassiveDeal;\n```",
+  "pattern": "An inheritance hierarchy or concrete struct tree attempts to represent variations along two or more completely independent dimensions simultaneously (e.g., Deal State and Presentation Layout), leading to a combinatorial explosion of types.",
+  "why_bad": "Adding a new variant along one dimension (e.g., adding a `Graphed` presentation layout) requires manually writing types for all variants in the other dimension (`GraphedActiveDeal`, `GraphedPassiveDeal`), causing massive duplication and making changes highly expensive.",
+  "detection": "Structs whose names combine adjectives from different dimensions of variation (e.g., `Tabular` + `Active`, `Single` + `Passive`).",
+  "counterexample": "Unified, simple decorators that wrap objects sequentially to add transient capabilities without defining combinatorial static type trees.",
+  "fix": "Apply delegation (Tease Apart Inheritance). Create two independent, simple hierarchies or trait structures (e.g., `DealState` and `LayoutRenderer`) and have the primary type compose them via delegation.",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Refactoring*, Chapter 12 (\"Tease Apart Inheritance\"), p. 507; Sandi Metz, *Practical Object-Oriented Design* (2019), Chapter 6."
+}

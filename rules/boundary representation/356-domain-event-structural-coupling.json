@@ -1,0 +1,13 @@
+{
+  "id": 356,
+  "title": "Domain Event Structural Coupling",
+  "category": "Boundary Representation",
+  "damaged_code": "```rust\nstruct UserRegisteredEvent {\n    user: domain::User, // Leaks the internal behavioral domain type\n}\n```",
+  "pattern": "Publishing internal domain objects or database entity definitions directly as fields inside public, out-of-process Domain Events.",
+  "why_bad": "It leaks representation details across contexts. Any change or refactoring to internal domain fields immediately breaks downstream event subscribers, ruining system evolvability.",
+  "detection": "Domain event structures containing nested domain-layer entity types instead of flat primitive types.",
+  "counterexample": "Internal, in-memory event structures that are never serialized or published across context boundaries.",
+  "fix": "Publish event DTOs containing only stable, flat primitive types or public interchange formats (Published Language).\n```rust\nstruct UserRegisteredEvent {\n    user_id: String,\n    username: String,\n    email: String,\n}\n```",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design* by Vaughn Vernon (Chapter 13, p. 547-548)."
+}

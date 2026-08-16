@@ -1,0 +1,13 @@
+{
+  "id": 488,
+  "title": "Unbounded Cardinality in Metrics Labels",
+  "category": "Resource Capacity Blindness",
+  "damaged_code": "```rust\nfn record_request_latency(user_id: &str, latency_ms: f64) {\n    // Dynamic dynamic high-cardinality userId used as metric label\n    prometheus::counter!(\"request_latency_count\", \"user_id\" => user_id.to_string());\n}\n```",
+  "pattern": "Inserting highly dynamic, unbounded fields (such as user IDs, session tokens, request UUIDs, or raw URL strings) as labels or dimensions in TSDB metrics counters.",
+  "why_bad": "In-memory metric collectors represent each unique label combination as a distinct time-series object [351]. Using dynamic, high-cardinality values as labels causes the number of active metrics series to grow exponentially [351]. This silently consumes all application RAM, degrading garbage-collection performance and causing OOM crashes [351, 535].",
+  "detection": "Identify counter or histogram registration functions that bind runtime dynamic string parameters (e.g., parameters that contain random UUIDs, email addresses, or user keys) as labels.",
+  "counterexample": "```rust\nfn record_request_latency(status_code: &str, latency_ms: f64) {\n    // Low-cardinality status code used as label\n    prometheus::counter!(\"request_latency_count\", \"status\" => status_code.to_string());\n}\n```",
+  "fix": "Only use bounded, low-cardinality categories as metric labels. Store high-cardinality fields in logs or trace contexts instead [351, 535].",
+  "strength": "Strong",
+  "source": "Brendan Gregg, *Systems Performance*, Chapter 4 / passage [351]; Martin Kleppmann, *Designing Data-Intensive Applications*, Chapter 11 / passage [535]."
+}

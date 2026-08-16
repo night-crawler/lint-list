@@ -1,0 +1,13 @@
+{
+  "id": 943,
+  "title": "God Snapshot Events (Mega-Event Overload)",
+  "category": "Wrong Granularity",
+  "damaged_code": "```rust\n// Emitted on any simple change (such as adding a line item)\nstruct OrderStateSnapshot {\n    id: u64,\n    items: Vec<LineItem>, // Entire collection of 1000 items\n    customer_details: CustomerDetails,\n    shipping_address: Address,\n    billing_history: Vec<Invoice>,\n}\n```",
+  "pattern": "Publishing the entire deep object graph or system state snapshot on every tiny state change, ignoring the exact delta or semantic event.",
+  "why_bad": "Creates immense serialization and network transmission overhead. Emitting a 2MB snapshot event to notify subscribers of a single status change wastes bandwidth and memory. It also exposes private, internal state fields of the aggregate that subscribers should not know or depend on.",
+  "detection": "Observe event types containing large, complex object trees representing the entire aggregate state, emitted for trivial, simple status or flag mutations.",
+  "counterexample": "Read-model synchronization strategies (such as event sourcing snapshots) that explicitly require capturing full state to speed recovery.",
+  "fix": "Emit semantic delta events that communicate only the exact attributes altered by the operation, coupled with the root identity.\n```rust\nstruct OrderStatusChanged {\n    order_id: u64,\n    new_status: OrderStatus,\n}\n```",
+  "strength": "Strong",
+  "source": "*Vaughn Vernon - Implementing Domain-Driven Design (2013)*, Chapter 8, \"Domain Events\" (Event Serializers / Event Immutability, p. 261); *Martin Kleppmann - Designing Data-Intensive Applications (2017)*, Chapter 11."
+}

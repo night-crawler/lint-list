@@ -1,0 +1,13 @@
+{
+  "id": 839,
+  "title": "Local Filesystem State Flushing Under Load",
+  "category": "Operational Architecture Smells",
+  "damaged_code": "```rust\nfn save_state(user_id: u64, data: &[u8]) {\n    let path = format!(\"/tmp/state_{}.bin\", user_id);\n    std::fs::write(&path, data).unwrap();\n}\n```",
+  "pattern": "Writing dynamic, high-frequency state updates as raw individual files on the local filesystem and calling `fsync()` under incoming traffic load.",
+  "why_bad": "Forces random disk seeks and metadata updates (e.g., dentry cache allocation in the kernel). Under load, this exhausts OS memory, blocks request handling threads on mass storage I/O, and causes extremely long-tail latencies.",
+  "detection": "Writing files to local directories in high-frequency loops or HTTP handler paths, especially when combined with `.sync_all()`.",
+  "counterexample": "Writing low-frequency logs asynchronously or structured configuration writes during start/shutdown.",
+  "fix": "Use a proper key-value database or database manager designed for sequential append-only writes.",
+  "strength": "Strong",
+  "source": "*Building Secure and Reliable Systems*, p. 334; *Systems Performance*, p. 630-632."
+}

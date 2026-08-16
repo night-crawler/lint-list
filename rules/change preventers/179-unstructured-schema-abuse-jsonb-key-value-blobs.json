@@ -1,0 +1,13 @@
+{
+  "id": 179,
+  "title": "Unstructured Schema Abuse (JSONB / Key-Value Blobs)",
+  "category": "Change Preventers",
+  "damaged_code": "```rust\nstruct User {\n    id: u64,\n    // Storing schema-free attributes in a database JSONB column to avoid migrations\n    attributes: std::collections::HashMap<String, String>,\n}\n```",
+  "pattern": "Storing structured domain attributes in unstructured database fields (like JSONB or Key-Value maps) under the premise of \"avoiding schema migrations and keeping changes flexible.\"",
+  "why_bad": "Compile-time schema safety is lost. If an attribute name or type changes, the compiler cannot catch the mismatch. Validation is pushed to fragile runtime parsing code, leading to silent database corruption and unknown unknowns if obsolete fields are accessed.",
+  "detection": "Structs where key business fields are read or mutated via dynamic string keys (`hashmap.get(\"user_age\")`) rather than concrete struct fields.",
+  "counterexample": "Genuinely dynamic, user-defined metadata schemas (such as custom form builders) where the layout is inherently undetermined at compile time.",
+  "fix": "Define strongly typed schemas and concrete database columns. Use automated migration tools; running a migration takes seconds and preserves full type-safety.",
+  "strength": "Strong",
+  "source": "Titus Winters et al., *Software Engineering at Google* (2020), Chapter 22 (\"Large-Scale Changes\"); Martin Kleppmann, *Designing Data-Intensive Applications*, Chapter 5."
+}

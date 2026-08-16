@@ -1,0 +1,13 @@
+{
+  "id": 196,
+  "title": "Incomplete Library Class / Framework Subclassing",
+  "category": "Couplers",
+  "damaged_code": "```rust\n// Framework-supplied base class trait\ntrait FrameworkController {\n    fn handle_request(&self);\n    fn log_error(&self);\n}\n\n// User struct forced to implement all framework methods\nstruct MyController;\nimpl FrameworkController for MyController {\n    fn handle_request(&self) { /* my logic */ }\n    fn log_error(&self) { /* forced to override/provide logic */ }\n}\n```",
+  "pattern": "An application struct implements a massive third-party framework trait directly to inject minor custom behaviors, coupling the domain struct to the entire framework signature.",
+  "why_bad": "It exposes the application to \"Framework Captivity.\" The application structure is constrained by the framework's design decisions. If the framework updates its trait signature, the application's core code breaks.",
+  "detection": "A domain struct directly implementing large, non-local traits that contain many unrelated lifecycle or utility methods.",
+  "counterexample": "Implementing highly cohesive, single-method standard traits (e.g., `Default`, `Clone`, `AsRef`) which represent fundamental compile-time concepts.",
+  "fix": "Decouple the application using the Adapter or Delegation pattern, wrapping the framework behind a minimal interface that you control.\n```rust\nstruct MyController;\nimpl MyController {\n    fn execute(&self) { /* my clean logic */ }\n}\n// Framework adapter class separately implements FrameworkController\n```",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Refactoring* (1999), Chapter 3 (\"Incomplete Library Class\"); Andrew Hunt & David Thomas, *The Pragmatic Programmer* (2019), Chapter 2 (\"Inheritance\")."
+}

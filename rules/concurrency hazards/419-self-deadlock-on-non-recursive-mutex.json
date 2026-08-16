@@ -1,0 +1,13 @@
+{
+  "id": 419,
+  "title": "Self-Deadlock on Non-Recursive Mutex",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```rust\nfn process(lock: &Mutex<State>) {\n    let _g1 = lock.lock().unwrap();\n    // Nesting same lock acquisition\n    let _g2 = lock.lock().unwrap(); \n}\n```",
+  "pattern": "A single thread attempts to re-acquire a non-recursive mutex that it currently holds.",
+  "why_bad": "The thread blocks waiting for itself to release the lock, creating an immediate, unconditional single-thread deadlock.",
+  "detection": "A path in the control-flow graph (CFG) where a lock guard's lifetime overlaps with another acquisition of the same lock object within the same thread.",
+  "counterexample": "Using recursive locks (`ReentrantMutex`), where re-entry increments an internal reference counter rather than blocking.",
+  "fix": "Release the first lock guard before re-acquiring, or restructure the code to avoid nested calls that require the lock.\n```rust\nfn process(lock: &Mutex<State>) {\n    let mut state = lock.lock().unwrap();\n    state.update();\n}\n```",
+  "strength": "Strong",
+  "source": "Paul McKenney 7.1.1, Herlihy 8.2"
+}

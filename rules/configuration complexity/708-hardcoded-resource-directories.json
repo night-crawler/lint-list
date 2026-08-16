@@ -1,0 +1,13 @@
+{
+  "id": 708,
+  "title": "Hardcoded Resource Directories",
+  "category": "Configuration Complexity",
+  "damaged_code": "```rust\n// Hardcoded kernel diagnostic paths\nlet cpu_info = std::fs::read_to_string(\"/sys/devices/system/cpu/cpu0/topology/physical_package_id\")?;\n```",
+  "pattern": "Hardcoding specific file descriptor paths, operating system pseudofiles, or system directories deep in core code.",
+  "why_bad": "Renders the system completely non-portable. It causes execution failures across different operating systems, kernel versions, or container environments that configure mount hierarchies differently.",
+  "detection": "Core parsing or diagnostic modules accessing hardcoded linux-specific namespaces (such as raw `/proc` or `/sys` targets) directly.",
+  "counterexample": "```rust\n// Expose the base sys hierarchy as a configurable mount target\nfn read_cpu_topology(sys_mount_path: &Path) -> Result<String, IoError> { ... }\n```",
+  "fix": "Expose the resource root paths as configuration parameters; fall back to system standard paths but permit override overrides for alternate testing.",
+  "strength": "Strong",
+  "source": "Gregg, Brendan - *Systems Performance_ Enterprise and the Cloud* (2013, Pearson Education Limited (US titles)_Prentice Hall).pdf, Chapter 4."
+}

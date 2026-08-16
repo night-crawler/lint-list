@@ -1,0 +1,13 @@
+{
+  "id": 287,
+  "title": "Acquiring Locks After Releasing Locks (2PL Violation)",
+  "category": "Temporal Coupling Lifecycle Bugs",
+  "damaged_code": "```rust\n// Rust\nfn transaction(db: &Database) {\n    let mut lock_a = db.acquire_lock(\"item_a\");\n    lock_a.write_data();\n    lock_a.release(); // Phase transition!\n    let mut lock_b = db.acquire_lock(\"item_b\"); // BUG: acquiring lock after releasing!\n    lock_b.write_data();\n}\n```",
+  "pattern": "A database transaction or concurrency controller releases a lock on a data item and then subsequently attempts to acquire a lock on another data item.",
+  "why_bad": "Violates the Two-Phase Locking (2PL) rule which mandates that no locks may be acquired once any lock has been released. This violation breaks serializability guarantees and can lead to reading inconsistent or dirty states.",
+  "detection": "Trace the lifecycle of lock acquisitions and releases within a transaction block. Flag any lock acquisition statement that follows a lock release statement.",
+  "counterexample": "Non-transactional, thread-local resource locking where isolation level guarantees do not apply.",
+  "fix": "Hold all acquired locks until the transaction's locking phase completes, and release all of them simultaneously at the end (strict 2-phase locking).",
+  "strength": "Strong",
+  "source": "Alex Petrov, *Database Internals*, page 248 / passage [61, 339]."
+}

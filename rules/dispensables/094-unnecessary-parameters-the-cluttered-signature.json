@@ -1,0 +1,13 @@
+{
+  "id": 94,
+  "title": "Unnecessary Parameters (The Cluttered Signature)",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nfn calculate_total(base: f64, tax_rate: f64, unused_discount: f64) -> f64 {\n    base + (base * tax_rate)\n}\n```",
+  "pattern": "A function parameter that is declared in the signature but never read or referenced within the function body.",
+  "why_bad": "Forces every caller of the function to formulate and pass a meaningless value, increasing API coupling and cognitive burden.",
+  "detection": "Function parameters whose names are unused (or prefixed with underscores) and are not required by any trait interface.",
+  "counterexample": "Implementing required signatures dictated by an external trait or API.",
+  "fix": "Remove the unused parameter from the function signature and update all call sites.",
+  "strength": "Strong",
+  "source": "Fowler, *Refactoring*, Chapter 3 (\"Speculative Generality - Remove Parameter\"); Steve McConnell, *Code Complete*, Chapter 24."
+}

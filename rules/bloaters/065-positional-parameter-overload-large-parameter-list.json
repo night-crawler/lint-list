@@ -1,0 +1,13 @@
+{
+  "id": 65,
+  "title": "Positional Parameter Overload (Large Parameter List)",
+  "category": "Bloaters",
+  "damaged_code": "```rust\nfn create_user(\n    first_name: String,\n    last_name: String,\n    email: String,\n    phone: String,\n    street: String,\n    city: String,\n    zip_code: String,\n    is_admin: bool,\n    send_welcome_email: bool,\n) -> Result<User, Error> {\n    todo!()\n}\n```",
+  "pattern": "A function signature accepting a large list (typically 6-7+) of individual primitive arguments, especially of identical types (like consecutive `String`s or `bool`s).",
+  "why_bad": "Call sites are incredibly unreadable and highly fragile. It is extremely easy to accidentally swap two positional parameters of the same type (like swapping `first_name` and `last_name`, or `street` and `city`) without triggering any compiler errors. Adding a single field breaks every call site across the codebase.",
+  "detection": "Identify any public function or method accepting more than 5 positional arguments, especially when several consecutive arguments share the exact same primitive type.",
+  "counterexample": "`Context-dependent`. Low-level library constructors or internal wrapper interfaces where positional mapping is strictly isolated to a single calling file.",
+  "fix": "Group related parameters into cohesive parameter structs or apply the Builder pattern.",
+  "strength": "Strong",
+  "source": "*Steve McConnell - Code Complete (2004)*, Chapter 7, \"High-Quality Routines\" (Limit parameters to about 7); *Martin Fowler - Refactoring (1999)*, Chapter 3, \"Long Parameter List\"; *Vaughn Vernon - Implementing Domain-Driven Design (2013)*, Chapter 10."
+}

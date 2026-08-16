@@ -1,0 +1,13 @@
+{
+  "id": 117,
+  "title": "Pointless Format Macros (Trivial Formatting)",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nlet s = format!(\"hello\");\n```",
+  "pattern": "Invoking string formatting macros (`format!`) without any arguments or variable interpolation.",
+  "why_bad": "Executes complex formatting machinery and performs dynamic heap allocations at runtime for a value that is already static and constant.",
+  "detection": "An invocation of `format!` containing only a single literal string with no replacement placeholders (`{}`).",
+  "counterexample": "Converting a static string literal to a dynamic heap-allocated `String` (though `.to_string()` is preferred).",
+  "fix": "Replace the macro call with `.to_string()` on the literal or direct assignment.",
+  "strength": "Strong",
+  "source": "Fowler, *Refactoring*, Chapter 3 (\"Bad Smells - Dispensables\")."
+}

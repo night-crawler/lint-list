@@ -1,0 +1,13 @@
+{
+  "id": 421,
+  "title": "Thread-Blocking Lock Held Across Await Point",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```rust\nasync fn process(data: &Arc<Mutex<State>>) {\n    let _guard = data.lock().unwrap(); // std::sync::Mutex\n    do_something_async().await; // Yield point\n}\n```",
+  "pattern": "A thread-blocking lock guard (such as `std::sync::MutexGuard`) is kept in scope across an asynchronous `.await` boundary.",
+  "why_bad": "If the future is suspended at the `.await` point, the underlying OS thread is yielded back to the executor, but the lock remains held. If other tasks on the same executor attempt to acquire the lock, they will block the executor threads, causing starvation or deadlocks.",
+  "detection": "An active lock guard variable that does not implement `Send` or is an OS-level blocking guard is alive across a yield/await point in an `async fn` or `async` block.",
+  "counterexample": "Using an asynchronous mutex (`tokio::sync::Mutex`) whose guards are designed to be held across await boundaries safely.",
+  "fix": "Use an async-aware mutex, or limit the block scope of the standard lock guard so it is dropped before the `.await` point.\n```rust\nasync fn process(data: &Arc<Mutex<State>>) {\n    {\n        let mut guard = data.lock().unwrap();\n        guard.update();\n    } // dropped here\n    do_something_async().await;\n}\n```",
+  "strength": "Strong",
+  "source": "Jon Gjengset Ch 9 (p. 238), Tokio Mutex documentation"
+}

@@ -1,0 +1,13 @@
+{
+  "id": 766,
+  "title": "Flag-Guarded Dead Codepath Graveyard (CI Flag-Guard Leftovers)",
+  "category": "Maintenance Fossils",
+  "damaged_code": "```rust\npub fn process_checkout(&self, cart: &Cart) {\n    if self.flags.is_enabled(\"use_new_checkout\") {\n        self.new_checkout_flow(cart);\n    } else {\n        // Dead path: old checkout flow is no longer intended to run but kept 'just in case'\n        self.old_legacy_checkout_flow(cart);\n    }\n}\n```",
+  "pattern": "A runtime conditional branch (`if/else`) where one of the paths (typically the old codepath) is dead wood but remains checked into version control long after the flag has been permanently configured to the alternative.",
+  "why_bad": "Accumulated complexity and \"haunted graveyards\". Keeping dead branches inside binaries raises cyclomatic complexity, increases binary footprints, degrades compiler optimization potential, and prevents the cleanup of obsolete dependencies and data schemas.",
+  "detection": "The linter must observe:\n1. A branch statement controlled by a runtime feature flag.\n2. The associated feature flag is retired (always `true` or `false` in configuration), or the code path has been under-utilized/unexecuted in production for an extended period according to telemetry.",
+  "counterexample": "`Context-dependent`\n```rust\n// Valid: Temporary flag-guard during rolling upgrade phase\npub fn run_experiment(&self) {\n    if self.flags.is_enabled(\"active_experiment_v2\") {\n        self.run_new_logic();\n    } else {\n        self.run_control_logic();\n    }\n}\n```",
+  "fix": "Delete the retired feature flag, discard the dead path, and expose the new path directly.\n```rust\npub fn process_checkout(&self, cart: &Cart) {\n    self.new_checkout_flow(cart);\n}\n```",
+  "strength": "Contextual` (Requires configuration or runtime trace telemetry to verify flag retirement)",
+  "source": "- Titus Winters et al., *Software Engineering at Google* (2020) [370]\n- Kent Beck, *Tidy First?* (2023) [71, 72]"
+}

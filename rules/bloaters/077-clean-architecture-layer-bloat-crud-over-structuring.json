@@ -1,0 +1,13 @@
+{
+  "id": 77,
+  "title": "Clean-Architecture Layer Bloat (CRUD Over-Structuring)",
+  "category": "Bloaters",
+  "damaged_code": "```rust\n// UserController -> UserPresenter -> UserInteractor -> UserRepository -> UserDbModel -> UserEntity\n// To add a simple field, you must modify 6 files and write extensive mapping boilerplate!\n```",
+  "pattern": "Splitting a basic CRUD data operation into 6+ distinct physical files and abstract adapter interfaces (Controller, Presenter, Interactor, Repository, DBModel, DomainEntity) in a simple startup application.",
+  "why_bad": "Severe developer exhaustion and extreme development friction. Adding a single field (like a user's nickname) requires modifying 6 files and writing extensive mapping boilerplate, grinding development velocity to a halt for zero architectural gain.",
+  "detection": "Look for a design containing more than 5 distinct, sequential mapping layers for standard database reads and writes with no rich domain logic.",
+  "counterexample": "Highly complex business domains with extensive, volatile business rules where strict interactor isolation is necessary to protect core invariants.",
+  "fix": "Simplify. For simple CRUD, let your handler fetch the record directly from a repository, only adding complex interactors where the domain rules are genuinely rich.",
+  "strength": "Contextual",
+  "source": "*Robert C. Martin - Clean Architecture (2017)*; *Titus Winters et al. - Software Engineering at Google (2020)*, Chapter 14."
+}

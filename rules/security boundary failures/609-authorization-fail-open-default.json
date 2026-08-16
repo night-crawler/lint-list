@@ -1,0 +1,13 @@
+{
+  "id": 609,
+  "title": "Authorization Fail-Open Default",
+  "category": "Security Boundary Failures",
+  "damaged_code": "```rust\nfn authorize_request(user_role: &str) -> bool {\n    match load_access_policies() {\n        Ok(policies) => policies.is_allowed(user_role),\n        Err(_) => true, // Fail-open: allow request if configuration fails to load\n    }\n}\n```",
+  "pattern": "Exception or error-handling blocks in authentication/authorization code returning `true` or mapping to \"allow\" if policy lookups or network connections fail.",
+  "why_bad": "In conditions of resource exhaustion, disk errors, or temporary network failure, the security checks collapse and default to permitting access, allowing attackers to bypass authentication entirely.",
+  "detection": "An `Err` handler or panic recovery block inside an authorization function returning `true` or matching to a lenient permission set.",
+  "counterexample": "```rust\nfn authorize_request(user_role: &str) -> bool {\n    match load_access_policies() {\n        Ok(policies) => policies.is_allowed(user_role),\n        Err(_) => false, // Fail-secure: deny access on error\n    }\n}\n```",
+  "fix": "Ensure all authorization paths default to \"deny all\". Access must be explicitly granted; any failure during lookup must trigger immediate denial.",
+  "strength": "Strong",
+  "source": "`Heather Adkins et al. - Building Secure and Reliable Systems (2020)`, Ch 8, p. 158."
+}

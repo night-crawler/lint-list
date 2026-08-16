@@ -1,0 +1,13 @@
+{
+  "id": 202,
+  "title": "Concrete Driver Dependency (Lack of Abstraction)",
+  "category": "Couplers",
+  "damaged_code": "```rust\nstruct App {\n    // Directly dependent on a concrete, vendor-specific driver\n    database: postgres::Client,\n}\nimpl App {\n    fn run(&mut self) {\n        self.database.execute(\"SELECT 1\", &[]);\n    }\n}\n```",
+  "pattern": "A high-level business logic struct contains a direct field reference to a concrete, third-party vendor library client instead of an abstract interface.",
+  "why_bad": "It makes it impossible to switch vendors or mock the dependency during tests. The application's core logic is coupled directly to the chosen database vendor's API.",
+  "detection": "Direct storage of third-party driver connection/client structs in high-level domain or orchestrator structs.",
+  "counterexample": "Trivial scripts or short-lived CLI utilities where adaptability is not a concern.",
+  "fix": "Introduce a trait boundary to abstract the persistence mechanism.\n```rust\ntrait Database {\n    fn query(&self, sql: &str);\n}\nstruct App<D: Database> {\n    database: D,\n}\n```",
+  "strength": "Strong",
+  "source": "Andrew Hunt & David Thomas, *The Pragmatic Programmer* (2019), Chapter 2 (\"Reversibility\"); Martin Fowler, *Patterns of Enterprise Application Architecture* (2002), Chapter 8 (\"Data Mapper\")."
+}

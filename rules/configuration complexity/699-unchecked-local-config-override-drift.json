@@ -1,0 +1,13 @@
+{
+  "id": 699,
+  "title": "Unchecked Local Config Override Drift",
+  "category": "Configuration Complexity",
+  "damaged_code": "```bash\n# Manual edits on individual production nodes bypass source control\nssh node_4 \"echo 'pool_size: 40' >> /etc/app/config.yaml\"\n```",
+  "pattern": "Modifying configuration variables locally on specific live servers or database instances by hand.",
+  "why_bad": "Results in configuration drift, creating \"snowflake\" servers. It creates silent operational bugs where node 1 behaves differently than node 4 under the same workload, causing diagnostic nightmares.",
+  "detection": "A horizontally scaled cluster where local configuration properties files contain mismatching checksums across nodes.",
+  "counterexample": "Deploying configurations strictly via central automation (like Ansible or Terraform) verified by source control commit histories.",
+  "fix": "Treat configuration files as read-only; enforce all changes through centralized orchestration tools, auditing checksums continuously to block manual drift.",
+  "strength": "Context-dependent",
+  "source": "[Pragmatic Programmers] Michael T. Nygard - *Release It!_ Design and Deploy Production-Ready Software* (2007, Pragmatic Bookshelf).pdf, Section 14.2."
+}

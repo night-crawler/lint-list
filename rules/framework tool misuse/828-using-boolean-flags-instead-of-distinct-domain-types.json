@@ -1,0 +1,13 @@
+{
+  "id": 828,
+  "title": "Using Boolean Flags instead of Distinct Domain Types",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Distinguishing distinct domain workflow states with boolean flags\npub struct Order {\n    pub is_quote: bool, // Merges two distinct business concepts into one struct\n}\n```",
+  "pattern": "Using boolean state flags (e.g. `is_quote`, `is_order`) inside a single struct to distinguish between conceptually distinct domain concepts.",
+  "why_bad": "It violates the Single Responsibility Principle. Different business rules, validation criteria, and states are mixed into a single class, leading to complex nested conditionals.",
+  "detection": "A single domain struct with multiple optional/nullable fields and boolean flags used to selectively enable or disable attributes.",
+  "counterexample": "A boolean representing a simple, transient attribute (e.g., `is_active`).",
+  "fix": "Model the distinct states as separate types or enum variants (e.g., `Quote` and `Order` structs).",
+  "strength": "Strong",
+  "source": "*Domain Modeling Made Functional (Wlaschin), Chapter 2, p. 31, 573 [114, 573]*"
+}

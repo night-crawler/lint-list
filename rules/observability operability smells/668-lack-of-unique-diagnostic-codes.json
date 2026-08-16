@@ -1,0 +1,13 @@
+{
+  "id": 668,
+  "title": "Lack of Unique Diagnostic Codes",
+  "category": "Observability Operability Smells",
+  "damaged_code": "```rust\nlog::error!(\"Timeout failure connecting to fulfillment system.\");\n```",
+  "pattern": "Emitting critical log strings that completely lack a unique, static alphanumeric code.",
+  "why_bad": "Prevents precise communications between operators and developers, complicates automated log-scanning routing rules, and makes searching in runbooks difficult [284, 693].",
+  "detection": "A static check that flags any error-level string lacking an identifier (e.g., `[ERR_FULFILL_02]`).",
+  "counterexample": "```rust\nlog::error!(\"[ERR_FULFILL_02] Timeout failure connecting to fulfillment system.\");\n```",
+  "fix": "Prepend unique error codes to critical system error messages.",
+  "strength": "Strong",
+  "source": "*Release It!*, page 284 [284, 693]."
+}

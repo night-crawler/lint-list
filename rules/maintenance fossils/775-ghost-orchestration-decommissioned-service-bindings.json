@@ -1,0 +1,13 @@
+{
+  "id": 775,
+  "title": "Ghost Orchestration / Decommissioned Service Bindings",
+  "category": "Maintenance Fossils",
+  "damaged_code": "```yaml\n# Borg / Kubernetes deployment config with forgotten service configurations\n- name: legacy_takeout_api_port\n  value: \"8081\" # Ports kept open for unowned / decommissioned services\n```",
+  "pattern": "Build config parameters, environment variables, port mappings, or deployment orchestrations kept active for services, APIs, or VMs that have been decommissioned or forgotten by the organization.",
+  "why_bad": "Security vulnerability. Unmonitored, open ports and active routing profiles to unowned services represent prime targets for attack. It drains cloud budget on orphaned compute resources and clutters configuration files, making global security auditing impossible.",
+  "detection": "The linter must observe:\n1. Active configuration keys, ports, or service routing variables declared in deployment files.\n2. The targets of those configurations do not exist, fail health checks, or are unowned according to inventory databases.",
+  "counterexample": "```yaml\n# Valid: Active, actively checked and owned routing profile\n- name: takeout_api_port\n  value: \"8080\"\n```",
+  "fix": "Prune the orphaned environment variables, deployment bindings, and open ports from configuration files.\n```yaml\n# Deleted unneeded legacy API bindings.\n```",
+  "strength": "Strong",
+  "source": "- Titus Winters et al., *Software Engineering at Google* (2020) [136, 366]"
+}

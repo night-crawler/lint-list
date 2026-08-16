@@ -1,0 +1,13 @@
+{
+  "id": 711,
+  "title": "Configuration Loading via Dynamic Uncompiled Scripting Evaluators",
+  "category": "Configuration Complexity",
+  "damaged_code": "```rust\n// Evaluating complex scripting code inside configuration load routines\nfn load_config() {\n    let raw_script = std::fs::read_to_string(\"config.js\")?;\n    execute_javascript(&raw_script); // High-risk, uncompiled runtime logic\n}\n```",
+  "pattern": "Executing active, uncompiled scripting languages (like Lisp or JavaScript) inside configuration files to compute static environment parameters.",
+  "why_bad": "Introduces severe Remote Code Execution (RCE) vulnerabilities. It bypasses type-checks, breaks static analysis, and introduces untestable, non-deterministic logic paths into system startup.",
+  "detection": "Evaluating external scripting syntax or dynamic code runtimes inside configuration bootstrap structures.",
+  "counterexample": "```rust\n// Deserializing flat, static data structures only\nlet config: AppConfig = serde_json::from_str(&static_json)?;\n```",
+  "fix": "Replace executable configuration scripts with flat, declarative, schema-checked data formats (like TOML, YAML, or JSON) that carry no execution capabilities.",
+  "strength": "Strong",
+  "source": "Harold Abelson et al. - *Structure and Interpretation of Computer Programs* (1996, MIT Press).pdf, Chapter 4; Heather Adkins et al., - *Building Secure and Reliable Systems* (2020, O'Reilly Media).pdf, Chapter 14."
+}

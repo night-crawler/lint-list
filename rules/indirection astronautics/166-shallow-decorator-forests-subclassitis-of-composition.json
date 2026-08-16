@@ -1,0 +1,13 @@
+{
+  "id": 166,
+  "title": "Shallow Decorator Forests (Subclassitis of Composition)",
+  "category": "Indirection Astronautics",
+  "damaged_code": "```rust\nstruct SimpleDatabase;\nstruct LoggingDatabase<T> { inner: T }\nstruct AuditingDatabase<T> { inner: T }\nstruct MetricDatabase<T> { inner: T }\n\n// Constructing a deep tower of shallow wrappers\nlet db = MetricDatabase {\n    inner: AuditingDatabase {\n        inner: LoggingDatabase {\n            inner: SimpleDatabase\n        }\n    }\n};\n```",
+  "pattern": "Constructing nested towers of generic, shallow decorators to inject simple operational concerns like logging, auditing, or metrics tracking.",
+  "why_bad": "*   **Compilation Complexity:** In languages like Rust, deep towers of generic wrappers cause monomorphization explosion, slowing down compilation and bloating binary sizes.\n*   **Opaque Interfaces:** Finding where actual execution occurs requires stepping through multiple wrapper layers, turning debugging into a chore.",
+  "detection": "Nesting or wrapping of struct generic layers $\\ge 3$ deep, where the wrapper structs contain no unique domain data and only perform pre/after forwarding calls.",
+  "counterexample": "**Middleware Interceptors:** Utilizing a single, unified interceptor chain or middleware registration framework is valid.",
+  "fix": "Consolidate cross-cutting operational concerns into a single concrete wrapper, or leverage standard logging/tracing macros (like `tracing` in Rust) that do not pollute the type system.\n```rust\nstruct Database;\n\nimpl Database {\n    pub fn query(&self, sql: &str) {\n        // Cross-cutting concerns handled declaratively\n        info!(target: \"database\", query = sql, \"Executing query\");\n        self.raw_query(sql);\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Ousterhout, *A Philosophy of Software Design*, Section 4.6 \"Classitis\" & McConnell, *Code Complete*, Section 6.4 \"Reasons to Create a Class\"."
+}

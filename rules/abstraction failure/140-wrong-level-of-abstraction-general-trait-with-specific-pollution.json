@@ -1,0 +1,13 @@
+{
+  "id": 140,
+  "title": "Wrong Level of Abstraction (General Trait with Specific Pollution)",
+  "category": "Abstraction Failure",
+  "damaged_code": "```rust\ntrait Stack {\n    fn push(&mut self, value: i32);\n    fn pop(&mut self) -> Option<i32>;\n    \n    // Wrong level of abstraction\n    fn percent_full(&self) -> f64;\n}\n```",
+  "pattern": "An interface or trait declares a method that only makes sense for certain concrete implementations, forcing other implementers to either \"lie\" or return dummy, nonsensical values.",
+  "why_bad": "It pollutes the clean interface abstraction. A boundless or dynamic stack implementation cannot compute `percent_full()` accurately and is forced to return a default like `0.0`, which is a semantic lie that breaks client assumptions.",
+  "detection": "A trait method declaration that cannot be logically implemented by all known or planned implementers without using dummy default outputs.",
+  "counterexample": "Traits where optional capabilities are explicitly represented via `Option` return types that are logically consistent for all implementers.",
+  "fix": "Refactor the specific method out of the general trait and place it into a specialized sub-trait or concrete struct (e.g., `trait BoundedStack: Stack`).",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 17, G6 (\"Code at Wrong Level of Abstraction\")."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 885,
+  "title": "Diagnostic Panic on Log Flushes",
+  "category": "Robustness Theater",
+  "damaged_code": "```rust\nfn complete_payment(transaction: Transaction) {\n    process_money(&transaction);\n    // Panicking if non-essential logging fails\n    write_audit_log(&transaction).expect(\"Audit log failure!\"); \n}\n```",
+  "pattern": "Calling `.unwrap()`, `.expect()`, or triggering a program-wide `panic!` in response to the failure of non-critical, secondary telemetry or logging operations.",
+  "why_bad": "It makes a successfully completed business transaction fail due to a failure in diagnostic infrastructure. The payment succeeded, but the program crashed, leaving the system state inconsistent and users frustrated for the sake of diagnostic perfectionism.",
+  "detection": "The use of panicking methods (such as `expect`) on `Result` variables returned from functions that perform logging, auditing, trace-flushing, or analytics operations.",
+  "counterexample": "```rust\n// Correct: Log failure locally but allow the transaction to complete\nfn complete_payment(transaction: Transaction) {\n    process_money(&transaction);\n    if let Err(e) = write_audit_log(&transaction) {\n        eprintln!(\"Failed to write audit log: {:?}\", e); // Suppressed fallback\n    }\n}\n```",
+  "fix": "Gracefully degrade. Swallow or report diagnostic log failures asynchronously without interrupting the success path of core business logic.",
+  "strength": "Strong",
+  "source": "Andrew Hunt & David Hurst Thomas, *The Pragmatic Programmer*, Topic 25 (\"Assertive Programming: Leave Assertions Turned On\")."
+}

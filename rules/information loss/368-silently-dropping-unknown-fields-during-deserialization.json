@@ -1,0 +1,13 @@
+{
+  "id": 368,
+  "title": "Silently Dropping Unknown Fields during Deserialization",
+  "category": "Information Loss",
+  "damaged_code": "```rust\n#[derive(Deserialize, Serialize)]\nstruct UserDto {\n    username: String,\n    role: String,\n}\n```",
+  "pattern": "Decoding an external record or database payload into a fixed struct without preserving unrecognized fields, then re-encoding the same struct back to the source.",
+  "why_bad": "When older versions of code read data written by newer versions, any newly added fields not present in the old struct are silently discarded. This breaks forward compatibility and results in silent data loss during read-write loops.",
+  "detection": "Look for structs annotated with `#[derive(Deserialize, Serialize)]` used in read-write-back scenarios that lack a mechanism to capture and re-serialize undeclared keys.",
+  "counterexample": "Strictly-controlled internal message payloads that are never written back or forwarded:\n```rust\n#[derive(Deserialize)]\nstruct InternalEvent {\n    id: u64,\n}\n```",
+  "fix": "Use a catch-all map with Serde's `#[serde(flatten)]` to capture and preserve all unrecognized fields during the decode/encode loop.\n```rust\nuse std::collections::HashMap;\n\n#[derive(Deserialize, Serialize)]\nstruct UserDto {\n    username: String,\n    role: String,\n    #[serde(flatten)]\n    extra_fields: HashMap<String, serde_json::Value>,\n}\n```",
+  "strength": "Strong",
+  "source": "*Designing Data-Intensive Applications* by Martin Kleppmann (Chapter 4, p. 125, Figure 4-7)."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 537,
+  "title": "Unmeasured Network Connection Pooling",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\n// Creating a connection pool of 500 connections for an API that only receives 2 requests per minute\n```",
+  "pattern": "Creating a massive connection pool or pool size configuration for database or external API requests without measuring the live concurrency rate.",
+  "why_bad": "Each connection in a pool consumes file descriptors, kernel memory buffers, and server-side thread resources. Under low traffic, a large connection pool is purely wasteful and can easily degrade network interface performance [111, 422].",
+  "detection": "Initializing a database connection pool or TCP socket pool with a large default size (e.g., > 100 connections) for applications with extremely low transaction rates.",
+  "counterexample": "High-volume microservices serving tens of thousands of concurrent requests per second. `Contextual`.",
+  "fix": "Use a minimal default connection pool size (e.g., 5 to 10 connections) and let the pool grow dynamically only if profiled concurrency demands it.",
+  "strength": "Strong",
+  "source": "*Systems Performance*, Chapter 2 (p. 111); *Release It!*, Section 10 (p. 422)."
+}

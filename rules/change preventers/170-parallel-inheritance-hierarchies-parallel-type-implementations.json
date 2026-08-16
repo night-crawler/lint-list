@@ -1,0 +1,13 @@
+{
+  "id": 170,
+  "title": "Parallel Inheritance Hierarchies (Parallel Type Implementations)",
+  "category": "Change Preventers",
+  "damaged_code": "```rust\n// Core Hierarchy\npub trait Deal {\n    fn compute_payout(&self) -> f64;\n}\npub struct ActiveDeal;\nimpl Deal for ActiveDeal { fn compute_payout(&self) -> f64 { 100.0 } }\npub struct PassiveDeal;\nimpl Deal for PassiveDeal { fn compute_payout(&self) -> f64 { 50.0 } }\n\n// Parallel Presentation Hierarchy\npub trait PresentationStyle {\n    fn format(&self, deal: &dyn Deal) -> String;\n}\npub struct TabularActiveStyle;\nimpl PresentationStyle for TabularActiveStyle { fn format(&self, d: &dyn Deal) -> String { format!(\"Tabular Active: {}\", d.compute_payout()) } }\npub struct TabularPassiveStyle;\nimpl PresentationStyle for TabularPassiveStyle { fn format(&self, d: &dyn Deal) -> String { format!(\"Tabular Passive: {}\", d.compute_payout()) } }\n```",
+  "pattern": "For every new type added in one domain hierarchy, a developer is forced to write a corresponding type implementation in a parallel hierarchy, typically sharing matching prefixes or suffixes (e.g., `ActiveDeal` and `TabularActiveStyle`).",
+  "why_bad": "It tightly couples independent dimensions of variation. Extending the system with a new variant requires duplicate work and matching structural configuration in two separate files. If a developer implements a new `Deal` type but forgets to create its matching `PresentationStyle`, a runtime error or structural gap occurs.",
+  "detection": "Two or more distinct traits or enum groupings in separate modules where the list of concrete implementers/variants matches 1:1, especially if their type names share identical prefixes or suffixes.",
+  "counterexample": "Standard implementations of universal traits (like `std::fmt::Display` or `serde::Serialize`) where the type system naturally requires separate formatting or serialization behavior for every concrete type.",
+  "fix": "Merge the parallel hierarchies using delegation. Let the primary class hold a reference to a single generic strategy style or use a single multi-dimensional mapper instead of duplicated class trees.",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Refactoring*, Chapter 3 (\"Parallel Inheritance Hierarchies\"); Steve McConnell, *Code Complete* (2004), Chapter 24 (\"Inheritance hierarchies have to be modified in parallel\"), pp. 212, 570."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 808,
+  "title": "ORM Data Model Leakage (Value Objects as Tables)",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Modeling a simple Address Value Object with a separate table and surrogate primary key to satisfy the ORM\n#[derive(sqlx::FromRow)]\npub struct AddressTable {\n    pub address_id: i64, // Surrogate key forced by ORM\n    pub street: String,\n    pub city: String,\n}\n```",
+  "pattern": "Mapping local Value Objects (attributes with no conceptual identity of their own) to distinct database tables with surrogate primary keys rather than denormalizing them into the parent entity's table.",
+  "why_bad": "It forces unnecessary database normalization, table joins, and surrogate identity keys onto conceptually immutable value objects, leaking relational database constraints into the logical domain model.",
+  "detection": "Entity-relationship mapping where a type without a unique business identity (e.g., coordinates, address) is declared as a separate relation with its own auto-incremented surrogate key.",
+  "counterexample": "The value object is shared globally as a reference data table (e.g., standard postal codes list).",
+  "fix": "Embed the value object's attributes directly into the parent table's columns (denormalization) using ORM Embedded/Value patterns.",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design (Vernon), Chapter 6, p. 225-227, 249 [225-227, 673]*"
+}

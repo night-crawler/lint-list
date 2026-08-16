@@ -1,0 +1,13 @@
+{
+  "id": 606,
+  "title": "OS Command Injection via Shell Interpolation",
+  "category": "Security Boundary Failures",
+  "damaged_code": "```rust\nfn count_lines(filename: &str) {\n    let cmd = format!(\"wc -c {}\", filename);\n    std::process::Command::new(\"sh\")\n        .arg(\"-c\")\n        .arg(cmd)\n        .spawn()\n        .unwrap();\n}\n```",
+  "pattern": "Constructing operating system command lines by raw string formatting of unvalidated user inputs and executing them inside a shell interpreter shell sink.",
+  "why_bad": "The shell interpreter treats control characters (like `;`, `&`, `|`) as statement delimiters, allowing adversaries to append arbitrary shell commands (e.g., `filename = \"test.dat; rm -rf /\"`) that execute with the application's privileges.",
+  "detection": "Dynamic string parameters containing variables passed to shell arguments of standard execution commands (e.g. `Command::new(\"sh\").arg(\"-c\")` or `Command::new(\"bash\")`).",
+  "counterexample": "```rust\nfn count_lines(filename: &str) {\n    std::process::Command::new(\"wc\")\n        .arg(\"-c\")\n        .arg(filename)\n        .spawn()\n        .unwrap();\n}\n```",
+  "fix": "Avoid invoking shell interpreters (`sh`, `bash`, `cmd`); invoke process binaries directly, passing arguments as a safe vector/array of independent parameters.",
+  "strength": "Strong",
+  "source": "`Andrew Hunt & David Thomas - The Pragmatic Programmer (2019)`, p. 63 (Topic 38)."
+}

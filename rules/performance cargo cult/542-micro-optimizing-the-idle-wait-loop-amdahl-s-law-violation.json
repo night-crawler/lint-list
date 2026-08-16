@@ -1,0 +1,13 @@
+{
+  "id": 542,
+  "title": "Micro-Optimizing the Idle/Wait Loop (Amdahl's Law Violation)",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\n// Micro-optimizing a simple loop inside a background logging daemon's idle sleep function\n```",
+  "pattern": "Spending engineering effort optimizing a code routine or component that consumes less than 1% of the application's runtime or executing during system idle time.",
+  "why_bad": "According to Amdahl's Law, even a 10x speedup of a routine that represents 1% of runtime improves overall application performance by less than 0.1%. Micro-optimizing idle routines is a complete waste of development effort and compromises readability [296, 337, 340].",
+  "detection": "Tuning loops, allocations, or math expressions inside utility functions, debug logs, or shutdown sequences that are rarely called or run during idle periods.",
+  "counterexample": "Hard real-time systems where the absolute worst-case latency must be minimized. `Context-dependent`.",
+  "fix": "Profile the application using a CPU sampler first, and focus optimization efforts exclusively on the highest-priority hot paths (> 10% of runtime).",
+  "strength": "Strong",
+  "source": "*Code Complete*, Section 25.3 (p. 337, 340); *Refactoring*, Section 1.1 (p. 296)."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 531,
+  "title": "Premature Consistent Hashing on Fixed Clusters",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\n// Setting up a complex consistent hashing ring for only 2 or 3 static nodes\n```",
+  "pattern": "Implementing a complex consistent hash ring with virtual nodes for distributing data across a small, static set of database connections or servers.",
+  "why_bad": "Consistent hashing adds lookup latency and code complexity to calculate ranges and virtual node maps. If the set of nodes is fixed and small, a simple modulo lookup (`hash(key) % server_count`) is hundreds of times faster, fully balanced, and trivially simple to implement [300].",
+  "detection": "Complex consistent hashing library usage or custom hash ring implementation when the connection pool or server list size is static and known at build time.",
+  "counterexample": "Dynamically scaled caching clusters (such as Memcached pools with dozens of nodes) where nodes are added or removed multiple times a day. `Context-dependent`.",
+  "fix": "Use a simple static key index hashing modulo connection length.",
+  "strength": "Strong",
+  "source": "*Designing Data-Intensive Applications*, Chapter 6 (p. 300)."
+}

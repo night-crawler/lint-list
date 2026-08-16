@@ -1,0 +1,13 @@
+{
+  "id": 959,
+  "title": "Mixing Blocking Synchronous and Non-Blocking Async Methods in a Single Trait",
+  "category": "Conceptual Integrity",
+  "damaged_code": "```rust\ntrait UserStore {\n    async fn get_user_async(&self, id: u64) -> Result<User, Error>;\n    fn save_user_sync(&self, user: User) -> Result<(), Error>; // Blocks!\n}\n```",
+  "pattern": "A single trait or interface defines a mixture of asynchronous, non-blocking methods and synchronous, blocking methods.",
+  "why_bad": "Calling blocking operations inside an async executor starves the thread pool, causing massive latency spikes and deadlocks. It violates the operational consistency model of async systems.",
+  "detection": "traits with a mix of `async fn` and normal `fn` returning database/network IO handles.",
+  "counterexample": "Interface definitions for libraries explicitly bridging sync-async boundaries with separate, well-documented runtimes. Marked `Context-dependent`.",
+  "fix": "Keep traits strictly async-only, or sync-only, using separate adapters for thread offloading.",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design* by Vaughn Vernon (2013), p. 308-309."
+}

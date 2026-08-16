@@ -1,0 +1,13 @@
+{
+  "id": 361,
+  "title": "Lossy Output Gate Mappings Leaking Sensitive Fields",
+  "category": "Boundary Representation",
+  "damaged_code": "```rust\n// Public output DTO derived automatically from Domain Model:\n#[derive(Serialize)]\nstruct UserDto {\n    id: u64,\n    username: String,\n    password_hash: String, // Leaked sensitive field\n}\n```",
+  "pattern": "Generating public API output models directly from internal schemas using default field derivation rules without explicit field filtering.",
+  "why_bad": "It causes critical security and privacy leaks. Sensitive details (e.g. hashed credentials, internal flags) get exposed on public networks because the boundary map is generic.",
+  "detection": "Match structs derived for public APIs that replicate identical fields of internal database row schemas including known sensitive terms.",
+  "counterexample": "Internal admin-only payloads with explicit authorization checks. Mark as `Context-dependent`.",
+  "fix": "Ensure output gates actively filter, drop, or map fields explicitly to hide private concepts.\n```rust\nstruct UserDto {\n    username: String, // Safe, selected field\n}\n```",
+  "strength": "Strong",
+  "source": "*Domain Modeling made Functional* by Scott Wlaschin (Chapter 11, p. 133, \"Output Gates and Information Leakage\")."
+}

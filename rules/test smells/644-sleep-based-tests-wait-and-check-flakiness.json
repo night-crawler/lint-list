@@ -1,0 +1,13 @@
+{
+  "id": 644,
+  "title": "Sleep-Based Tests (Wait-and-Check Flakiness)",
+  "category": "Test Smells",
+  "damaged_code": "```rust\n#[test]\nfn test_async_operation() {\n    let runner = AsyncRunner::new();\n    runner.start_job();\n\n    // Naive sleep-based heuristic to wait for async completion\n    std::thread::sleep(std::time::Duration::from_millis(500));\n\n    assert_eq!(runner.get_status(), JobStatus::Completed);\n}\n```",
+  "pattern": "A test that introduces hardcoded thread sleep delays as a heuristic to allow asynchronous operations or concurrent threads to finish execution before making assertions.",
+  "why_bad": "It causes test flakiness and dramatic test suite slowdowns [515]. Under heavy load (e.g., in virtualized CI systems), the sleep time may be insufficient, causing arbitrary failures [223, 539]. Under normal conditions, it injects unnecessary idle time into the development cycle [515].",
+  "detection": "Widespread use of `sleep()`, `setTimeout()`, or `nanosleep()` in test cases validating concurrent, asynchronous, or network operations [515].",
+  "counterexample": "Explicit timing benchmark tests where system delays or latency are the direct subjects of study under controlled environments [356].",
+  "fix": "Use active polling with a tight interval loop (microseconds) and a generous maximum fallback timeout, or leverage event-driven notifications (such as channels, future wakeups, or promise resolutions) [223, 515, 539].",
+  "strength": "Strong",
+  "source": "*   *Software Engineering at Google*, \"Larger Testing: Driving out flakiness\" (p. 306) [223]\n*   *Software Engineering at Google*, \"Testing Overview: Fast tests\" (p. 224) [515]\n*   *Understanding Software Dynamics*, \"Nanosleep performance bug\" (p. 297) [582]"
+}

@@ -1,0 +1,13 @@
+{
+  "id": 178,
+  "title": "Artificial Consistency (Pattern Monotony)",
+  "category": "Change Preventers",
+  "damaged_code": "```rust\n// Simple static config page forced to use complex transactional service model\nstruct ConfigController {\n    service: TransactionalService<ConfigRecord>,\n}\nimpl ConfigController {\n    pub fn get_config(&self) -> ConfigRecord {\n        // Massive transactional overhead for a static JSON read\n        self.service.execute_transaction(|db| db.find(1))\n    }\n}\n```",
+  "pattern": "Forcing a single, complex architectural pattern (such as microservices, CQRS, or multi-layered Clean Architecture) universally across all subsystems, regardless of local simplicity or requirements.",
+  "why_bad": "It forces \"square pegs into round holes.\" Developers are forced to write massive amounts of boilerplate, boilerplate mapping layers, and transaction logic to perform simple, static tasks, increasing change friction and compile-time overhead for zero structural gain.",
+  "detection": "Subsystems containing only simple CRUD operations or static reads that are structurally forced to implement 5-6 layers of controllers, interactors, models, and repositories.",
+  "counterexample": "Complex financial ledger transaction systems where strict, multi-layered transactional architectures are fundamentally required to preserve safety.",
+  "fix": "Design for volatility rather than monotony. Use simple, direct, lightweight approaches (like straight database reads) for simple CRUD/static data, reserving complex patterns only for rich domain areas.",
+  "strength": "Contextual",
+  "source": "Marianne Bellotti, *Kill It with Fire* (2021), Chapter 2 (\"Familiarity\"), p. 34."
+}

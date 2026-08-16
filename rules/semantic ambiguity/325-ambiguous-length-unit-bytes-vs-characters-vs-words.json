@@ -1,0 +1,13 @@
+{
+  "id": 325,
+  "title": "Ambiguous `length` Unit (Bytes vs Characters vs Words)",
+  "category": "Semantic Ambiguity",
+  "damaged_code": "```rust\nfn truncate_string(input: &str, length: usize) -> &str {\n    &input[..length]\n}\n```",
+  "pattern": "A parameter or field named `length` or `size` representing string or buffer boundaries without specifying the unit of measurement.",
+  "why_bad": "In multi-byte string encodings (like UTF-8 in Rust), `length` is ambiguous. It could mean bytes, characters, or words. Slicing a Rust `&str` by character count using byte indices causes runtime panics or corrupts unicode boundaries.",
+  "detection": "Match functions taking `&str` or `String` and a parameter named `length`, `size`, or `limit` of a numeric type.",
+  "counterexample": "When the unit is explicitly encoded in the variable name:\n```rust\nfn truncate_string_safe(input: &str, max_bytes: usize) -> &str {\n    &input[..max_bytes]\n}\n```",
+  "fix": "Attach the unit of measurement to the parameter or variable name to make the unit explicit.\n```rust\nfn truncate_string(input: &str, max_chars: usize) -> &str {\n    // Correctly count characters to avoid panics on multi-byte boundaries\n    let byte_end = input.chars().take(max_chars).map(|c| c.len_utf8()).sum();\n    &input[..byte_end]\n}\n```",
+  "strength": "Strong",
+  "source": "*The Art of Readable Code* by Dustin Boswell and Trevor Foucher (Chapter 3, p. 24)."
+}

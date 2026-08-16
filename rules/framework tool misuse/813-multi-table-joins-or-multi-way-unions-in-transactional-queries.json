@@ -1,0 +1,13 @@
+{
+  "id": 813,
+  "title": "Multi-table Joins or Multi-way Unions in Transactional Queries",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Eight-way join on unindexed tables in a core transactional system path\nlet complex_report = sqlx::query(\"SELECT * FROM t1 JOIN t2 JOIN t3 JOIN t4 JOIN t5 JOIN t6 JOIN t7 JOIN t8 ON ...\")\n    .fetch_all(&pool).await?;\n```",
+  "pattern": "Creating highly complex handcrafted SQL queries involving many-way joins (e.g. 5+ tables) or multi-way `UNION` operations in transactional (OLTP) code paths.",
+  "why_bad": "It creates extremely slow query plans that lock many tables simultaneously, causing database lock escalation, transactional timeouts, and blocking simple read/write operations.",
+  "detection": "An SQL query containing more than 4 `JOIN` statements or multiple `UNION` operations executing inside a transactional, low-latency API endpoint.",
+  "counterexample": "Complex joins executed inside a dedicated offline analytical (OLAP) reporting warehouse database.",
+  "fix": "Split the query into simpler, targeted index-seeks, denormalize reporting data, or move complex analysis to a read-only secondary view.",
+  "strength": "Strong",
+  "source": "*Release It! (Nygard), Chapter 10, p. 180 [252-253]*"
+}

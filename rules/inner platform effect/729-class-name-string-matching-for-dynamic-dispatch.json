@@ -1,0 +1,13 @@
+{
+  "id": 729,
+  "title": "Class-Name String Matching for Dynamic Dispatch",
+  "category": "Inner Platform Effect",
+  "damaged_code": "```\n// Attempting manual method dispatch by string matching type names\nstruct Scheduler;\n\nimpl Scheduler {\n    fn lead_days(&self, target_class: &str) -> u32 {\n        // String-based class matching to simulate polymorphic behavior\n        match target_class {\n            \"Bicycle\" => 1,\n            \"Mechanic\" => 4,\n            \"Vehicle\" => 3,\n            _ => 0,\n        }\n    }\n}\n```",
+  "pattern": "Evaluating type-name strings inside centralized control modules to determine behavior, recreating dynamic dispatch.",
+  "why_bad": "It violates basic encapsulation and increases coupling. Adding a new class requires finding and modifying string matchers inside distant dispatch systems.",
+  "detection": "The use of `target_class` strings or `any::type_name` queries inside conditionals to execute class-specific behavior.",
+  "counterexample": "`None`. Standard polymorphic dispatch is always superior.",
+  "fix": "Declare an interface trait and implement it directly on each target struct.\n\n```\n// Enforce dispatch via statically checked traits\npub trait Schedulable {\n    fn lead_days(&self) -> u32;\n}\n\npub struct Bicycle;\nimpl Schedulable for Bicycle {\n    fn lead_days(&self) -> u32 { 1 }\n}\n\npub struct Mechanic;\nimpl Schedulable for Mechanic {\n    fn lead_days(&self) -> u32 { 4 }\n}\n```",
+  "strength": "Strong",
+  "source": "Sandi Metz - _Practical Object-oriented Design. An agile Primer ising Ruby [2nd ed.]_ (2019, Addison-Wesley).pdf, Chapter 7 \"Schedule expects targets to know their own lead time\"."
+}

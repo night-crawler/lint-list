@@ -1,0 +1,13 @@
+{
+  "id": 554,
+  "title": "Premature Data Partitioning (NUMA Node Hard-Binding)",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```bash\n# Hard-binding task threads to specific NUMA socket 0 to \"avoid bus crossing\"\nnumactl --physcpubind=0 --membind=0 ./my_app\n```",
+  "pattern": "Pinning application threads and allocating memory explicitly to single NUMA CPU sockets without measuring interconnect bus traffic.",
+  "why_bad": "Hard-binding threads to NUMA nodes prevents the operating system scheduler from performing effective load balancing, turning temporary workload spikes into CPU resource starvation [132, 222].",
+  "detection": "Invoking NUMA-specific system configurations (`numactl` or thread affinity libraries) inside standard application deploy pipelines.",
+  "counterexample": "Supercomputing cluster configurations or raw hypervisor systems running dedicated single-purpose workloads. `Contextual`.",
+  "fix": "Allow the operating system kernel scheduler to dynamically allocate CPU threads and manage NUMA locality.",
+  "strength": "Strong",
+  "source": "*Systems Performance*, Chapter 6, Section 6.5 (p. 132), Chapter 7 (p. 222)."
+}

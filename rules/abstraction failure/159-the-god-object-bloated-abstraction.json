@@ -1,0 +1,13 @@
+{
+  "id": 159,
+  "title": "The God Object (Bloated Abstraction)",
+  "category": "Abstraction Failure",
+  "damaged_code": "```rust\nstruct ApplicationManager {\n    users: Vec<User>,\n    database: DbConnection,\n    config: AppConfig,\n    socket: Socket,\n    // ... dozens of other fields and methods for everything\n}\n```",
+  "pattern": "A single struct representing a massive conceptual space with dozens of unrelated responsibilities, fields, and helper methods.",
+  "why_bad": "It is a massive failure of decomposition. It results in extremely high coupling, making the codebase highly fragile. Any change to a minor configuration parameter ripples and risks breaking unrelated socket or user database logic.",
+  "detection": "A struct declaration with an exceptionally high number of fields (e.g., 10 or more) or public methods (e.g., 20 or more) that span different functional domains.",
+  "counterexample": "None. Large, monolithic abstractions always indicate a design error.",
+  "fix": "Decompose the God Object into smaller, cohesive, deep structs based on the Single Responsibility Principle, and coordinate them via simple interfaces.",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Refactoring* (1999), Chapter 3 (\"Large Class\"); John K. Ousterhout, *A Philosophy of Software Design* (2018)."
+}

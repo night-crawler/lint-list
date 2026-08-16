@@ -1,0 +1,13 @@
+{
+  "id": 126,
+  "title": "Premature Microservices",
+  "category": "Speculative Generality",
+  "damaged_code": "```rust\nfn fetch_user_over_network(id: u64) -> Result<User, reqwest::Error> {\n    reqwest::blocking::get(format!(\"http://user-service/{}\", id))?.json()\n}\n```",
+  "pattern": "Separating cohesive domain entities into physically distinct network-bound services during early development phases.",
+  "why_bad": "Swaps fast, compile-time checked in-memory calls for slow, brittle network boundaries, forcing complex tracing, retries, and network failure management.",
+  "detection": "Separate network-bound services that are highly coupled, where changes in one require synchronized changes and deployments in the other.",
+  "counterexample": "Highly scalable, independent subsystems with stable boundaries.",
+  "fix": "Consolidate the services into a single monolithic binary, using clean module boundaries.",
+  "strength": "Contextual",
+  "source": "Titus Winters et al., *Software Engineering at Google* (2020); Juval Löwy, *Righting Software* (2019)."
+}

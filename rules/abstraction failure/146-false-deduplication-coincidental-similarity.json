@@ -1,0 +1,13 @@
+{
+  "id": 146,
+  "title": "False Deduplication (Coincidental Similarity)",
+  "category": "Abstraction Failure",
+  "damaged_code": "```rust\n// Unified validator for age and quantity\nfn validate_value(val: i32) -> Result<(), &'static str> {\n    if val <= 0 {\n        return Err(\"Must be greater than zero\");\n    }\n    Ok(())\n}\n```",
+  "pattern": "Unifying two functions or workflows because their code structure or validation rules look identical today, despite them representing completely different domain concepts (e.g., user age vs. order quantity).",
+  "why_bad": "It couples unrelated domain concepts. When the business rule for age inevitably changes (e.g., \"minimum age is 18\"), developers are forced to insert complex boolean flags or conditional switches into the unified function, complicating it.",
+  "detection": "A single helper function used by distinct, unrelated domain workflows where the parameters are treated as generic values rather than domain types.",
+  "counterexample": "Generic utility routines (like string trim or list sorting) that are truly domain-independent.",
+  "fix": "Keep the functions separate (e.g., `validate_age` and `validate_quantity`). The coincidental similarity in implementation is not true duplication of knowledge.",
+  "strength": "Contextual",
+  "source": "Andrew Hunt & David Thomas, *The Pragmatic Programmer* (2019), Topic 9 (\"Not All Code Duplication Is Knowledge Duplication\"); Robert C. Martin, *Clean Architecture* (2017), Chapter 15 (\"Duplication\")."
+}

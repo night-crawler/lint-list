@@ -1,0 +1,13 @@
+{
+  "id": 228,
+  "title": "Mutually Exclusive Boolean Flag Clusters",
+  "category": "Primitive Obsession",
+  "damaged_code": "```rust\nstruct Article {\n    is_draft: bool,\n    is_published: bool,\n    is_archived: bool,\n}\n```",
+  "pattern": "Using multiple individual boolean fields to track a set of mutually exclusive states.",
+  "why_bad": "It allows representing physically impossible state combinations (e.g., `is_draft = true` AND `is_published = true` AND `is_archived = true`), creating a wide vector for invalid states and requiring redundant defensive conditional assertions.",
+  "detection": "Structs containing multiple fields starting with `is_` or `has_` typed as raw booleans that represent exclusive logical paths.",
+  "counterexample": "A struct containing unrelated, additive configuration flags:\n```rust\nstruct SearchConfig {\n    case_sensitive: bool,\n    use_regex: bool,\n}\n```",
+  "fix": "Consolidate the mutually exclusive states into an explicit enum.\n```rust\nenum ArticleState {\n    Draft,\n    Published,\n    Archived,\n}\n```",
+  "strength": "Strong",
+  "source": "*Domain Modeling made Functional* by Scott Wlaschin (p. 108)."
+}

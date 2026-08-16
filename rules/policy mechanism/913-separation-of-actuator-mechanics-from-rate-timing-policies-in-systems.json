@@ -1,0 +1,13 @@
+{
+  "id": 913,
+  "title": "Separation of Actuator Mechanics from Rate/Timing Policies in Systems",
+  "category": "Policy Mechanism",
+  "damaged_code": "```rust\nstruct RolloutSystem {\n    // Hardcoded execution logic and scheduling policy mixed\n    pub fn deploy(&self, image: Image) {\n        for group in self.machine_groups() {\n            self.install(group, image);\n            std::thread::sleep(Duration::from_secs(86400)); // Hardcoded policy \"wait 1 day\"\n        }\n    }\n}\n```",
+  "pattern": "A rollout, backup, or maintenance actuator hardcodes scheduling or rate parameters (such as waiting intervals, canary percentages) inside its execution methods.",
+  "why_bad": "Changes in rollout or rollback rules (e.g., speeding up deployments for security hotfixes or pausing rollouts on weekends) require editing, refactoring, and deploying the actuator code itself, presenting high risk to availability.",
+  "detection": "Actuator or execution modules containing hardcoded pause instructions, timing constraints, or hardcoded calendar checks.",
+  "counterexample": "Infrastructural safety guardrails that are absolutely invariant (e.g., never exceed maximum thread pool capacity).",
+  "fix": "Strictly separate the data plane (the actuator that executes deployments) from the control plane (the dynamic configuration representing scheduling policy).\n```rust\nstruct RolloutSystem {\n    policy_client: PolicyServiceClient,\n}\n\nimpl RolloutSystem {\n    pub fn deploy(&self, image: Image) {\n        for group in self.machine_groups() {\n            self.install(group, image);\n            let wait_duration = self.policy_client.get_next_wait_interval();\n            std::thread::sleep(wait_duration);\n        }\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Google SRE, *Building Secure and Reliable Systems* (2020), Chapter 9, \"Design for Recovery\", p. 108, 361-362."
+}

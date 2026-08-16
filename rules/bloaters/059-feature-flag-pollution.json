@@ -1,0 +1,13 @@
+{
+  "id": 59,
+  "title": "Feature-Flag Pollution",
+  "category": "Bloaters",
+  "damaged_code": "```rust\nfn process_payment(amount: f64) -> Result<(), Error> {\n    #[cfg(feature = \"stripe\")]\n    {\n        stripe_client::charge(amount)?;\n    }\n    #[cfg(feature = \"paypal\")]\n    {\n        paypal_client::charge(amount)?;\n    }\n    #[cfg(not(any(feature = \"stripe\", feature = \"paypal\")))]\n    {\n        compile_error!(\"A payment provider must be enabled!\");\n    }\n    Ok(())\n}\n```",
+  "pattern": "Interleaving conditional compilation attributes (`#[cfg(...)]`) directly inside core business logic or method bodies to toggle different platform behaviors.",
+  "why_bad": "Severe visual noise and massive cognitive load. Developers must mentally parse multiple compilation branches simultaneously. It makes unit testing and static analysis highly fragile, as code code-paths are invisible to the compiler depending on which cargo flags are set.",
+  "detection": "Look for `#[cfg(...)]` blocks inside function or method bodies, particularly when they enclose line-by-line alternative logic.",
+  "counterexample": "`Context-dependent`. Low-level library code or platform abstraction boundaries (like standard library OS-specific file modules) where platform checks are unavoidable.",
+  "fix": "Isolate the platform-dependent implementations behind a clean trait boundary, and conditionally compile the entire module or struct implementation file rather than inline statements.",
+  "strength": "Strong",
+  "source": "*Robert C. Martin - Clean Code (2008)*, Chapter 3, \"Functions\"; *Titus Winters et al. - Software Engineering at Google (2020)*, Chapter 14, \"Larger Testing\" (Configuration vs Code)."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 680,
+  "title": "Burying Configurable Data in Low-Level Functions",
+  "category": "Configuration Complexity",
+  "damaged_code": "```rust\nfn parse_args() {\n    let mut port = 0;\n    // ...\n    if port == 0 {\n        port = 80; // Default buried deep inside command parsing logic\n    }\n}\n```",
+  "pattern": "Hardcoding default configuration values, fallback parameters, or installation constants inside low-level helper functions instead of exposing them at the bootstrap layer.",
+  "why_bad": "Hides defaults from maintainers and operators, requiring them to comb through low-level source files to understand the system's baseline behavior. It prevents central overriding and modular configuration swapping.",
+  "detection": "The assignment of literal constants to configuration fields inside utility or secondary namespaces rather than within a designated configuration/main module.",
+  "counterexample": "```rust\n// Exposed as an argument at the top level\nconst DEFAULT_PORT: u16 = 80;\n```",
+  "fix": "Hoist all configurable defaults to high-level, centralized metadata structures or pass them down as explicit arguments from the application's entry point.",
+  "strength": "Strong",
+  "source": "Martin, Robert Cecil - *Clean Code_ A Handbook of Agile Software Craftsmanship* (2008, Prentice Hall).pdf, Chapter 17 (G35)."
+}

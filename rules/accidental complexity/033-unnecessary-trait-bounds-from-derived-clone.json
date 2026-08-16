@@ -1,0 +1,13 @@
+{
+  "id": 33,
+  "title": "Unnecessary Trait Bounds from Derived Clone",
+  "category": "Accidental Complexity",
+  "damaged_code": "```rust\n#[derive(Clone)]\nstruct SharedData<T> {\n    data: Arc<T>, \n}\n```",
+  "pattern": "Using the default `#[derive(Clone)]` on a generic struct that wraps a reference-counted pointer (`Arc<T>` or `Rc<T>`).",
+  "why_bad": "The desugared macro automatically adds an unnecessary `where T: Clone` bound to the struct's `Clone` implementation. Callers who instantiate the struct with a non-`Clone` type cannot clone the wrapper, creating artificial design friction.",
+  "detection": "A generic struct deriving `Clone` where the only fields containing the generic type are wrapped in `Arc` or `Rc`.",
+  "counterexample": "Structs where cloning the wrapper truly requires cloning the underlying value `T` (such as `Box<T>`).",
+  "fix": "Manually implement `Clone` for the struct, cloning the inner reference-counted pointer without adding a `T: Clone` bound.\n```rust\nimpl<T> Clone for SharedData<T> {\n    fn clone(&self) -> Self {\n        SharedData { data: self.data.clone() }\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust for Rustaceans* (2021), Chapter 3 (\"Types - Traits and Trait Bounds - Deriving Traits\"), p. 569."
+}

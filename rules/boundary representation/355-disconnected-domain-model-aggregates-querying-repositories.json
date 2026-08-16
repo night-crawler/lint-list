@@ -1,0 +1,13 @@
+{
+  "id": 355,
+  "title": "Disconnected Domain Model Aggregates Querying Repositories",
+  "category": "Boundary Representation",
+  "damaged_code": "```rust\nimpl Order {\n    pub fn add_item(&self, item_id: u64, repo: &ProductRepository) {\n        let product = repo.find(item_id); // Aggregate queries repository internally\n        ...\n    }\n}\n```",
+  "pattern": "An Aggregate Root receiving and executing queries on database repositories inside its own business logic methods.",
+  "why_bad": "It introduces lazy-loading exceptions, database connection details, and heavy I/O operations deep inside the aggregate boundary. This makes unit testing highly painful due to complex mocking requirements.",
+  "detection": "Methods defined on core business entities that accept arguments typed as repositories or data access traits.",
+  "counterexample": "Pure domain services or application services designed specifically to coordinate logic across aggregates.",
+  "fix": "Load all required dependencies ahead of time in the application service layer, and pass only the needed domain data into the aggregate.\n```rust\nfn add_item(&mut self, product: &Product) {\n    self.items.push(OrderItem::from(product));\n}\n```",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design* by Vaughn Vernon (Chapter 10, p. 362-363; \"Disconnected Domain Model\")."
+}

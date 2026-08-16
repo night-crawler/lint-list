@@ -1,0 +1,13 @@
+{
+  "id": 23,
+  "title": "Speculative Generality",
+  "category": "Accidental Complexity",
+  "damaged_code": "```rust\ntrait RateCalculator {\n    fn calculate(&self, amount: f64, unused_future_flag: bool) -> f64;\n}\n\nstruct StandardCalculator;\nimpl RateCalculator for StandardCalculator {\n    fn calculate(&self, amount: f64, _unused_future_flag: bool) -> f64 {\n        amount * 0.05\n    }\n}\n```",
+  "pattern": "Abstractions, trait implementations, hooks, or parameters designed to handle hypothetical future capabilities that are not currently required.",
+  "why_bad": "It bloats the codebase and increases cognitive load. Developers must maintain, document, and test speculative hooks that may never be used, and these unnecessary structures get in the way of real, required refactoring.",
+  "detection": "Traits with only a single concrete implementation, methods containing unused parameters (often prefixed with underscores or marked with suppressions), or code paths that are only executed in test suites designed specifically to exercise the hook.",
+  "counterexample": "Implementing standard library traits (like `Clone`, `Debug`) or external library API contracts where signatures are externally dictated.",
+  "fix": "Remove the speculative code. Collapse the trait hierarchy (Inline Class/Trait) and remove unused parameters.",
+  "strength": "Strong",
+  "source": "Martin Fowler et al., *Refactoring: Improving the Design of Existing Code* (1999), Chapter 3 (\"Bad Smells in Code - Speculative Generality\"), pp. 110, 257–258."
+}

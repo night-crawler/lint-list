@@ -1,0 +1,13 @@
+{
+  "id": 387,
+  "title": "Relying on Raw Strings for Command Routing",
+  "category": "Information Loss",
+  "damaged_code": "```rust\nfn route_command(cmd: &str) {\n    match cmd {\n        \"CONFIRM\" => process_confirmation(),\n        \"CANCEL\" => process_cancellation(),\n        _ => panic!(\"Unknown command\"),\n    }\n}\n```",
+  "pattern": "Using a raw string slice to route critical transactional commands or events within a routing module.",
+  "why_bad": "It bypasses compile-time verification. Callers can misspell commands, leading to unexpected panics or silent failures at runtime.",
+  "detection": "`match` blocks or string equality checks against raw string literals representing system control commands.",
+  "counterexample": "Parsing strings from a file directly to enums before routing:\n```rust\nlet command: Command = cmd.parse()?;\n```",
+  "fix": "Define a concrete Enum for command types, forcing parsing at the system boundary.\n```rust\nenum Command {\n    Confirm,\n    Cancel,\n}\n\nfn route_command(cmd: Command) {\n    match cmd {\n        Command::Confirm => process_confirmation(),\n        Command::Cancel => process_cancellation(),\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Patterns of Enterprise Application Architecture* by Martin Fowler (p. 406)."
+}

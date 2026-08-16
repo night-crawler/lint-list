@@ -1,0 +1,13 @@
+{
+  "id": 534,
+  "title": "Over-using Inline Directives (`#[inline(always)]`)",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\n#[inline(always)]\nfn print_message(msg: &str) {\n    println!(\"Log: {}\", msg);\n}\n```",
+  "pattern": "An author annotating every helper function or method with force-inline directives (`#[inline(always)]` or C++ `__forceinline`).",
+  "why_bad": "It inflates the compiled binary size, causing instruction cache thrashing (L1i misses). It also prevents compiler-specific inter-procedural analysis, often resulting in slower machine code than normal compiler-directed inlining [339, 347, 348].",
+  "detection": "Functions with a substantial number of operations or I/O calls marked with `#[inline(always)]`.",
+  "counterexample": "Small wrapper functions (such as a single getter returning a field value) where inlining is guaranteed to remove call overhead. `Context-dependent`.",
+  "fix": "Remove the manual inline directive and let the compiler's optimizer decide.",
+  "strength": "Strong",
+  "source": "*Code Complete*, Section 25.3 (p. 339, 347, 348); *Rust For Rustaceans*, Chapter 7 (p. 132)."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 558,
+  "title": "Using Primitive Arrays instead of Struct Collections (Anti-Abstraction)",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\n// Parallel arrays to \"avoid struct allocation/abstraction overhead\"\nlet mut user_names: Vec<String> = vec![];\nlet mut user_ages: Vec<u32> = vec![];\n```",
+  "pattern": "Declaring separate parallel vectors of primitive types instead of a single vector of clean structured records.",
+  "why_bad": "It destroys type safety, violates basic domain modeling principles, and introduces indexing synchronization bugs. Modern compilers optimize structures of arrays and arrays of structures efficiently, making raw parallel arrays completely unnecessary for standard applications [110, 325].",
+  "detection": "The presence of multiple synchronized vectors or arrays of primitive values whose elements are accessed at identical indices.",
+  "counterexample": "Highly specialized columns-oriented database engine internals where vectorized columnar scanning is a core architecture. `Contextual`.",
+  "fix": "```rust\nstruct User {\n    name: String,\n    age: u32,\n}\nlet mut users: Vec<User> = vec![];\n```",
+  "strength": "Strong",
+  "source": "*Domain-Driven Design*, Chapter 5 (p. 110); *Code Complete*, Section 25.2 (p. 325)."
+}

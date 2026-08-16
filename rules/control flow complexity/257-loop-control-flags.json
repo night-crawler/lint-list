@@ -1,0 +1,13 @@
+{
+  "id": 257,
+  "title": "Loop Control Flags",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```rust\nlet mut done = false;\nwhile !done && has_next() {\n    let item = next();\n    if item.is_target() {\n        process(item);\n        done = true;\n    }\n}\n```",
+  "pattern": "A mutable boolean flag declared outside a loop, evaluated in the loop header, and modified inside the loop body solely to terminate execution on subsequent passes.",
+  "why_bad": "Introduces dummy/unnecessary state. The reader is forced to trace all potential mutations of the flag throughout the entire loop block to understand loop termination.",
+  "detection": "A mutable boolean variable evaluated in a loop condition and assigned a literal value inside the loop body to exit.",
+  "counterexample": "A state variable that contains actual program data needed by code executing after the loop terminates.",
+  "fix": "Replace the state variable with an immediate structured exit via `break` or `return`:\n```rust\nwhile has_next() {\n    let item = next();\n    if item.is_target() {\n        process(item);\n        break;\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Refactoring*, \"Remove Control Flag\"; Trevor Foucher & Dustin Boswell, *The Art of Readable Code*, Chapter 9."
+}

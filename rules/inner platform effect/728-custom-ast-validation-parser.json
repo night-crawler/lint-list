@@ -1,0 +1,13 @@
+{
+  "id": 728,
+  "title": "Custom AST Validation Parser",
+  "category": "Inner Platform Effect",
+  "damaged_code": "```\n// Defining custom validator rules as an AST grammar parser\nenum ValRule {\n    MinLength(usize),\n    Alphanumeric,\n}\n\nstruct FieldValidator {\n    rules: Vec<ValRule>,\n}\n\nimpl FieldValidator {\n    fn validate(&self, value: &str) -> bool {\n        for rule in &self.rules {\n            match rule {\n                ValRule::MinLength(len) => if value.len() < *len { return false; },\n                ValRule::Alphanumeric => if !value.chars().all(|c| c.is_alphanumeric()) { return false; },\n            }\n        }\n        true\n    }\n}\n```",
+  "pattern": "Representing simple validation logic as a custom-parsed grammar tree evaluated at runtime.",
+  "why_bad": "It requires maintaining a complex parser stack. It slows validation, complicates basic error messaging, and lacks compile-time verification.",
+  "detection": "Custom tokenizers and AST validation structures within standard helper libraries.",
+  "counterexample": "`Context-dependent`. General-purpose forms engines where validation logic is configured dynamically by non-programming users via UI schemas.",
+  "fix": "Define validation constraints as compiled, static functions or standard procedural attributes.\n\n```\n// Straightforward statically compiled validation rules\nfn validate_input(value: &str) -> Result<(), &'static str> {\n    if value.len() < 5 {\n        return Err(\"Input must be at least 5 characters long\");\n    }\n    if !value.chars().all(|c| c.is_alphanumeric()) {\n        return Err(\"Input must be alphanumeric\");\n    }\n    Ok(())\n}\n```",
+  "strength": "Strong",
+  "source": "Joshua Kerievsky - _Refactoring to Patterns_ (2004, Addison-Wesley Professional).pdf, Chapter 7 \"Replace Implicit Language with Interpreter\"."
+}

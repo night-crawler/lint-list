@@ -1,0 +1,13 @@
+{
+  "id": 213,
+  "title": "Primitive Clumping (Lack of Parameter Object)",
+  "category": "Low Cohesion",
+  "damaged_code": "```rust\nstruct ReservationSystem;\n\nimpl ReservationSystem {\n    // Group of parameters always passed together as primitives\n    fn reserve_room(&self, room_id: u32, start_year: u16, start_month: u8, start_day: u8, end_year: u16, end_month: u8, end_day: u8) {\n        /* ... */\n    }\n}\n```",
+  "pattern": "A set of primitives (such as start and end dates, or coordinate pairs) are consistently passed together through multiple functions but are never formalised into a single type.",
+  "why_bad": "It leads to long, unreadable parameter lists and invites errors (such as swapping start and end parameters). In addition, it fails to provide a logical home for verification rules (e.g., checking that `end_date >= start_date`).",
+  "detection": "Multiple function signatures throughout the code repeat the same sequence of primitive type parameters.",
+  "counterexample": "Functions that happen to take similar primitives but have no shared semantic relationship (e.g., `(user_id: u32, timeout: u32)`).",
+  "fix": "Bundle the related parameters into a cohesive parameter object / struct.\n```rust\nstruct DateRange {\n    start: DateTime,\n    end: DateTime,\n}\n\nimpl DateRange {\n    fn new(start: DateTime, end: DateTime) -> Result<Self, &'static str> {\n        if end < start { return Err(\"Invalid range\"); }\n        Ok(Self { start, end })\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Martin Fowler - Refactoring, Chapter 10, \"Introduce Parameter Object\"*"
+}

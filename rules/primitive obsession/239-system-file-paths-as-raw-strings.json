@@ -1,0 +1,13 @@
+{
+  "id": 239,
+  "title": "System File Paths as Raw Strings",
+  "category": "Primitive Obsession",
+  "damaged_code": "```rust\nfn read_config(path: String) { ... }\n```",
+  "pattern": "Representing system resources (file paths, directories) as raw `String` parameters.",
+  "why_bad": "A raw string has no path safety: it can represent structurally invalid paths (e.g., containing null bytes, illegal characters, or control sequences), leading to fragile platform-specific handling and runtime crashes.",
+  "detection": "Passing raw `String` variables representing file system locations to internal file-handling routines.",
+  "counterexample": "Parsing path arguments from a terminal command array at the application's entry boundary.",
+  "fix": "Use standard library path abstractions.\n```rust\nuse std::path::Path;\n\nfn read_config(path: &Path) { ... }\n```",
+  "strength": "Strong",
+  "source": "*Rust for Rustaceans* by Jon Gjengset (p. 110)."
+}

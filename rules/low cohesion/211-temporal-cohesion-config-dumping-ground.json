@@ -1,0 +1,13 @@
+{
+  "id": 211,
+  "title": "Temporal Cohesion (Config Dumping Ground)",
+  "category": "Low Cohesion",
+  "damaged_code": "```rust\nstruct AppInitializer;\nimpl AppInitializer {\n    // Temporal Cohesion: Grouping tasks merely because they happen at startup\n    fn initialize_system(&self) {\n        self.load_environment_variables();\n        self.connect_database();\n        self.print_banner();\n        self.run_disk_space_check();\n    }\n}\n```",
+  "pattern": "A single routine groups multiple operations together solely because they must execute around the same time (e.g., initialization, cleanup, or shutdown phases).",
+  "why_bad": "Grouping unrelated actions (e.g., console banners vs. database TCP socket handshakes) makes it impossible to reuse, test, or modify them independently without triggering massive collateral dependencies.",
+  "detection": "A function contains sequential calls to multiple disjoint subsystems or modules with no data flow or logical connection between them, other than execution order.",
+  "counterexample": "A central main function or orchestrator that clearly sequences operations while keeping the actual implementation steps safely isolated in distinct modules.",
+  "fix": "Move the separate operations into their respective functional modules, and have a high-level orchestrator cleanly call them sequentially.\n```rust\nfn main() {\n    Config::load_env();\n    Database::connect();\n    HealthMonitor::check_disk();\n}\n```",
+  "strength": "Contextual",
+  "source": "*Steve McConnell - Code Complete, Chapter 7, Section \"Aim for Strong Cohesion\" (Temporal Cohesion)*"
+}

@@ -1,0 +1,13 @@
+{
+  "id": 460,
+  "title": "Implicit Network Boundary (The Waldo Fallacy)",
+  "category": "Distributed Systems Fallacies",
+  "damaged_code": "```rust\n// Hiding network calls behind local traits that lack network failure or latency semantics\ntrait UserRepository {\n    fn get_user(&self, id: u64) -> Result<User, ()>; // Generic error, no timeout/retry context\n}\n\nstruct RemoteUserRepository;\n\nimpl UserRepository for RemoteUserRepository {\n    fn get_user(&self, id: u64) -> Result<User, ()> {\n        // Blocks on synchronous network HTTP call\n        let response = reqwest::blocking::get(&format!(\"http://api/users/{}\", id))\n            .map_err(|_| ())?;\n        response.json::<User>().map_err(|_| ())\n    }\n}\n```",
+  "pattern": "An interface or trait definition containing methods that return generic, non-network-aware error types (such as `Result<T, ()>` or basic local enums) implemented by a struct that performs synchronous network RPC/HTTP calls.",
+  "why_bad": "It violates the Waldo principle of distribution by treating remote calls identically to local memory lookups [28, 291]. Remote calls have radically different failure modes (timeouts, packet loss, socket resets) and latency characteristics (milliseconds vs. nanoseconds) [102, 113]. Hiding these behind a generic local interface prevents upstream callers from reasoning about network partitions, setting deadlines, or handling retries safely [90, 113].",
+  "detection": "Identify Trait definitions that do not return a network-aware error type (e.g., enums representing connection reset, timeout, or DNS failure) or do not accept timeout/context parameters, which are implemented by structs invoking networking libraries (e.g., `reqwest`, `hyper`, `tokio::net`).",
+  "counterexample": "```rust\nuse std::time::Duration;\n\n#[derive(Debug)]\nenum NetworkError {\n    Timeout,\n    ConnectionReset,\n    ProtocolError(String),\n}\n\ntrait UserRepository {\n    fn get_user(&self, id: u64, timeout: Duration) -> Result<User, NetworkError>;\n}\n```",
+  "fix": "Modify the trait signature to explicitly accept a timeout/deadline (or async context) and return an error type that represents network-specific failure conditions, forcing callers to implement appropriate fault tolerance [90, 113].",
+  "strength": "Strong",
+  "source": "Martin Kleppmann, *Designing Data-Intensive Applications*, Chapter 4 (RPC) / passages [112, 113]; Michael T. Nygard, *Release It!*, page 210-214 / passage [291]; Alex Petrov, *Database Internals*, Chapter 8 / passage [28]."
+}

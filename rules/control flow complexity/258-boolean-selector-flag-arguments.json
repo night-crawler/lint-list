@@ -1,0 +1,13 @@
+{
+  "id": 258,
+  "title": "Boolean Selector / Flag Arguments",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```rust\nfn calculate_pay(hours: u32, is_overtime: bool) -> u32 {\n    if is_overtime {\n        hours * 25\n    } else {\n        hours * 15\n    }\n}\n```",
+  "pattern": "Passing a boolean literal or type-unsafe selector argument to a function to direct its primary internal execution flow.",
+  "why_bad": "Violates the Single Responsibility Principle. The function does more than one thing depending on the flag, and call sites become obscure (e.g., `calculate_pay(40, true)` forces the reader to look up the signature to understand what `true` means).",
+  "detection": "A function signature taking a boolean parameter where the parameter is directly branched on at the top level of the function body.",
+  "counterexample": "Passing boolean configurations that merely adjust an invariant property of a single task without altering the execution path of the function.",
+  "fix": "Split into two distinct, well-named functions that clearly express their single responsibility:\n```rust\nfn calculate_overtime_pay(hours: u32) -> u32 {\n    hours * 25\n}\n\nfn calculate_regular_pay(hours: u32) -> u32 {\n    hours * 15\n}\n```",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code*, Chapter 3; Steve McConnell, *Code Complete*, Section 7.5."
+}

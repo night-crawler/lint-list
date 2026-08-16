@@ -1,0 +1,13 @@
+{
+  "id": 40,
+  "title": "Shared Database Integration (Database-as-IPC)",
+  "category": "Essential Complexity Denial Patterns",
+  "damaged_code": "```rust\n// Microservice A directly querying/writing Microservice B's tables\nlet orders = db_client.query(\"SELECT * FROM microservice_b.orders WHERE user_id = ?\", user_id)?;\n```",
+  "pattern": "Direct database sharing where multiple independent microservices or modules read/write directly to the same database schema instead of communicating through public API boundaries.",
+  "why_bad": "It tightly couples the services' physical representations [38:442]. If Service B refactors its database tables, Service A silently breaks at compile time or runtime. It bypasses Domain Domain boundaries, violates encapsulation, and prevents independent service deployment [21:123].",
+  "detection": "Querying tables that conceptually belong to a different microservice bounded context or module, or sharing database connection pools across domain module boundaries [442:442].",
+  "counterexample": "```rust\nlet orders = b_api_client.get_user_orders(user_id).await?;\n```",
+  "fix": "Enforce schema ownership per service. Keep database schemas strictly private to each service, forcing all inter-service communication to pass through explicit published APIs (gRPC, HTTP DTOs, or event messages) [38:442].",
+  "strength": "Contextual",
+  "source": "*Fundamentals of Software Architecture* (Richards & Ford) [21:123]; *Implementing Domain-Driven Design* (Vernon), Chapter 13 [442:442]."
+}

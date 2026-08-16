@@ -1,0 +1,13 @@
+{
+  "id": 814,
+  "title": "Sprinkling Dependency Injection Annotations on Business Logic",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Polluting a domain service with framework annotations\n#[inject]\n#[autowired]\npub struct OrdersService {\n    pub repo: JdbcOrdersRepository,\n}\n```",
+  "pattern": "Sprinkling framework-specific annotations (such as `@Autowired`, `#[inject]`, or `@Transactional`) throughout core domain and business logic objects instead of keeping them in low-level configuration modules.",
+  "why_bad": "It leaks technical infrastructure dependencies into pure business policy, meaning the business logic is no longer framework-independent or easily portable.",
+  "detection": "Dependency injection annotations or macros from a third-party framework (like Spring or Rocket) placed inside core domain structs/classes.",
+  "counterexample": "Using standard constructor-based dependency injection where references are passed via simple, language-native parameters without annotations.",
+  "fix": "Remove annotations from domain classes, and perform wiring in a dedicated, low-level entry point (like the Main component).",
+  "strength": "Strong",
+  "source": "*Clean Architecture (Martin), Chapter 22, p. 205 [729, 1096]*"
+}

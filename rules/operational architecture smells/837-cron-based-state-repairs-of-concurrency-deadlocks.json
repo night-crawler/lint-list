@@ -1,0 +1,13 @@
+{
+  "id": 837,
+  "title": "Cron-Based \"State Repairs\" of Concurrency Deadlocks",
+  "category": "Operational Architecture Smells",
+  "damaged_code": "```rust\nfn periodic_state_repair() {\n    let mut queue = QUEUE.lock().unwrap();\n    if queue.is_empty_and_full() { \n        queue.reset(); // Forcibly clear stuck locks/deadlocks\n    }\n}\n```",
+  "pattern": "Using a periodic background job/scheduler task to forcibly reset lock states, queues, or process flows because of latent deadlocks or hung transactions.",
+  "why_bad": "Masks the root cause of concurrency bugs (deadlocks, race conditions, or leaks) rather than fixing them. It introduces non-deterministic behavior and risks severe data corruption.",
+  "detection": "Periodic background threads or timer jobs that write to synchronization variables, reset state queues, or force-unlock mutexes to \"unclog\" execution paths.",
+  "counterexample": "Legitimate periodic cleanup of historical, persisted logs or expired temporary storage.",
+  "fix": "Identify and resolve the underlying deadlock/leak using RAII guards and proper lock ordering.",
+  "strength": "Strong",
+  "source": "*Clean Code*, Appendix A: Concurrency II, \"Deadlock,\" p. 332."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 924,
+  "title": "Mega-Method (The Monster Function)",
+  "category": "Wrong Granularity",
+  "damaged_code": "```rust\nfn process_incoming_payload(data: &[u8]) -> Result<(), Error> {\n    // 1. Parse JSON payload (40 lines of serde/validation)\n    // 2. Insert metrics and audit logs (30 lines of file/db writes)\n    // 3. Apply complex discount tax formulas (50 lines of business logic)\n    // 4. Send email confirmation to user (40 lines of SMTP client handling)\n    Ok(())\n}\n```",
+  "pattern": "A monolithic, extremely long function executing several distinct phases of a business process (parsing, auditing, business math, network output) sequentially within a single execution block.",
+  "why_bad": "Violates the Single Responsibility Principle and local reasoning. Local variables from separate phases bleed into each other, inviting accidental state corruption. It is impossible to test or mock any individual segment (like the discount logic) without triggering all other phases (like database writes or SMTP network calls).",
+  "detection": "Measure functions containing hundreds of lines executing structurally distinct responsibilities (indicated by large, contiguous blocks separated by comment headers such as \"// Parse\", \"// Write to DB\", \"// Send Email\").",
+  "counterexample": "`Context-dependent`. Low-level parser-combinators or assembly generators where a flat, linear execution sequence is highly optimized and necessary.",
+  "fix": "Extract the individual, isolated responsibilities into cohesive, testable helper functions or structs.\n```rust\nfn process_incoming_payload(data: &[u8]) -> Result<(), Error> {\n    let order = parse_and_validate(data)?;\n    write_audit_log(&order)?;\n    let final_price = calculate_discounts(&order);\n    send_confirmation_email(&order, final_price)?;\n    Ok(())\n}\n```",
+  "strength": "Strong",
+  "source": "*Steve McConnell - Code Complete (2004)*, Chapter 7, \"High-Quality Routines\"; *Martin Fowler - Refactoring (1999)*, Chapter 3, \"Long Method\" (p. 64); *Michael C. Feathers - Working Effectively with Legacy Code (2004)*, Chapter 22, \"I Need to Change a Monster Method\"."
+}

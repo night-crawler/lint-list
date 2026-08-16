@@ -1,0 +1,13 @@
+{
+  "id": 418,
+  "title": "Lock-Order Inversion (Classic Deadlock)",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```rust\n// Thread 1\n{\n    let _g1 = lock_a.lock().unwrap();\n    let _g2 = lock_b.lock().unwrap();\n}\n// Thread 2\n{\n    let _g1 = lock_b.lock().unwrap();\n    let _g2 = lock_a.lock().unwrap();\n}\n```",
+  "pattern": "Multiple threads acquiring a common set of locks in inconsistent lexicographical or hierarchical order.",
+  "why_bad": "It violates the global partial-order invariant required for deadlock-free lock acquisition, allowing a cycle of mutual blockages where each thread holds a lock needed by the other.",
+  "detection": "Look for nested lock acquisitions across different threads or functions where the sequence of lock identifiers is reversed or inconsistent.",
+  "counterexample": "Acquiring multiple locks under a strict global hierarchy (e.g., always locking in alphabetical or address order).",
+  "fix": "Standardize the acquisition order across all threads.\n```rust\n// Both threads\n{\n    let _g1 = lock_a.lock().unwrap();\n    let _g2 = lock_b.lock().unwrap();\n}\n```",
+  "strength": "Strong",
+  "source": "Herlihy 9.4, Paul McKenney 7.1.1, Clean Code Ch 13"
+}

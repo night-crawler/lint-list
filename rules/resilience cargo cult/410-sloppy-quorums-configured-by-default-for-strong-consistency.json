@@ -1,0 +1,13 @@
+{
+  "id": 410,
+  "title": "Sloppy Quorums Configured by Default for Strong Consistency",
+  "category": "Resilience Cargo Cult",
+  "damaged_code": "```rust\nlet read_quorum = quorum_read(key, target_nodes, SloppyQuorum::Enabled); \n```",
+  "pattern": "Relying on sloppy quorums with hinted handoffs for read and write operations that require causal or linearizable consistency.",
+  "why_bad": "Sloppy quorums only guarantee durability (the data is written *somewhere*), not consistency. If target replica nodes are partitioned, writes are accepted on temporary nodes. Reading a quorum from target replicas during partition will return stale data until hinted handoff can complete [332, 333].",
+  "detection": "Identify data read or write queries targeting leaderless replicated clusters configured with sloppy quorums and hinted handoff when linearizable or strong causal consistency is assumed.",
+  "counterexample": "```rust\nlet read_quorum = quorum_read(key, target_nodes, SloppyQuorum::Disabled);\n```",
+  "fix": "Disable sloppy quorums (use strict quorums where $R + W > N$) for operations where stale reads are unacceptable.",
+  "strength": "Contextual",
+  "source": "Martin Kleppmann, *Designing Data-Intensive Applications*, page 177 / passage [332, 333]."
+}

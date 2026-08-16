@@ -1,0 +1,13 @@
+{
+  "id": 344,
+  "title": "Multi-Tenant Information Leakage via Database Schema Exposure",
+  "category": "Boundary Representation",
+  "damaged_code": "```rust\n#[derive(Serialize)]\nstruct TenantResource {\n    tenant_db_schema_name: String, // Leaks internal database layout\n    api_key: String,\n}\n```",
+  "pattern": "Exposing physical database structural elements (such as schema names, raw partition keys, or table IDs) in public API response schemas.",
+  "why_bad": "It presents a severe security risk and information leakage. It allows attackers to reconstruct internal network database topology, enabling SQL injections or multi-tenant partition bypasses.",
+  "detection": "Match struct fields marked with `#[derive(Serialize)]` or exposed in public routes named `schema_name`, `table_name`, `partition_key`, or similar.",
+  "counterexample": "Low-level internal diagnostic logs or administrative database control interfaces. Mark as `Context-dependent`.",
+  "fix": "Remove all internal storage database topology from public schemas. Use abstract tenant identifiers (like secure UUIDs) mapped internally on the server.\n```rust\n#[derive(Serialize)]\nstruct TenantResource {\n    tenant_id: Uuid, // Abstract identifier\n}\n```",
+  "strength": "Strong",
+  "source": "*Building Secure and Reliable Systems* by Heather Adkins et al. (Chapter 11, p. 238); *Implementing Domain-Driven Design* (Chapter 13)."
+}

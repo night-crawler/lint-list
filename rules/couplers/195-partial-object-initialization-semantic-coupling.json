@@ -1,0 +1,13 @@
+{
+  "id": 195,
+  "title": "Partial Object Initialization (Semantic Coupling)",
+  "category": "Couplers",
+  "damaged_code": "```rust\nstruct Profile {\n    username: String,\n    age: u32,\n    address: Option<String>,\n}\n\nfn display_header(profile: &Profile) {\n    // Only reads username\n    println!(\"Welcome {}\", profile.username);\n}\n```",
+  "pattern": "A function accepts a large, complex struct argument but only reads a tiny subset of its fields, forcing callers to instantiate the whole struct (often filling unused fields with dummy values).",
+  "why_bad": "It introduces semantic coupling. The calling function depends on the entire structural layout of the complex struct. If unrelated fields change or require complex setup, the caller breaks.",
+  "detection": "Functions where a parameter struct is passed, but static analysis shows only a small fraction of fields (e.g., < 25%) are ever read in the function body.",
+  "counterexample": "Structs passed to generic framework adapters or serializers that automatically inspect and process all fields dynamically.",
+  "fix": "Narrow the function parameter to only the data it actually requires, or define a small focused struct.\n```rust\nfn display_header(username: &str) {\n    println!(\"Welcome {}\", username);\n}\n```",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 5 (\"Semantic Coupling\")."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 457,
+  "title": "Unsynchronized Flag Read in Signal Handler",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```c\nvolatile int stop_flag = 0; // Plain int, not sig_atomic_t\n\nvoid handle_signal(int sig) {\n    stop_flag = 1; // BUG: Non-atomic write in signal handler!\n}\n\nint main() {\n    signal(SIGINT, handle_signal);\n    while (stop_flag == 0) {\n        // ...\n    }\n}\n```",
+  "pattern": "Reading or writing plain shared variables from within an asynchronous signal handler concurrently with the main thread.",
+  "why_bad": "Signals interrupt execution arbitrarily. Writing to a non-`sig_atomic_t` variable inside a signal handler is not guaranteed to be atomic or visible to the main thread, leading to torn reads, missing state changes, or compiler-reordering optimization bugs.",
+  "detection": "A signal handler writing to a non-`volatile sig_atomic_t` or non-atomic variable that is accessed by the main thread.",
+  "counterexample": "Using `volatile sig_atomic_t` or atomic flags.",
+  "fix": "Use `volatile sig_atomic_t` or platform atomic flags.\n```c\nvolatile sig_atomic_t stop_flag = 0;\n```",
+  "strength": "Strong",
+  "source": "Steve McConnell Ch 13, Secure Systems Ch 13"
+}

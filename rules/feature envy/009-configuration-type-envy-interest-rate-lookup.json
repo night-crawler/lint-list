@@ -1,0 +1,13 @@
+{
+  "id": 9,
+  "title": "Configuration-Type Envy (Interest Rate Lookup)",
+  "category": "Feature Envy",
+  "damaged_code": "```rust\nstruct AccountType {\n    interest_rate: f64,\n}\nstruct Account {\n    account_type: AccountType,\n}\nimpl Account {\n    fn interest_for_amount_days(&self, amount: f64, days: u32) -> f64 {\n        self.account_type.interest_rate * amount * (days as f64) / 365.0\n    }\n}\n```",
+  "pattern": "A class method computes a value using parameters passed to it, but retrieves its core factor or multiplier exclusively by reaching into an associated configuration/type object.",
+  "why_bad": "The method \"envies\" the configuration/type object because the calculation's constants or rates belong to the classification category itself.",
+  "detection": "A method that performs math where the only class-scoped field accessed is an associated struct's property.",
+  "counterexample": "Methods that require the host class's own state (e.g., active balances or transaction history) to complete the calculation.",
+  "fix": "Move the calculation directly to the type/configuration object and pass the variable parameters.\n```rust\nimpl AccountType {\n    fn interest_for_amount_days(&self, amount: f64, days: u32) -> f64 {\n        self.interest_rate * amount * (days as f64) / 365.0\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Refactoring* (1999), Chapter 10 (page 179)."
+}

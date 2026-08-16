@@ -1,0 +1,13 @@
+{
+  "id": 862,
+  "title": "Deref Implementation Exposing Name Collisions",
+  "category": "Correctness By Convention",
+  "damaged_code": "```rust\n// Rust\nstruct SmartPointer<T> { value: T }\nimpl<T> SmartPointer<T> {\n    fn clone(&self) -> Self { ... } // BUG: name collision with T's clone!\n}\nimpl<T> Deref for SmartPointer<T> { type Target = T; ... }\n```",
+  "pattern": "Defining public inherent methods (like `clone()`) on a type that implements `Deref` to a user-controlled target type.",
+  "why_bad": "If the underlying target type T also has a method with the same name, calling `pointer.clone()` becomes highly ambiguous or unexpectedly invokes T's method, leading to logic bugs.",
+  "detection": "A struct implements `Deref` and declares public inherent methods (especially those matching standard trait methods like clone, borrow, etc.).",
+  "counterexample": "Smart pointer types like `Arc` and `Box` use associated static functions (e.g., `Arc::clone(&my_arc)`) instead of inherent methods.",
+  "fix": "Expose the method as an associated static function: `pub fn clone(ptr: &Self) -> Self` instead of taking `&self`.",
+  "strength": "Strong",
+  "source": "Rust For Rustaceans, Chapter 4 (Deref and Inherent Methods) [418]."
+}

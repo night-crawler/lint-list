@@ -1,0 +1,13 @@
+{
+  "id": 324,
+  "title": "Ambiguous `filter` Method (Select vs Discard)",
+  "category": "Semantic Ambiguity",
+  "damaged_code": "```rust\nlet active_users = users.filter(|u| u.is_inactive);\n```",
+  "pattern": "A method named `filter` where it is structurally unclear from the call site whether the closure selects elements to keep or elements to discard.",
+  "why_bad": "The word \"filter\" is semantically ambiguous in natural language. A coffee filter removes grounds but keeps the liquid, whereas an air filter removes dust and discards it. Some libraries use `filter` to mean \"keep matching\" (like Rust's `Iterator::filter`), while others use it to mean \"exclude matching\". This leads to severe logic inversion bugs.",
+  "detection": "Custom traits or types implementing a method named `filter` returning a collection, or variables named `filter` without a clarifying prefix.",
+  "counterexample": "Standard library iterators where `filter` is highly idiomatic and universally understood to mean \"select\":\n```rust\nlet active_users: Vec<_> = users.into_iter().filter(|u| u.is_active).collect();\n```",
+  "fix": "Rename the method or function to `select` or `keep` (if retaining elements) or `reject` or `discard` (if discarding elements) to eliminate ambiguity.\n```rust\nlet active_users = users.select(|u| !u.is_inactive);\n```",
+  "strength": "Contextual",
+  "source": "*The Art of Readable Code* by Dustin Boswell and Trevor Foucher (Chapter 3, p. 24, p. 119)."
+}

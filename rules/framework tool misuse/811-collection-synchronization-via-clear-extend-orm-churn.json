@@ -1,0 +1,13 @@
+{
+  "id": 811,
+  "title": "Collection Synchronization via clear() + extend() (ORM Churn)",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Synchronizing a persistent Set by wiping it and inserting replacement values\npub fn update_members(&mut self, new_members: HashSet<Member>) {\n    self.members.clear(); // Triggers ORM delete queries for all existing records\n    self.members.extend(new_members); // Triggers individual inserts\n}\n```",
+  "pattern": "Clearing an entire ORM-managed collection field and then repopulating it with a new set of elements to perform an update.",
+  "why_bad": "It generates heavy, redundant database churn. Instead of updating changed items, it fires immediate deletes for all existing entries followed by inserts for the entire list, bloating the database transaction log.",
+  "detection": "An entity method that calls both `.clear()` and `.extend()` (or `.add_all()`) on an ORM collection relationship within the same unit of work.",
+  "counterexample": "Performing full collection replacement on a non-persisted local collection.",
+  "fix": "Diff the collections to only perform targeted inserts, updates, or deletes on items that have actually changed.",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design (Vernon), Chapter 6, p. 228 [228]*"
+}

@@ -1,0 +1,13 @@
+{
+  "id": 55,
+  "title": "Hidden Temporal Coupling (Sequential API Dependencies)",
+  "category": "Essential Complexity Denial Patterns",
+  "damaged_code": "```rust\n// Calling logic out of order results in crash or silent corruption\nlet mut worker = SplineWorker::new();\nworker.reticulate_splines(); // Panics if saturate_gradient() wasn't run first!\nworker.saturate_gradient();\n```",
+  "pattern": "An object exposing multiple public methods that must be executed in a strict chronological sequence, but whose type signatures do not enforce this sequence via compile-time constraints.",
+  "why_bad": "This design counts on other programmers guessing the undocumented sequence perfectly [411:411]. It creates hidden temporal coupling where changing the order leads to catastrophic runtime failures or silent memory corruption [395:395].",
+  "detection": "API classes exposing stateful builder methods that panic or produce undefined behavior when invoked in alternative orderings [410:410].",
+  "counterexample": "```rust\n// Enforcing sequential constraints by propagating states in type signatures\nlet builder = SplineBuilder::new();\nlet gradient = builder.saturate_gradient();\nlet worker = gradient.reticulate_splines(); // Type system prevents ordering errors\n```",
+  "fix": "Expose state transformations through a \"bucket brigade\" structure where each method consumes the previous state and returns a new distinct type, forcing correct sequential execution at compile time [411:411].",
+  "strength": "Strong",
+  "source": "*Clean Code* (Martin), Chapter 3 & 14 [410:410, 395:395]."
+}

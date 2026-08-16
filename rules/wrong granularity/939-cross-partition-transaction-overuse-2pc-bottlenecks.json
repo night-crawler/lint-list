@@ -1,0 +1,13 @@
+{
+  "id": 939,
+  "title": "Cross-Partition Transaction Overuse (2PC Bottlenecks)",
+  "category": "Wrong Granularity",
+  "damaged_code": "```rust\n// Modifying accounts in partition A and partition B in one transaction\nfn transfer_funds(db: &DistributedDb, from: AccountId, to: AccountId, amt: f64) {\n    let mut tx = db.begin_transaction()?;\n    tx.debit(from, amt)?; // Sharded on Partition A\n    tx.credit(to, amt)?;  // Sharded on Partition B\n    tx.commit()?;         // Forces Two-Phase Commit (2PC) coordinator locks\n}\n```",
+  "pattern": "Structuring distributed database schemas so that common, high-frequency transactions must cross multiple sharding partitions, triggering expensive distributed atomic commit protocols.",
+  "why_bad": "Distributed transactions require Two-Phase Commit (2PC), which forces coordinator locks, blocking commits, and multiple network rounds across database sharding nodes. A single cross-partition write can be orders of magnitude slower than a single-partition write, creating a massive scalability bottleneck that cannot be solved by adding machines.",
+  "detection": "Database access statements executing writes on sharding keys that map to different network nodes inside a single transaction boundary.",
+  "counterexample": "Low-frequency operations (such as weekly balance reconciliations) where transactional accuracy overrides throughput.",
+  "fix": "Denormalize data structures or adjust sharding keys so that high-frequency write transactions can be executed entirely within a single sharding partition.\n```rust\n// Run debit on Partition A, then asynchronously execute eventual consistency credit on Partition B\nfn transfer_funds(db: &DistributedDb, from: AccountId, to: AccountId, amt: f64) {\n    db.debit_local(from, amt)?; // Single partition transaction\n    db.publish_event(FundsTransferred { to, amt }); // Handled asynchronously\n}\n```",
+  "strength": "Strong",
+  "source": "*Martin Kleppmann - Designing Data-Intensive Applications (2017)*, Chapter 7, \"Transactions\" (Single-threaded serial transaction processing, p. 244 & Distributed Transactions, p. 254); *Alex Petrov - Database Internals (2019)*, Chapter 13."
+}

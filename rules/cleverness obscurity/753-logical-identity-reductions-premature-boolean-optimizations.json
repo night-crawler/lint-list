@@ -1,0 +1,13 @@
+{
+  "id": 753,
+  "title": "Logical Identity Reductions (Premature Boolean Optimizations)",
+  "category": "Cleverness Obscurity",
+  "damaged_code": "```rust\n// Rust\nif !(a || b) { // Optimization of !a && !b\n    do_something();\n}\n```",
+  "pattern": "Manually applying algebraic boolean reductions (like de Morgan's laws) to simplify logical expressions to \"save\" logical operators at the expense of readability.",
+  "why_bad": "It forces the reader to pause and mentally expand the logical terms, raising the cognitive barrier. Compilers automatically perform boolean optimization, so manual rewrite of logic for speed is useless.",
+  "detection": "Rewriting simple conditions to logical equivalents that use fewer operators but are less direct in their domain representation.",
+  "counterexample": "Domain logic that naturally maps to the reduced form. `Context-dependent`.",
+  "fix": "Write expressions to directly match the natural business model or spoken language phrasing.\n```rust\nif !is_admin && !is_employee {\n    do_something();\n}\n```",
+  "strength": "Strong",
+  "source": "*Code Complete*, Chapter 25, \"Exploit Algebraic Identities\" (p. 614)."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 132,
+  "title": "Trait Objects as Pseudo-Enums",
+  "category": "Speculative Generality",
+  "damaged_code": "```rust\nlet actions: Vec<Box<dyn Action>> = vec![Box::new(Stop), Box::new(Start)];\n```",
+  "pattern": "Using dynamic trait objects for a closed set of types known at compile time.",
+  "why_bad": "Forces heap allocations and vtable lookup overhead, losing exhaustiveness checking.",
+  "detection": "Storing `Box<dyn Trait>` where all implementers are inside the same module/crate and the set is closed.",
+  "counterexample": "Open-ended plugin architectures.",
+  "fix": "Replace dynamic dispatch with a rich `enum` and pattern matching.",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust for Rustaceans* (2021)."
+}

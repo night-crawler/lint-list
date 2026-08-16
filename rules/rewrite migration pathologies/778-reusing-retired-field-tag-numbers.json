@@ -1,0 +1,13 @@
+{
+  "id": 778,
+  "title": "Reusing Retired Field Tag Numbers",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```protobuf\n// v1 schema\nmessage Payment {\n  required string user_id = 1;\n  optional string legacy_card_hash = 2; // Retired in v2\n}\n\n// v2 schema\nmessage Payment {\n  required string user_id = 1;\n  optional int64 transaction_amount = 2; // Tag 2 reused for a different type!\n}\n```",
+  "pattern": "Removing a deprecated field from a binary serialization schema and reassigning its unique tag ID to a new field with a different semantic meaning or type.",
+  "why_bad": "Legacy database records or older running binaries will attempt to deserialize tag 2. Older binaries will decode the new transaction amount as `legacy_card_hash`, and newer binaries will crash or silently corrupt data when attempting to parse the legacy card hash string as an `int64` integer [632].",
+  "detection": "Static analysis of schema file history detecting tag ID reassignment to different field names or data types.",
+  "counterexample": "None. Tag reuse is always a defect in binary-encoded backwards-compatible schemas.",
+  "fix": "Deprecate the field name but keep the tag ID reserved (e.g. using `reserved` keyword in Protobuf) or mark the old tag as obsolete and allocate a fresh tag ID [632].\n```protobuf\nmessage Payment {\n  required string user_id = 1;\n  reserved 2; // Tag 2 is permanently reserved to prevent collisions\n  optional int64 transaction_amount = 3; // Fresh tag number\n}\n```",
+  "strength": "Strong",
+  "source": "Designing Data-Intensive Applications, Chapter 4, \"Protobuf / Thrift / Avro compatibility\" [632]"
+}

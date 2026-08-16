@@ -1,0 +1,13 @@
+{
+  "id": 414,
+  "title": "Unbounded Speculative Hedged Requests",
+  "category": "Resilience Cargo Cult",
+  "damaged_code": "```rust\nlet futures = replicas.iter().map(|node| node.read(key));\nlet first_response = select_all(futures).await; // Redundant calls sent unconditionally\n```",
+  "pattern": "Automatically or unconditionally issuing speculative duplicate/hedged requests to multiple replicas to reduce tail latency, without capping the rate of hedged requests or client-side load.",
+  "why_bad": "Hedged requests are helpful under normal loads. However, if a backend is struggling due to high load or network congestion, unconditionally duplicating requests doubles or triples the traffic. This completely saturates the remaining capacity of the cluster, transforming a minor slowdown into a catastrophic denial-of-service [30, 140].",
+  "detection": "Detect redundant/speculative requests sent in parallel to multiple replicas where there is no throttling, rate-limiting, or conditional limit on the fraction of requests that can be speculatively duplicated.",
+  "counterexample": "Configure a system where a hedged request is only sent if the primary request takes longer than the 95th percentile expected latency (e.g. 200ms), and cap the total number of hedged requests at 5% of overall client traffic.",
+  "fix": "Implement hedging thresholds (only send duplicate requests if the primary call exceeds a high-percentile duration) and strictly limit the total percentage of hedged requests to protect backend capacity.",
+  "strength": "Strong",
+  "source": "Alex Petrov, *Database Internals*, page 238 / passage [30] or Titus Winters et al., *Software Engineering at Google*, page 527 / passage [140]."
+}

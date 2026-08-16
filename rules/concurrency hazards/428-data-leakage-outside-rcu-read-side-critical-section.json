@@ -1,0 +1,13 @@
+{
+  "id": 428,
+  "title": "Data Leakage Outside RCU Read-Side Critical Section",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```c\nstruct element *leak_reference(int key) {\n    struct element *p;\n    rcu_read_lock();\n    p = rcu_dereference(hashtable[key]);\n    rcu_read_unlock();\n    return p; // LEAK! Pointer returned to unsynchronized scope\n}\n```",
+  "pattern": "Leaking or returning a pointer obtained inside an RCU read-side critical section to a scope outside the critical section.",
+  "why_bad": "Once the RCU read lock is released, the updater is free to remove and reclaim the memory of that element. Accessing the leaked pointer outside the read lock results in a use-after-free or severe memory corruption.",
+  "detection": "The return value of an RCU dereference escapes the scope of the enclosing `rcu_read_lock` and `rcu_read_unlock` pair.",
+  "counterexample": "Incrementing a reference count on the object *before* releasing the RCU read lock, ensuring its existence guarantee persists.",
+  "fix": "Perform all reading inside the critical section, or atomically increment a reference counter under the RCU read lock before exiting.\n```c\nstruct element *get_safe_reference(int key) {\n    struct element *p;\n    rcu_read_lock();\n    p = rcu_dereference(hashtable[key]);\n    if (p) {\n        kref_get(&p->ref); // Increase existence guarantee\n    }\n    rcu_read_unlock();\n    return p;\n}\n```",
+  "strength": "Strong",
+  "source": "Paul McKenney 15.4.3.1, Ch 9"
+}

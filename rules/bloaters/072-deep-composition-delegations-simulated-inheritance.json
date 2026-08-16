@@ -1,0 +1,13 @@
+{
+  "id": 72,
+  "title": "Deep Composition Delegations (Simulated Inheritance)",
+  "category": "Bloaters",
+  "damaged_code": "```rust\nstruct Engine {\n    pistons: u32,\n}\nimpl Engine {\n    fn check_compression(&self) -> bool { true }\n}\n\nstruct Car {\n    engine: Engine,\n}\nimpl Car {\n    // Boilerplate delegation to simulate inheritance\n    fn check_compression(&self) -> bool {\n        self.engine.check_compression()\n    }\n}\n```",
+  "pattern": "A nested struct layout where parent structs implement manual, boilerplate delegation methods for almost every single method defined on their inner fields, trying to mimic physical class inheritance.",
+  "why_bad": "Bloats the codebase with dummy forwarding methods that add zero business value. It creates highly fragile structures; any method added or modified on the inner child forces a cascading change in all parent delegation chains.",
+  "detection": "Look for structs containing methods that do nothing except forward calls to an inner field with an identical name and signature.",
+  "counterexample": "`Context-dependent`. The Facade pattern, where a public entry point delegates to highly complex internal subsystems to provide a simplified API.",
+  "fix": "Expose the inner component directly if it has no invariants to protect, or rethink the design to avoid deep physical containment.",
+  "strength": "Contextual",
+  "source": "*Martin Fowler - Refactoring (1999)*, Chapter 3, \"Message Chains\" / \"Middle Man\"; *Steve McConnell - Code Complete (2004)*, Chapter 6."
+}

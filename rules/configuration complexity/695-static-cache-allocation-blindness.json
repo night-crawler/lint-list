@@ -1,0 +1,13 @@
+{
+  "id": 695,
+  "title": "Static Cache Allocation Blindness",
+  "category": "Configuration Complexity",
+  "damaged_code": "```rust\n// Hardcoded cache memory size ignoring deployment limits\nconst DB_BUFFER_POOL_SIZE_BYTES: usize = 16 * 1024 * 1024 * 1024; // 16GB\n```",
+  "pattern": "Allocating internal cache tables, page pools, or buffer limits using fixed integer constants compiled into the application code.",
+  "why_bad": "Triggers Out-Of-Memory (OOM) aborts if the binary is deployed to a container or virtual host with fewer resources than the hardcoded ceiling, or severely under-utilizes hardware on high-memory nodes.",
+  "detection": "Hardcoded memory buffers or resource pool allocations defined using static compiled primitives instead of dynamic metrics.",
+  "counterexample": "```rust\nfn get_buffer_size() -> usize {\n    // Limit to 50% of available physical memory detected at startup\n    get_available_system_memory() / 2\n}\n```",
+  "fix": "Detect physical limits dynamically at startup, scaling memory structures proportionally, or resolve limits from standard container configuration targets.",
+  "strength": "Strong",
+  "source": "Gregg, Brendan - *Systems Performance_ Enterprise and the Cloud* (2013, Pearson Education Limited (US titles)_Prentice Hall).pdf, Chapter 7; Titus Winters, Tom Manshreck, Hyrum Wright - *Software Engineering at Google_ Lessons Learned from Programming Over Time* (2020, O'Reilly Media).pdf, Chapter 23."
+}

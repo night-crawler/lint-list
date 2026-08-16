@@ -1,0 +1,13 @@
+{
+  "id": 556,
+  "title": "Pre-computing Unused Lookup Tables at Startup",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\nlazy_static::lazy_static! {\n    static ref IP_COUNTRY_MAP: std::collections::HashMap<String, String> = {\n        // Pre-parsing and caching 500,000 CSV lines at startup\n        load_and_parse_csv(\"ip_data.csv\")\n    };\n}\n```",
+  "pattern": "Loading, parsing, and caching massive dataset files into memory indexes at application startup.",
+  "why_bad": "It severely increases application cold-start times and consumes massive amounts of RAM for data points that may never be queried during the runtime lifecycle. Memory that is idle is wasted [361, 373].",
+  "detection": "Large static initializers or dynamic parse trees loaded inside application startup macros before the first query is received.",
+  "counterexample": "Core lookup indices (such as database schemas or routing tables) that are guaranteed to be queried immediately on every single request. `Contextual`.",
+  "fix": "Utilize standard on-demand database querying (like SQLite) or lazy load segments index by index using dynamic file seeking.",
+  "strength": "Strong",
+  "source": "*Code Complete*, Section 26.4 (p. 361, 373)."
+}

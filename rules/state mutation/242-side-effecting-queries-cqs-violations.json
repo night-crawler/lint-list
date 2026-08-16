@@ -1,0 +1,13 @@
+{
+  "id": 242,
+  "title": "Side-Effecting Queries (CQS Violations)",
+  "category": "State Mutation",
+  "damaged_code": "```rust\nstruct Account {\n    balance: i64,\n    alerts_sent: usize,\n}\n\nimpl Account {\n    pub fn get_balance_and_report_overdraft(&mut self) -> i64 {\n        if self.balance < 0 {\n            self.alerts_sent += 1; // Side effect!\n            send_alert();\n        }\n        self.balance\n    }\n}\n```",
+  "pattern": "A method queries information from an object (returns a value) but also mutates the underlying state of the system as an observable side effect.",
+  "why_bad": "Violates Bertrand Meyer's Command-Query Separation (CQS) principle: \"Asking a question should not change the answer.\" It forces developers to read method implementation details to see if calling a simple getter will inadvertently mutate database values or logs, rendering testing and caching impossible.",
+  "detection": "A method returning a non-void/non-Result type (e.g. `i64`, `String`) that also performs assignments to `self` fields or invokes other state-altering methods.",
+  "counterexample": "A pure query returning values without side effects, and a separate command that mutates state and returns nothing (`()`):\n```rust\nimpl Account {\n    pub fn balance(&self) -> i64 {\n        self.balance\n    }\n    pub fn trigger_overdraft_alerts(&mut self) {\n        if self.balance < 0 {\n            self.alerts_sent += 1;\n            send_alert();\n        }\n    }\n}\n```",
+  "fix": "Split the side-effecting query into a read-only query method and a state-modifying command method.\n```rust\n// Caller must execute sequentially:\naccount.trigger_overdraft_alerts();\nlet bal = account.balance();\n```",
+  "strength": "Contextual",
+  "source": "*Refactoring* by Martin Fowler (p. 279, \"Separate Query from Modifier\"); *Clean Code* by Robert C. Martin (Chapter 3, \"Command Query Separation\"); *Implementing Domain-Driven Design* by Vaughn Vernon (Chapter 10, \"Side-Effect-Free Functions\")."
+}

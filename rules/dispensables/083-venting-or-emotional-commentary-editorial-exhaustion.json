@@ -1,0 +1,13 @@
+{
+  "id": 83,
+  "title": "Venting or Emotional Commentary (Editorial Exhaustion)",
+  "category": "Dispensables",
+  "damaged_code": "```rust\n// This is a horrible, smelly hack because the payment gateway API is absolute garbage.\n// Don't blame me, Dwight forced me to write this.\nfn execute_payment() {}\n```",
+  "pattern": "Comments containing subjective, emotional, frustrated, or finger-pointing prose instead of technical explanations.",
+  "why_bad": "Fails to explain the technical invariants, limitations, or workarounds required to maintain the code, replacing logic with emotional noise.",
+  "detection": "Comments containing frustrated language, developer names, or colloquialisms ('garbage', 'hack', 'trash', 'dumb').",
+  "counterexample": "Pragmatic, dry warnings documenting external API defects, accompanied by ticket numbers or issue URLs.",
+  "fix": "Rewrite the comment to state the technical constraints and invariants objectively, or fix the code.",
+  "strength": "Contextual",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 4 (\"Comments - Noise Comments\"), pp. 64-66."
+}

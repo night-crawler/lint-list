@@ -1,0 +1,13 @@
+{
+  "id": 2,
+  "title": "Foreign-Field Points Accumulation Envy",
+  "category": "Feature Envy",
+  "damaged_code": "```rust\nimpl Customer {\n    fn statement(&self) -> String {\n        let mut points = 0;\n        for r in &self.rentals {\n            points += 1;\n            if r.movie.price_code == 1 && r.days_rented > 1 {\n                points += 1;\n            }\n        }\n        format!(\"Points: {}\", points)\n    }\n}\n```",
+  "pattern": "An outer struct method increments a local accumulator based on checks against multiple nested fields of an associated struct.",
+  "why_bad": "This creates a deep logical dependency on the internal business rules of the referenced struct. The calculation of how many loyalty points a rental is worth belongs with the rental, not with the statement printer.",
+  "detection": "An accumulator variable in a loop where the increment logic relies entirely on conditional checks on properties of the loop item.",
+  "counterexample": "Accumulating a simple count of elements or summing a direct primitive getter (e.g., `r.days_rented`) without conditional business logic.",
+  "fix": "Move the points calculation to the referenced type and call it from the statement printer.\n```rust\nimpl Rental {\n    fn frequent_renter_points(&self) -> u32 {\n        if self.movie.price_code == 1 && self.days_rented > 1 {\n            2\n        } else {\n            1\n        }\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Refactoring* (1999), Chapter 1 and Chapter 3 (\"Feature Envy\")."
+}

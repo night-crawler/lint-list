@@ -1,0 +1,13 @@
+{
+  "id": 187,
+  "title": "Direct Field Modification of Colleague (Porous Encapsulation)",
+  "category": "Couplers",
+  "damaged_code": "```rust\npub struct Engine {\n    pub oil_level: i32,\n}\nstruct Car {\n    engine: Engine,\n}\nimpl Car {\n    fn drive(&mut self) {\n        // Direct mutation of another struct's internal state field\n        self.engine.oil_level -= 1;\n    }\n}\n```",
+  "pattern": "A struct directly reads and modifies the public, mutable field of an associated struct rather than telling it to perform the action.",
+  "why_bad": "It violates basic encapsulation (\"Tell, Don't Ask\"). If the logic for oil consumption changes (e.g., consumption rate varies with RPM), the caller (`Car`) must change instead of the `Engine`.",
+  "detection": "Code outside of struct `T` modifying a field of `T` directly using assignment operators.",
+  "counterexample": "Simple configuration structs or pure \"data holders\" (structs with no behavior/methods) designed purely as plain-old-data DTOs.",
+  "fix": "Encapsulate the mutation inside a method on the target struct.\n```impl Engine {\n    fn consume_oil(&mut self, amount: i32) {\n        self.oil_level -= amount;\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Refactoring* (1999), Chapter 3 (\"Inappropriate Intimacy\"); Steve McConnell, *Code Complete* (2004), Chapter 5 (\"Design in Construction\")."
+}

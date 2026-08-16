@@ -1,0 +1,13 @@
+{
+  "id": 177,
+  "title": "Wildcard-Import Ambiguity (The Orphan rule collide)",
+  "category": "Change Preventers",
+  "damaged_code": "```rust\n// In crate1 (v1.1 adding a trait method)\npub struct Unit;\npub trait Foo1 { fn foo(&self); }\nimpl Foo1 for Unit { fn foo(&self) {} }\n\n// In downstream crate2 (which did wildcard import)\nuse crate1::*;\npub trait Foo2 { fn foo(&self); }\nimpl Foo2 for Unit { fn foo(&self) {} }\n\nfn main() {\n    Unit.foo(); // Ambigious call error!\n}\n```",
+  "pattern": "Downstream crates use wildcard imports (`use crate::*`), and an upstream crate introduces a new public trait or method with a name that collides with a downstream trait implemented for the same type.",
+  "why_bad": "It causes silent compilation breakages on minor upstream updates. Even though both traits are technically distinct, the downstream compiler cannot resolve the ambiguous method name on `Unit.foo()`, halting developer builds unexpectedly.",
+  "detection": "The combination of wildcard imports (`*`) in client modules combined with the upstream introduction of traits containing common method names (like `run`, `init`, or `save`).",
+  "counterexample": "Explicit imports or strict module qualification paths where the namespace is unambiguously declared.",
+  "fix": "Avoid exporting general wildcard preludes. Instruct library consumers to use explicit imports or wrap foreign types using the newtype pattern to isolate method resolution.",
+  "strength": "Contextual",
+  "source": "Jon Gjengset, *Rust for Rustaceans* (2021), Chapter 4 (\"Coherence and the Orphan Rule\"), pp. 87-88, 93-94."
+}

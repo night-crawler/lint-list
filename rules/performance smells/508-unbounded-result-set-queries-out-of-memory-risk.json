@@ -1,0 +1,13 @@
+{
+  "id": 508,
+  "title": "Unbounded Result Set Queries (Out-of-Memory Risk)",
+  "category": "Performance Smells",
+  "damaged_code": "```sql\nSELECT * FROM transactions WHERE user_id = 123; -- Returns millions of rows\n```",
+  "pattern": "Executing database queries that fetch matching rows without an explicit cap or range constraint (`LIMIT`, `TOP`, or `rownum`).",
+  "why_bad": "If the tables grow over time, unconstrained select queries bring massive volumes of data into application memory at once, risking heap exhaustion, severe garbage collection thrashing, and database locks.",
+  "detection": "SQL select queries or ORM finders (`findAll()`, `all()`) executed in user-facing APIs without paging, slicing, or row caps.",
+  "counterexample": "Static, small reference tables (e.g., country codes or state lists). `Context-dependent`.",
+  "fix": "Always enforce explicit query bounds using `LIMIT`, pagination controls, or database-side cursors.",
+  "strength": "Strong",
+  "source": "*Release It!*, Section 9.7 (p. 533) and *Domain-Driven Design*, Chapter 6 (p. 349)."
+}

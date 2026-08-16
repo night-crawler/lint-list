@@ -1,0 +1,13 @@
+{
+  "id": 860,
+  "title": "Immediate Reclamation of Shared Resources",
+  "category": "Correctness By Convention",
+  "damaged_code": "```rust\n// C-like pseudocode\nvoid delete_item(struct list *item) {\n    list_remove(item);\n    free(item); // BUG: Reader threads may still reference item!\n}\n```",
+  "pattern": "Immediately freeing or deallocating a shared resource after removing its pointer from a global data structure, without waiting for concurrent reader threads to exit.",
+  "why_bad": "Reader threads that were actively traversing the structure before its removal will still hold raw pointers to the item, causing a crash or use-after-free when they access it.",
+  "detection": "A concurrent data structure update deletes a node and immediately deallocates it without invoking synchronize_rcu(), hazard pointers, or a reference counter.",
+  "counterexample": "Using RCU or hazard pointers to defer reclamation until all pre-existing reader threads have completed.",
+  "fix": "Introduce a grace-period deferral before deallocating the memory: `list_remove(item); synchronize_rcu(); free(item);`.",
+  "strength": "Strong",
+  "source": "1701.00854v6, Section 9.5 & Section 9.6 [252, 269]."
+}

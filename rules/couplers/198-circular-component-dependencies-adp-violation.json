@@ -1,0 +1,13 @@
+{
+  "id": 198,
+  "title": "Circular Component Dependencies (ADP Violation)",
+  "category": "Couplers",
+  "damaged_code": "```rust\n// Module A\nfn process_auth() {\n    let u = user::get_user();\n}\n\n// Module B (user.rs)\nfn get_user() {\n    let is_authed = auth::check_session();\n}\n```",
+  "pattern": "Two compiled units, crates, or modules contain dependency arrows pointing at each other, creating a cyclic dependency graph at the component level.",
+  "why_bad": "It violates the Acyclic Dependencies Principle (ADP). It merges the two modules into a single large component. They can no longer be released, compiled, or tested independently.",
+  "detection": "Module import analyzer identifying a cycle (`A` imports `B` which imports `A`) at compile time.",
+  "counterexample": "Mutually recursive functions that are tightly localized within the exact same file and private scope.",
+  "fix": "Invert the dependency by introducing a trait in one module that the other implements, or extract the shared logic into a third, independent module.\n```rust\n// Module A defines a trait\ntrait SessionChecker { fn check_session(&self) -> bool; }\n```",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Architecture* (2017), Chapter 14 (\"ADP: The Acyclic Dependencies Principle\")."
+}

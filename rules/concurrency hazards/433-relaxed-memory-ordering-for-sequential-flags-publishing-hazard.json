@@ -1,0 +1,13 @@
+{
+  "id": 433,
+  "title": "Relaxed Memory Ordering for Sequential Flags (Publishing Hazard)",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```rust\n// Thread 1 - Publisher\nunsafe {\n    PAYLOAD = 42; // Plain store\n}\nREADY.store(true, Ordering::Relaxed); // BUG! Relaxed store\n\n// Thread 2 - Consumer\nif READY.load(Ordering::Relaxed) {\n    // Compiler/CPU could reorder PAYLOAD read before READY load,\n    // or READY store before PAYLOAD store!\n    println!(\"{}\", unsafe { PAYLOAD }); \n}\n```",
+  "pattern": "Using `Ordering::Relaxed` when writing to a sync flag or pointer that indicates a separate non-atomic payload is ready.",
+  "why_bad": "Relaxed operations do not impose any memory ordering constraints on surrounding memory accesses. The compiler or CPU can reorder the payload write *after* the flag write, or the payload read *before* the flag read, causing the consumer to see uninitialized or corrupt data.",
+  "detection": "An atomic variable write with `Ordering::Relaxed` preceded by non-atomic writes, or an atomic read with `Ordering::Relaxed` followed by non-atomic reads.",
+  "counterexample": "Acquiring the flag with `Ordering::Acquire` and releasing it with `Ordering::Release`.",
+  "fix": "Use `Acquire` and `Release` ordering.\n```rust\n// Thread 1\nunsafe { PAYLOAD = 42; }\nREADY.store(true, Ordering::Release);\n\n// Thread 2\nif READY.load(Ordering::Acquire) {\n    println!(\"{}\", unsafe { PAYLOAD });\n}\n```",
+  "strength": "Strong",
+  "source": "Jon Gjengset Ch 9, Paul McKenney Appendix C"
+}

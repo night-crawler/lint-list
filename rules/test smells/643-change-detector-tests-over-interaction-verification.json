@@ -1,0 +1,13 @@
+{
+  "id": 643,
+  "title": "Change-Detector Tests (Over-Interaction Verification)",
+  "category": "Test Smells",
+  "damaged_code": "```rust\n#[test]\nfn test_get_user_profile() {\n    let mut mock_db = MockDatabase::new();\n    // Non-state-changing query: should not be verified on interaction\n    mock_db.expect_get_user()\n        .with(eq(\"alice\"))\n        .times(1)\n        .returning(|_| Ok(User::new(\"alice\")));\n\n    let service = UserService::new(mock_db);\n    let _ = service.get_profile(\"alice\");\n    \n    // Verifying interaction instead of validating returned state\n    mock_db.verify(); \n}\n```",
+  "pattern": "Tests that enforce exact calls to non-state-changing query methods of a collaborator, asserting *how* a system arrived at a result rather than *what* the result is.",
+  "why_bad": "Non-state-changing interactions (queries) are private implementation details. Change-detector tests break in response to harmless refactoring (e.g., adding cache lookups, changing query order) even when the external behavior is completely preserved [209].",
+  "detection": "The test uses mocking verifications (`verify()`, `times()`) on collaborator methods that perform read-only queries or returns data without mutating external state [530].",
+  "counterexample": "```rust\n#[test]\nfn test_delete_user_is_state_changing() {\n    let mut mock_db = MockDatabase::new();\n    // State-changing side-effect: Reasonable to verify interaction\n    mock_db.expect_delete_user()\n        .with(eq(\"alice\"))\n        .times(1)\n        .returning(|_| Ok(()));\n\n    let service = UserService::new(mock_db);\n    let _ = service.delete_profile(\"alice\");\n    mock_db.verify();\n}\n```",
+  "fix": "Rely on state-based testing (asserting returned values or final system state) instead of interaction verification [208, 526]. Only verify state-changing interactions that are explicit requirements [529].",
+  "strength": "Strong",
+  "source": "*   *Software Engineering at Google*, \"Interaction Testing\" (p. 275-279) [208, 209, 525, 527, 529]"
+}

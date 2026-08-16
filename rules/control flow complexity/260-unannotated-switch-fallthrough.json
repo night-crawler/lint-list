@@ -1,0 +1,13 @@
+{
+  "id": 260,
+  "title": "Unannotated Switch Fallthrough",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```cpp\n// C++ Example:\nswitch (state) {\n    case State::Active:\n        send_heartbeat();\n    case State::Pending:\n        queue_message();\n        break;\n}\n```",
+  "pattern": "Allowing execution in a switch statement to slide from one case block directly into the next without explicit annotation.",
+  "why_bad": "High-risk maintenance hazard. A subsequent modifier can easily cause bugs or break logic when reordering or modifying cases.",
+  "detection": "A switch case block that does not terminate with `break`, `return`, `throw`, or an explicit compiler fallthrough attribute.",
+  "counterexample": "Cases stacked directly on top of each other with no code in between (shared case blocks).",
+  "fix": "Add explicit terminating statements or compiler fallthrough annotations:\n```cpp\nswitch (state) {\n    case State::Active:\n        send_heartbeat();\n        [[fallthrough]];\n    case State::Pending:\n        queue_message();\n        break;\n}\n```",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete*, Section 15.2."
+}

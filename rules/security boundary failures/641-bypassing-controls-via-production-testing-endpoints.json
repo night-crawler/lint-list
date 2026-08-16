@@ -1,0 +1,13 @@
+{
+  "id": 641,
+  "title": "Bypassing Controls via Production Testing Endpoints",
+  "category": "Security Boundary Failures",
+  "damaged_code": "```rust\nfn perform_action() {\n    if is_test_mode_active() {\n        // Complete bypass of authentication/authorization rules for testing\n        execute_privileged_command();\n    }\n}\n```",
+  "pattern": "Hardcoding test modes, validation bypass flags, or mock parameters directly into production binary codebases to simplify staging or manual tests.",
+  "why_bad": "If an attacker triggers the test mode flag (e.g. via setting specific environment parameters or headers), they can completely bypass authentication checks and access restricted production resources.",
+  "detection": "Conditional blocks (`if test_mode`) inside security-sensitive code branches that bypass authorization/authentication logic.",
+  "counterexample": "```rust\n// Compile out all testing scaffolding from production binaries entirely using build attributes\n#[cfg(test)]\nfn test_only_helpers() {}\n```",
+  "fix": "Isolate testing code into separate test configurations that are completely compiled out of production releases (`#[cfg(test)]` attributes).",
+  "strength": "Strong",
+  "source": "`Heather Adkins et al. - Building Secure and Reliable Systems (2020)`, Ch 5, p. 71-72."
+}

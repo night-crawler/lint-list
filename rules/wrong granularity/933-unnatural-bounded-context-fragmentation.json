@@ -1,0 +1,13 @@
+{
+  "id": 933,
+  "title": "Unnatural Bounded Context Fragmentation",
+  "category": "Wrong Granularity",
+  "damaged_code": "```\n// Over-fragmenting a simple workflow into multiple distinct Bounded Contexts\n/services/customer_creation_context/\n/services/customer_validation_context/\n/services/customer_billing_context/\n```",
+  "pattern": "Splitting a single Bounded Context into dozens of micro-contexts, creating distinct projects and teams for individual operations on the same logical entity.",
+  "why_bad": "Unnaturally fragments the Ubiquitous Language. It forces continuous translation, mapping, and synchronization of basic customer data (IDs, names) across multiple contexts, creating high operational coupling, more coordination, and massive integration overhead.",
+  "detection": "Look for separate systems/repositories designed around individual CRUD operations or simple workflow steps for a single logical business domain.",
+  "counterexample": "`Context-dependent`. Distributing contexts strictly when massive organizational scaling demands distinct team ownership boundaries (Conway's Law).",
+  "fix": "Unify the fragmented workflows under a single cohesive Bounded Context governed by a unified Ubiquitous Language.\n```\n/services/customer_management_context/\n```",
+  "strength": "Contextual",
+  "source": "*Vaughn Vernon - Implementing Domain-Driven Design (2013)*, Chapter 2, \"Bounded Contexts\" (Unnaturally fragmenting contexts is not the spirit of strategic DDD, p. 68)."
+}

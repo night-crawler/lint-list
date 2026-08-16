@@ -1,0 +1,13 @@
+{
+  "id": 268,
+  "title": "Unchecked Exception Cascades (Open-Closed Principle Violation)",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```cpp\nvoid process_order() throw(DiskFullException, DatabaseTimeoutException) {\n    save_to_db();\n}\n```",
+  "pattern": "Declaring low-level exceptions in the signatures of high-level business functions.",
+  "why_bad": "Breaking encapsulation. Modifying a low-level API forces signature changes and rebuilds of all intermediate layers up the stack.",
+  "detection": "Exception propagation declarations referencing low-level implementation details in high-level domain functions.",
+  "counterexample": "Closed application systems with only single layers or unified error categories.",
+  "fix": "Wrap low-level errors in unified domain exceptions at boundary interfaces.",
+  "strength": "Contextual",
+  "source": "Robert C. Martin, *Clean Code*, Chapter 7."
+}

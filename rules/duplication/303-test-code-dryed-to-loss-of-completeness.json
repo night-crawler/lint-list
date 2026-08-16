@@ -1,0 +1,13 @@
+{
+  "id": 303,
+  "title": "Test Code DRYed to Loss of Completeness",
+  "category": "Duplication",
+  "damaged_code": "```rust\n#[test]\nfn test_account_creation() {\n    let helper = TestHelper::new();\n    let account = helper.create_default_account(); // What values are in this default account?\n    assert_eq!(account.status, Status::Active);\n}\n\n#[test]\nfn test_account_overdraft() {\n    let helper = TestHelper::new();\n    let account = helper.create_default_account(); // Does this account have an overdraft limit set?\n    assert_eq!(account.overdraft_limit, 500);\n}\n```",
+  "pattern": "Hiding test setup and state initialization details inside generic shared helper functions solely to eliminate textual duplication.",
+  "why_bad": "It erodes test completeness. A reader must jump out of the test body to understand the context. Changing a \"default helper\" setting to fix one test can break dozens of other tests silently.",
+  "detection": "Test cases that do not configure their own essential test state locally, relying entirely on shared, parameter-less setup helpers, and asserting on specific fields.",
+  "counterexample": "Infrastructure mocks (e.g., database connection setups) where individual test data state is not the focus.",
+  "fix": "Apply DAMP (Descriptive And Meaningful Phrases) in test code, prioritizing local clarity over strict textual DRY.\n```rust\n#[test]\nfn test_account_creation() {\n    let account = Account::new(\"Jane Doe\", Status::Active, 500);\n    assert_eq!(account.status, Status::Active);\n}\n```",
+  "strength": "Contextual",
+  "source": "*Software Engineering at Google*, Chapter 12: \"Unit Testing\" — \"DAMP, Not DRY\", p. 248-250."
+}

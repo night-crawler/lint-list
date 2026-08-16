@@ -1,0 +1,13 @@
+{
+  "id": 39,
+  "title": "Best-Effort Durability (No fsync)",
+  "category": "Essential Complexity Denial Patterns",
+  "damaged_code": "```rust\n// Writing database logs or indices to disk without fsync\nlet mut file = OpenOptions::new().write(true).open(\"db.log\")?;\nfile.write_all(log_bytes)?;\n```",
+  "pattern": "Writing critical state changes to persistent storage without invoking an explicit file synchronization barrier (`fsync`).",
+  "why_bad": "Operating systems cache writes in RAM write buffers. If a power outage or system crash occurs before the buffer is flushed to non-volatile storage, the write is lost or partially committed, violating the durability guarantees of the database [39:51].",
+  "detection": "Writing to a file representing a database commit log, WAL, or persistent index structure without calling `file.sync_all()` or using synchronous I/O options [39:51].",
+  "counterexample": "```rust\nlet mut file = OpenOptions::new().write(true).open(\"db.log\")?;\nfile.write_all(log_bytes)?;\nfile.sync_all()?; // Force flushing of OS write buffers to disk\n```",
+  "fix": "Invoke `sync_all()` on the file handle or open the file with synchronous flags before acknowledging the operation to the caller [39:51].",
+  "strength": "Strong",
+  "source": "*Database Internals* (Petrov), Part I [39:51]."
+}

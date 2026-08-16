@@ -1,0 +1,13 @@
+{
+  "id": 256,
+  "title": "Deeply Nested Conditionals (Arrow Anti-Pattern)",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```rust\nfn process(conn: &mut Connection) -> Result<()> {\n    if conn.is_active() {\n        if conn.has_data() {\n            let data = conn.read_data();\n            if data.is_valid() {\n                save(data)?;\n            }\n        }\n    }\n    Ok(())\n}\n```",
+  "pattern": "Nested `if` statements wrapped inside other `if` blocks where the outer conditions only act as validations or preconditions with no corresponding `else` branches.",
+  "why_bad": "Pushes context onto the reader's mental stack. Each nesting level forces the reader to carry and remember all previous preconditions.",
+  "detection": "Nested `if` blocks where the parent block has no `else` statement and the inner body does not introduce new alternative execution branches.",
+  "counterexample": "Nested `if` statements where each nesting level has distinct, substantive `else` branches handling alternative business logic paths.",
+  "fix": "Invert conditions to exit or return early using guard clauses, restoring a linear reading path:\n```rust\nfn process(conn: &mut Connection) -> Result<()> {\n    if !conn.is_active() || !conn.has_data() {\n        return Ok(());\n    }\n    let data = conn.read_data();\n    if data.is_valid() {\n        save(data)?;\n    }\n    Ok(())\n}\n```",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete*, Section 19.4; Martin Fowler, *Refactoring*, \"Replace Nested Conditional with Guard Clauses\"."
+}

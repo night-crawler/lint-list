@@ -1,0 +1,13 @@
+{
+  "id": 846,
+  "title": "Uncontrolled Heartbeat Thread Blocking",
+  "category": "Operational Architecture Smells",
+  "damaged_code": "```rust\nfn run_heartbeat() {\n    loop {\n        send_ping_to_master(); // Synchronous blocking call\n        thread::sleep(Duration::from_secs(5));\n    }\n}\n```",
+  "pattern": "Conducting synchronous, network-blocking database queries or API pings directly inside the heartbeat/health-check reporting thread.",
+  "why_bad": "If the backend hangs, the heartbeat thread blocks on the ping call. The orchestrator/load balancer receives no health-checks and falsely assumes the node is dead, terminating the healthy container and initiating a cascading cluster teardown.",
+  "detection": "Synchronous block/read network calls executed directly on a thread responsible for writing/answering health checks or heartbeats.",
+  "counterexample": "Asynchronous heartbeats with independent, short non-blocking timeouts.",
+  "fix": "Execute pings asynchronously with short timeouts, or use a non-blocking background worker to update a shared atomic \"last success timestamp\" that the heartbeat thread reads without blocking.",
+  "strength": "Strong",
+  "source": "*Release It!*, p. 111-112, p. 247-248."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 25,
+  "title": "Primitive Obsession",
+  "category": "Accidental Complexity",
+  "damaged_code": "```rust\nstruct Payment {\n    card_number: Option<String>,\n    paypal_email: Option<String>,\n}\n```",
+  "pattern": "Representing domain concepts that have strict invariants (e.g., email addresses, mutually exclusive configurations, coordinates) using raw basic primitives or loose optional fields.",
+  "why_bad": "It allows illegal states to be representable. It bypasses the compiler's type checker and forces downstream code to duplicate validation checks or handle impossible branches (`None, None` states), risking runtime panics or silent logic errors.",
+  "detection": "Structs with multiple optional (`Option<T>`) fields that are logically mutually exclusive, or standard primitive types (`String`, `i32`) used for highly specialized domain concepts with strict invariants (like phone numbers, currencies, zip codes).",
+  "counterexample": "Pure data-transfer objects (DTOs) used for serialization boundaries where raw fields are parsed or local, unconstrained variables.",
+  "fix": "Refactor the code to use the Newtype pattern (wrapping primitives) or use a typed enum with associated data to make illegal states unrepresentable (parse, don't validate).\n```rust\nenum PaymentMethod {\n    Card { card_number: String },\n    PayPal { email: String },\n}\n```",
+  "strength": "Strong",
+  "source": "Joshua Kerievsky, *Refactoring to Patterns* (2004), Chapter on Smells; Martin Fowler et al., *Refactoring: Improving the Design of Existing Code* (1999), Chapter 3."
+}

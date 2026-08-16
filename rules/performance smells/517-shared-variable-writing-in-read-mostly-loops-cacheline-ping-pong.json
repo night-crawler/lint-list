@@ -1,0 +1,13 @@
+{
+  "id": 517,
+  "title": "Shared Variable Writing in Read-Mostly Loops (Cacheline Ping-Pong)",
+  "category": "Performance Smells",
+  "damaged_code": "```cpp\nvoid increment_counter() {\n    shared_counter++; // Modifies a shared variable in a hot loop\n}\n```",
+  "pattern": "Multiple threads frequently writing to a shared counter or status variable.",
+  "why_bad": "Triggers cacheline bouncing as CPUs constantly invalidate each other's cache lines via the coherence protocol, wasting hundreds of bus cycles on invalidation messages.",
+  "detection": "Writing to non-thread-local shared memory locations inside highly frequent concurrent loops.",
+  "counterexample": "The write is highly sporadic or occurs only on initialization. `Contextual`.",
+  "fix": "Split the shared variable into thread-local structures or per-CPU counters, aggregating them only when reading.",
+  "strength": "Strong",
+  "source": "*Herlihy - Art of Multiprocessor Programming*, Appendix B (p. 476 / p. 138-139) and *1701.00854v6.pdf*, Chapter 3 (p. 25)."
+}

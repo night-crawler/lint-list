@@ -1,0 +1,13 @@
+{
+  "id": 138,
+  "title": "Train Wreck (Message Chains)",
+  "category": "Abstraction Failure",
+  "damaged_code": "```rust\nlet discount = customer\n    .get_orders()\n    .find_order(order_id)\n    .get_invoice()\n    .get_totals()\n    .get_discount();\n```",
+  "pattern": "A client navigates through a long sequence of nested object references, requesting one object to get another, then another, and so on.",
+  "why_bad": "It introduces severe coupling between the client and the exact navigation path of the domain model. Any change to the structure of intermediate relationships (e.g., splitting `totals` out of `invoice`) breaks the calling client.",
+  "detection": "A chain of 3 or more method calls where each method returns an object on which the next method is called (e.g., `a.get_b().get_c().get_d()`).",
+  "counterexample": "Method chaining on Builder patterns or fluent APIs (like iterators or query builders) where the returned type is a conceptual continuation of the same object.",
+  "fix": "Hide the delegation by adding a direct method to the root object (e.g., `customer.get_discount_for_order(order_id)`), encapsulating the internal hierarchy.",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Refactoring* (1999), Chapter 3 (\"Message Chains\"); Andrew Hunt & David Thomas, *The Pragmatic Programmer* (2019), Topic 36 (\"Train Wrecks\")."
+}

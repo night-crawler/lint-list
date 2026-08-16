@@ -1,0 +1,13 @@
+{
+  "id": 386,
+  "title": "Clamping Numeric Precision without Boundary Checks",
+  "category": "Information Loss",
+  "damaged_code": "```rust\nfn set_latitude(lat: f64) -> f64 {\n    // Silently clamps out-of-range values!\n    if lat < -90.0 { -90.0 } else if lat > 90.0 { 90.0 } else { lat }\n}\n```",
+  "pattern": "Silently clamping or coercing invalid input values to their closest legal bounds instead of raising an error.",
+  "why_bad": "It destroys data validity context. Downstream systems receive modified data without knowing that the caller passed completely invalid inputs, masking software bugs or sensor malfunctions.",
+  "detection": "Conditional branches in input-processing logic that reassign out-of-bounds inputs to boundary constants without reporting.",
+  "counterexample": "Explicit clamping operations where the transition is documented and expected by design:\n```rust\nfn clamp_pixel_brightness(val: u8) -> u8 { val.clamp(0, 255) }\n```",
+  "fix": "Return a Result that forces the caller to acknowledge out-of-bounds inputs.\n```rust\nfn set_latitude(lat: f64) -> Result<f64, String> {\n    if lat >= -90.0 && lat <= 90.0 {\n        Ok(lat)\n    } else {\n        Err(\"Latitude out of range\".into())\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Code Complete* by Steve McConnell (p. 293)."
+}

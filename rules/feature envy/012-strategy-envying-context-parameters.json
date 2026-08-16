@@ -1,0 +1,13 @@
+{
+  "id": 12,
+  "title": "Strategy Envying Context parameters",
+  "category": "Feature Envy",
+  "damaged_code": "```rust\nstruct Loan {\n    commitment: f64,\n    unused_percentage: f64,\n    duration: f64,\n}\nstruct CapitalStrategyAdvisedLine;\nimpl CapitalStrategyAdvisedLine {\n    fn capital(&self, loan: &Loan) -> f64 {\n        loan.commitment * loan.unused_percentage * loan.duration * 0.02\n    }\n}\n```",
+  "pattern": "An external calculation strategy struct queries multiple instance variables from the context class (`Loan`) to compute a single business metric.",
+  "why_bad": "It exposes context variables publicly, breaking encapsulation. The strategy is so tightly coupled to the internal fields of the context that any changes to those fields require rewriting the strategy class.",
+  "detection": "Strategy classes whose methods accept a context object and perform calculations using three or more fields of that context.",
+  "counterexample": "Strategies that act as generic operators (e.g., standard comparison functions).",
+  "fix": "Change the strategy signature to accept only the required parameters or group them into a cohesive data transfer struct.\n```rust\nimpl CapitalStrategyAdvisedLine {\n    fn capital(&self, risk_amount: f64, duration: f64) -> f64 {\n        risk_amount * duration * 0.02\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Joshua Kerievsky, *Refactoring to Patterns* (2004), Chapter 4 (\"Move Embellishment to Decorator\")."
+}

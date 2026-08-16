@@ -1,0 +1,13 @@
+{
+  "id": 584,
+  "title": "Thread-Contention and Cache-Line Thrashing on Shared Global Counters",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\nstatic GLOBAL_COUNTER: AtomicU64 = AtomicU64::new(0);\n\nfn handle_request() {\n    GLOBAL_COUNTER.fetch_add(1, Ordering::SeqCst); // Incremented on every single micro-event\n    // do work...\n}\n```",
+  "pattern": "Using a single global atomic variable to count extremely high-frequency operations across multiple CPU cores.",
+  "why_bad": "Atomic operations across cores require cache line synchronization. Frequent writes to a single shared cache line cause continuous cache invalidations (cache thrashing), which severely degrades core execution speed and scalability.",
+  "detection": "Look for global atomic variables updated synchronously across thread boundaries on high-frequency paths.",
+  "counterexample": "`Context-dependent`. Permissible if the counter is updated infrequently (e.g., once per second rather than on every network call).",
+  "fix": "Use thread-local counters that are only periodically merged/aggregated, eliminating cache-coherency bottlenecking on the hot path.\n```rust\nthread_local! {\n    static LOCAL_COUNTER: Cell<u64> = Cell::new(0);\n}\n\nfn handle_request_correct() {\n    LOCAL_COUNTER.with(|c| {\n        let val = c.get() + 1;\n        if val >= 1000 { // Batch updates to the global pool\n            GLOBAL_COUNTER.fetch_add(val, Ordering::Relaxed);\n            c.set(0);\n        } else {\n            c.set(val);\n        }\n    });\n}\n```",
+  "strength": "Strong` — limits multi-core execution scaling to the latency of memory-bus syncs.",
+  "source": "Richard L. Sites - *Understanding Software Dynamics* (2021), Section 11.3, p. 184."
+}

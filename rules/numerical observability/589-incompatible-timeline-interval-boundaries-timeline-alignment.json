@@ -1,0 +1,13 @@
+{
+  "id": 589,
+  "title": "Incompatible Timeline Interval Boundaries (Timeline Alignment)",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\nfn plot_compare(source_a: &[Event], source_b: &[Event]) {\n    let timeline_a = aggregate_to_buckets(source_a, Duration::from_secs(3)); // 3M years\n    let timeline_b = aggregate_to_buckets(source_b, Duration::from_secs(15)); // 15M years\n    render_side_by_side(timeline_a, timeline_b); // Direct visual comparison of raw heights\n}\n```",
+  "pattern": "Plotting or comparing counts per interval on a timeline where the time-slices (bucket widths) differ between datasets.",
+  "why_bad": "Directly comparing raw heights is mathematically distorted. A peak of \"50 events per 15 million years\" looks much smaller than \"17 events per 1 million years\" if plotted without normalization. Users will visually misinterpret the data, completely missing critical density bursts.",
+  "detection": "Rendering timelines of different datasets without normalizing the Y-axis to a common base rate (e.g., events per second).",
+  "counterexample": "None.",
+  "fix": "Always normalize the Y-axis of timeline metrics to a common rate unit, regardless of bucket width.\n```rust\nfn plot_compare_correct(source_a: &[Event], source_b: &[Event]) {\n    // Convert both outputs to \"events per 10M years\" to normalize rates\n    let timeline_a_normalized = compute_rate_per_unit_time(source_a, 10_000_000); \n    let timeline_b_normalized = compute_rate_per_unit_time(source_b, 10_000_000);\n    render_side_by_side(timeline_a_normalized, timeline_b_normalized);\n}\n```",
+  "strength": "Strong` — visually distorts relative frequency metrics by factors equal to the bucket size ratios.",
+  "source": "Richard L. Sites - *Understanding Software Dynamics* (2021), Chapter 9.3, p. 143/144."
+}

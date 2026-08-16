@@ -1,0 +1,13 @@
+{
+  "id": 139,
+  "title": "Overexposure of Rarely Used Features (API Bloat)",
+  "category": "Abstraction Failure",
+  "damaged_code": "```rust\nstruct SocketManager;\nimpl SocketManager {\n    pub fn connect(\n        &self,\n        address: &str,\n        timeout_ms: u64,\n        buffer_size: usize,\n        keep_alive: bool,\n        tls_cert: Option<&Certificate>,\n    ) {\n        // ...\n    }\n}\n```",
+  "pattern": "A function or method API forces every common-case caller to specify deep, low-level configuration details, even when 99% of usages need identical sensible defaults.",
+  "why_bad": "It drastically increases the cognitive load of using the abstraction, making common-case usage complex and prone to errors. It forces callers to read and specify details they do not care about.",
+  "detection": "A method signature requiring many arguments (e.g., 5 or more) where most callers pass dummy, None, or standard default constant values (e.g., `0`, `false`, `None`).",
+  "counterexample": "Highly specialized, low-level backend functions where precise parameterization is strictly necessary at every call site.",
+  "fix": "Separate the API into a simple common-case entry point (e.g., `connect(address)`) and pull the complex configurations into a Builder struct or an optional configuration struct.",
+  "strength": "Contextual",
+  "source": "John K. Ousterhout, *A Philosophy of Software Design* (2018), Chapter 4 (\"Information Hiding\" and General-purpose vs. Special-purpose APIs)."
+}

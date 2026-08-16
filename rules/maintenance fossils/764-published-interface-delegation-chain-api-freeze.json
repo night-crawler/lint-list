@@ -1,0 +1,13 @@
+{
+  "id": 764,
+  "title": "Published Interface Delegation Chain (API Freeze)",
+  "category": "Maintenance Fossils",
+  "damaged_code": "```rust\n// Old method left to maintain backward compatibility for published callers\n#[deprecated(since = \"2.0.0\", note = \"Use `get_office_telephone_number` instead\")]\npub fn get_telephone_number(&self) -> String {\n    self.get_office_telephone_number()\n}\n\npub fn get_office_telephone_number(&self) -> String {\n    format!(\"({}) {}\", self.office_area_code, self.office_number)\n}\n```",
+  "pattern": "A public function marked `#[deprecated]` (or language equivalent) that performs no business logic of its own, but merely delegates arguments directly to a newer function.",
+  "why_bad": "Indirection bloat. It keeps outdated naming structures alive in public APIs, increasing the cognitive load of the library surface area. It causes \"alert fatigue\" when compilers warn about usages that the library author could easily have resolved internally with automated tooling.",
+  "detection": "The linter must observe:\n1. A public function with a deprecation attribute (`#[deprecated]`).\n2. The function body consists entirely of a direct forwarding call (optionally mapping parameter structures) to another public/private function.",
+  "counterexample": "```rust\n// Valid: Old function cannot simply forward because of signature adjustments\n#[deprecated(since = \"2.0.0\", note = \"Use the new typed API instead\")]\npub fn get_raw_status(&self) -> &'static str {\n    match self.get_status() {\n        Status::Active => \"Active\",\n        Status::Inactive => \"Inactive\",\n    }\n}\n```",
+  "fix": "Inline the old function where possible for internal callers, delete the deprecated wrapper, and bump the major crate version when cleaning up public contracts.\n```rust\npub fn get_office_telephone_number(&self) -> String {\n    format!(\"({}) {}\", self.office_area_code, self.office_number)\n}\n```",
+  "strength": "Strong",
+  "source": "- Martin Fowler, *Refactoring: Improving the Design of Existing Code* (1999) [171, 736]\n- Titus Winters et al., *Software Engineering at Google* (2020) [Chapter 15, Deprecation]"
+}

@@ -1,0 +1,13 @@
+{
+  "id": 893,
+  "title": "Point-Free Obscurity",
+  "category": "Local Optimization",
+  "damaged_code": "```rust\n// Extreme point-free style using function composition\nlet parse_and_sum = compose!(sum, map!(parse), filter!(is_numeric), split!(','));\n```",
+  "pattern": "Developers eliminate all intermediate variables and compile functions strictly through a chain of higher-order function compositions, lambdas, or combinators.",
+  "why_bad": "Locally, the code looks highly \"concise\" and elegant to functional programming purists. Globally, it destroys code readability and debuggability. The human mind can only process a limited number of quanta in working memory (4-7 discrete elements). Eliminating named variables strips the code of self-documenting semantic anchors, forcing maintainers to mentally execute the type checker to understand the data flow. When a runtime error occurs, the stack traces are often highly nested and virtually incomprehensible.",
+  "detection": "A chain of multiple generic functional compositions (`compose`, `pipe`, `and_then`) where there are no local variable bindings or named parameters to identify intermediate states.",
+  "counterexample": "Short, simple iterator pipelines (e.g., `vec.iter().map(|x| x + 1).collect()`) are idiomatic and clean. Mark `Context-dependent`.",
+  "fix": "Introduce clearly named intermediate variables to anchor the semantic states of the transformation.\n```rust\nlet raw_tokens = split(input, ',');\nlet numeric_strings = filter(raw_tokens, is_numeric);\nlet numbers = map(numeric_strings, parse);\nlet total = sum(numbers);\n```",
+  "strength": "Contextual",
+  "source": "Eric Elliott, *Composing Software*, \"Working Memory\" (p. 95) / Ousterhout, *A Philosophy of Software Design* \"Complexity is determined by activities...\" (p. 25)."
+}

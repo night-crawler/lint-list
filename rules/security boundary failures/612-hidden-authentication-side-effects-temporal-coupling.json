@@ -1,0 +1,13 @@
+{
+  "id": 612,
+  "title": "Hidden Authentication Side-Effects (Temporal Coupling)",
+  "category": "Security Boundary Failures",
+  "damaged_code": "```rust\npub fn check_password(username: &str, secret: &str) -> bool {\n    let user = find_user(username);\n    if user.verify_pass(secret) {\n        Session::initialize(); // Side-effect: Initializes session state\n        return true;\n    }\n    false\n}\n```",
+  "pattern": "A method whose signature and name implies a side-effect-free query (e.g., checking a password) silently mutates system state (e.g., initializing a session).",
+  "why_bad": "Violates Command-Query Separation. This creates a temporal coupling where the validation function can only be safely called at specific times, leading to security flaws (like accidentally clearing an existing session or failing to audit).",
+  "detection": "A query-like method (returning boolean or validation proof) invoking state mutation functions internally.",
+  "counterexample": "```rust\npub fn check_password(username: &str, secret: &str) -> bool {\n    let user = find_user(username);\n    user.verify_pass(secret)\n}\n\npub fn login_user(username: &str, secret: &str) {\n    if check_password(username, secret) {\n        Session::initialize();\n    }\n}\n```",
+  "fix": "Refactor to separate queries from modifiers. Let verification methods remain pure and side-effect-free; perform session lifecycle mutations in separate explicit command actions.",
+  "strength": "Strong",
+  "source": "`Robert C. Martin - Clean Code (2008)`, Ch 3, p. 44."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 516,
+  "title": "Thread Contention on Coarse-Grained Locks",
+  "category": "Performance Smells",
+  "damaged_code": "```rust\nfn access_element(key: i32) -> Element {\n    let _guard = GLOBAL_MUTEX.lock().unwrap(); // Coarse lock blocks all threads\n    hash_table.get(&key).clone()\n}\n```",
+  "pattern": "Protecting high-frequency, read-mostly operations using a single global or coarse-grained execution lock.",
+  "why_bad": "It forces parallel execution paths to serialize, incurring massive cache miss latency and lock-acquisition-induced context switches (lock bouncing).",
+  "detection": "Global mutexes (`Mutex` or `spin_lock`) acquired in non-mutating search or read-mostly operations.",
+  "counterexample": "The system only runs on a single-core CPU where lock contention cannot occur. `Contextual`.",
+  "fix": "Use fine-grained bucket locking, read-write locks (`RwLock`), hazard pointers, or RCU (Read-Copy Update).",
+  "strength": "Strong",
+  "source": "*1701.00854v6.pdf*, Chapter 10 (p. 8 / p. 9) and *A Philosophy of Software Design*, Chapter 20 (p. 175)."
+}

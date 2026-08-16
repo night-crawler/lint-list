@@ -1,0 +1,13 @@
+{
+  "id": 830,
+  "title": "Storing Multi-valued Collections as Entities (Wasted Joins)",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Mapping a collection of simple values to a separate table and entity\nCREATE TABLE user_skills (\n    id SERIAL PRIMARY KEY,\n    user_id INT REFERENCES users(id),\n    skill_name VARCHAR(100) NOT NULL\n);\n```",
+  "pattern": "Mapping collections of simple Value Objects (like strings or integers) to distinct database tables with individual primary keys.",
+  "why_bad": "It forces unnecessary table joins and triggers ORM database calls for simple attributes, degrading retrieval and storage performance.",
+  "detection": "Database schema declaring a one-to-many join table for simple primitives or attributes that carry no conceptual business identity.",
+  "counterexample": "A database table representing a first-class business Entity with its own unique identity and lifecycle.",
+  "fix": "Serialize the collection of values into a single column (e.g., as a comma-separated string, JSON, or postgres array).",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design (Vernon), Chapter 6, p. 227 [227, 1058]*"
+}

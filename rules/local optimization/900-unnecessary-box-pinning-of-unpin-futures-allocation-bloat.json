@@ -1,0 +1,13 @@
+{
+  "id": 900,
+  "title": "Unnecessary Box Pinning of Unpin Futures (Allocation Bloat)",
+  "category": "Local Optimization",
+  "damaged_code": "```rust\nuse std::future::Future;\nuse std::pin::Pin;\n\n// Boxes and pins the future to return it\npub fn process_data() -> Pin<Box<dyn Future<Output = ()>>> {\n    Box::pin(async {\n        println!(\"Hello\");\n    })\n}\n```",
+  "pattern": "An asynchronous function systematically wraps its return future in `Box::pin` and returns a trait object (`Pin<Box<dyn Future>>`) to avoid putting complex nested generic types in its signature.",
+  "why_bad": "Locally, the function signature is highly \"clean\" and simple. Globally, it introduces substantial runtime allocation overhead. Wrapping every single intermediate future in a heap allocation (`Box`) adds massive memory footprint and cache pollution, completely negating the zero-cost promise of Rust's async state machines.",
+  "detection": "Asynchronous helper functions that do not require dynamic dispatch returning `Pin<Box<dyn Future>>` instead of using the static `impl Future` type erasure.",
+  "counterexample": "Valid when implementing complex recursive async functions where static type sizing is impossible, or when dynamic dispatch is explicitly required by a trait boundary. Mark `Context-dependent`.",
+  "fix": "Use `impl Future` to let the compiler perform static dispatch and compute the exact state machine size at compile-time, zero-cost.\n```rust\nuse std::future::Future;\n\npub fn process_data() -> impl Future<Output = ()> {\n    async {\n        println!(\"Hello\");\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust for Rustaceans*, Chapter 9, \"Asynchronous Rust: Dynamic Dispatch\" (p. 153)."
+}

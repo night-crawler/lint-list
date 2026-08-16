@@ -1,0 +1,13 @@
+{
+  "id": 684,
+  "title": "Turing-Complete Templating Configurations (Purely Conditional Tags)",
+  "category": "Configuration Complexity",
+  "damaged_code": "```html\n<!-- Turns template config into a complex, uncompiled scripting language -->\n<IF expression=\"locale = 'US' || locale = 'CA'\">\n    <IF expression=\"pricedrop > 0.1\">\n        <p>Special Banner</p>\n    </IF>\n</IF>\n```",
+  "pattern": "The implementation of complex nested conditional tags and logic loops directly inside template configurations.",
+  "why_bad": "Turns configuration and view templates into uncompiled programming languages. It introduces untestable branching pathways, breaks static type checking, and creates unmaintainable runtime logic.",
+  "detection": "The use of nested `<IF>` or conditional formatting structures within configuration, markup, or YAML files.",
+  "counterexample": "```rust\n// Compute logical state inside compiled Rust code; pass simple flag\nlet show_special_banner = (locale == \"US\" || locale == \"CA\") && price_drop > 0.1;\n```",
+  "fix": "Treat conditional tags as code smells; compute conditional logic inside the compiled source code, passing only raw variables or simple boolean values to templates.",
+  "strength": "Strong",
+  "source": "[The Addison-Wesley signature series] Martin Fowler - *Patterns of Enterprise Application Architecture* (2015_2002, Addison-Wesley Professional).pdf, Chapter 12."
+}

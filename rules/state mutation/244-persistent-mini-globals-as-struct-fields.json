@@ -1,0 +1,13 @@
+{
+  "id": 244,
+  "title": "Persistent Mini-Globals as Struct Fields",
+  "category": "State Mutation",
+  "damaged_code": "```rust\nstruct ReportGenerator {\n    scratch_dir: String,\n    temp_report_name: String, // Scratchpad field\n}\n\nimpl ReportGenerator {\n    pub fn generate(&mut self) {\n        self.temp_report_name = format!(\"report_{}.pdf\", generate_id());\n        self.compile_pdf();\n    }\n    fn compile_pdf(&mut self) {\n        // Accesses temp_report_name directly\n        write_to(&self.temp_report_name);\n    }\n}\n```",
+  "pattern": "A struct contains private member variables that are only used as temporary \"scratchpads\" to pass data between private methods of a single call chain, rather than being passed as local parameters.",
+  "why_bad": "The fields become \"mini-globals\" inside the class boundary. This unnecessarily increases the persistent footprint of the struct, prevents the struct from being thread-safe, and obscures which fields represent actual long-term object state vs. short-lived calculations.",
+  "detection": "Identify struct fields that are written to in one method and subsequently read in other methods, but have no meaningful lifetime beyond a single, cohesive high-level method invocation.",
+  "counterexample": "Passing the parameters explicitly between methods:\n```rust\nstruct CleanReportGenerator {\n    scratch_dir: String,\n}\n\nimpl CleanReportGenerator {\n    pub fn generate(&self) {\n        let report_name = format!(\"report_{}.pdf\", generate_id());\n        self.compile_pdf(&report_name);\n    }\n    fn compile_pdf(&self, report_name: &str) {\n        write_to(report_name);\n    }\n}\n```",
+  "fix": "Demote the temporary fields to local variables inside the caller method and pass them explicitly to private helper methods as arguments.\n```rust\n// Field removed from struct definition, passed as explicit local parameter instead.\n```",
+  "strength": "Contextual",
+  "source": "*The Art of Readable Code* by Dustin Boswell and Trevor Foucher (Chapter 9, \"Shrink the Scope of Your Variables\", \"Mini-Globals\")."
+}

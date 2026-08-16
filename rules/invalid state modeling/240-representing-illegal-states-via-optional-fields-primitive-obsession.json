@@ -1,0 +1,13 @@
+{
+  "id": 240,
+  "title": "Representing Illegal States via Optional Fields (Primitive Obsession)",
+  "category": "Invalid State Modeling",
+  "damaged_code": "```rust\nstruct Payment {\n    card_number: Option<String>,\n    paypal_email: Option<String>,\n}\n```",
+  "pattern": "Multi-option structs where multiple interdependent fields are marked optional (`Option<T>`), but business logic requires exactly one to be present.",
+  "why_bad": "Downstream code must include redundant assertions or fallback error-handling blocks, inflating complexity and risking runtime bugs.",
+  "detection": "Struct definitions with multiple optional fields that represent mutually exclusive choices.",
+  "counterexample": "`Not stated`",
+  "fix": "Refactor the optional fields into a typed enum with associated data, making illegal states unrepresentable.\n```rust\nenum PaymentMethod {\n    Card { card_number: String },\n    PayPal { email: String },\n}\n```",
+  "strength": "Contextual",
+  "source": "Refactoring to Patterns, Chapter 4 (Primitive Obsession)."
+}

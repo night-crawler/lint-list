@@ -1,0 +1,13 @@
+{
+  "id": 316,
+  "title": "Tuple/Array Unification of Heterogeneous Concepts",
+  "category": "Dry Abuse",
+  "damaged_code": "```rust\nfn calculate_area(dimensions: &[f64; 2]) -> f64 {\n    dimensions[0] * dimensions[1] // Magic offsets representing width and height\n}\n```",
+  "pattern": "Storing conceptually distinct attributes in a generic raw array or tuple simply because they are of the same type.",
+  "why_bad": "The mapping knowledge (e.g., \"index 0 is width, index 1 is height\") is duplicated and scattered across all readers. Modifying the array structure forces a manual rewrite of all coordinate indexes, leading to silent index-shift corruption.",
+  "detection": "Literal index lookups (e.g., `tuple.0`, `arr[1]`) on homogeneous data structures representing conceptually distinct domain properties.",
+  "counterexample": "Homogeneous coordinates (e.g., $(x, y, z)$ coordinates) where coordinates are mathematically identical in behavior.",
+  "fix": "Replace the raw array/tuple with a dedicated struct containing named fields.\n```rust\nstruct Rectangle {\n    width: f64,\n    height: f64,\n}\n\nfn calculate_area(rect: &Rectangle) -> f64 {\n    rect.width * rect.height\n}\n```",
+  "strength": "Strong",
+  "source": "Sandi Metz *POODR*, Chapter 2: \"Obscuring References\", p. 24."
+}

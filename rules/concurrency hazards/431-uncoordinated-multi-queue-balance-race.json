@@ -1,0 +1,13 @@
+{
+  "id": 431,
+  "title": "Uncoordinated Multi-Queue Balance Race",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```c\n// Thread balancing two queues\nvoid balance(Queue *q1, Queue *q2) {\n    spin_lock(&q1->lock);\n    // CRITICAL RACE: Acquires q2 lock without releasing q1,\n    // but another thread might lock q2 then q1!\n    spin_lock(&q2->lock);\n    rebalance(q1, q2);\n    spin_unlock(&q2->lock);\n    spin_unlock(&q1->lock);\n}\n```",
+  "pattern": "Acquiring multiple individual queue locks to perform balancing or element transfers without a standardized ordering protocol.",
+  "why_bad": "It creates a lock-order inversion deadlock when different balancing operations attempt to coordinate overlapping sets of queues concurrently.",
+  "detection": "CFG demonstrating dynamic acquisition of multiple collection/queue locks within a single function without ordering checks.",
+  "counterexample": "Ordering locks by memory address (e.g., locking the queue with the lower address first).",
+  "fix": "Sort lock acquisitions by memory address to enforce a consistent lock hierarchy.\n```c\nvoid balance(Queue *q1, Queue *q2) {\n    Queue *first = q1 < q2 ? q1 : q2;\n    Queue *second = q1 < q2 ? q2 : q1;\n    spin_lock(&first->lock);\n    spin_lock(&second->lock);\n    rebalance(q1, q2);\n    spin_unlock(&second->lock);\n    spin_unlock(&first->lock);\n}\n```",
+  "strength": "Strong",
+  "source": "Paul McKenney Quick Quiz 6.4"
+}

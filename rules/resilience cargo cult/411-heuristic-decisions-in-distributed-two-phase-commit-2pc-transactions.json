@@ -1,0 +1,13 @@
+{
+  "id": 411,
+  "title": "Heuristic Decisions in Distributed Two-Phase Commit (2PC) Transactions",
+  "category": "Resilience Cargo Cult",
+  "damaged_code": "```rust\nif coordinator_timeout_expired() {\n    commit_heuristically(); // Unilateral commit decision to avoid blocking\n}\n```",
+  "pattern": "Configuring distributed transaction participants to make \"heuristic decisions\" (unilateral commit or abort decisions) on coordinator timeouts to avoid locking.",
+  "why_bad": "Heuristic decisions are a euphemism for probably breaking atomicity. If one cohort commits and another aborts unilaterally, the system is left in a permanently inconsistent and corrupt state, defeating the purpose of distributed transactions [41, 354].",
+  "detection": "Identify methods in 2PC or XA-transaction cohort implementations that perform unilateral commits or aborts on coordinator timeout.",
+  "counterexample": "```rust\nlet decision = query_backup_coordinators();\nexecute_decision(decision);\n```",
+  "fix": "Participants must block and seek definitive commit status from coordinator backups or peer transaction logs, reserving heuristic escapes strictly for manual intervention under disaster conditions.",
+  "strength": "Strong",
+  "source": "Martin Kleppmann, *Designing Data-Intensive Applications*, page 353 / passage [354] or page 276 / passage [41]."
+}

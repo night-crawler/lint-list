@@ -1,0 +1,13 @@
+{
+  "id": 546,
+  "title": "Premature Write-Ahead Log for Transient In-Memory Caches",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\n// Writing every cache insert to a disk-based WAL log for an ephemeral caching service\n```",
+  "pattern": "Writing all transactions, updates, or caching inserts to a write-ahead log (WAL) on disk for a transient, ephemeral caching server.",
+  "why_bad": "Write-ahead logging and disk sync/fsync operations are incredibly slow, taking 5–10 ms (compared to nanoseconds for in-memory writes). If the cache is transient and does not require ACID durability, disk-based log files ruin performance [84].",
+  "detection": "The presence of file append and fsync loops inside key-value storage or caching engines that are designated for temporary memory-only caching.",
+  "counterexample": "Persistent database engines (like Postgres or RocksDB) where strict ACID durability is a core system requirement. `Contextual`.",
+  "fix": "Disable logging and disk synchronization for transient nodes, allowing the cache to run entirely in RAM at peak speeds.",
+  "strength": "Strong",
+  "source": "*Database Internals*, Chapter 1 (p. 84)."
+}

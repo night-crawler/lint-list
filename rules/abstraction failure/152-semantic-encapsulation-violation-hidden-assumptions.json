@@ -1,0 +1,13 @@
+{
+  "id": 152,
+  "title": "Semantic Encapsulation Violation (Hidden Assumptions)",
+  "category": "Abstraction Failure",
+  "damaged_code": "```rust\nstruct Database;\nimpl Database {\n    pub fn init(&self) {}\n    pub fn query(&self) {\n        // Assumes init was called, but doesn't check\n    }\n}\n\nfn client_code(db: &Database) {\n    // Client skips calling db.init() because they know\n    // the system bootstrapper called it elsewhere\n    db.query();\n}\n```",
+  "pattern": "Caller code relies on hidden, undocumented implementation assumptions of a class, such as skipping a setup step because they know another part of the system has already run it.",
+  "why_bad": "It introduces silent, tight coupling. If the internal implementation of the class changes (e.g., the bootstrapper no longer initializes that specific database instance), the caller code breaks silently at runtime.",
+  "detection": "A client program calling a method on an object without satisfying the public prerequisites specified in the interface, relying on contextual knowledge.",
+  "counterexample": "None. This is a pure encapsulation bug.",
+  "fix": "Make the interface robust: enforce prerequisites programmatically (e.g., using Typestate pattern or internal initialization checks on first query) so the object can never be called in an invalid state.",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 6, Section 6.2 (\"Be wary of semantic violations of encapsulation\")."
+}

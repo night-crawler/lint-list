@@ -1,0 +1,13 @@
+{
+  "id": 514,
+  "title": "Nagle's Algorithm and Delayed ACKs Conflict (The Double Delay)",
+  "category": "Performance Smells",
+  "damaged_code": "Latency-sensitive request-response network protocols using small packets without disabling Nagle's algorithm.",
+  "pattern": "Small write messages sent over a TCP connection that has Nagle's algorithm enabled, while communicating with a receiver using TCP Delayed ACKs.",
+  "why_bad": "Nagle delays sending packets if unacknowledged data is outstanding, while Delayed ACKs delay sending the ACK (up to 500ms), resulting in severe, artificial latency delays.",
+  "detection": "Multi-step network communication loops involving tiny messages without explicit socket options to disable Nagle.",
+  "counterexample": "Streaming/throughput-heavy bulk communication channels where packet coalescing is beneficial. `Context-dependent`.",
+  "fix": "Enable the `TCP_NODELAY` socket option to disable Nagle's algorithm for low-latency endpoints.",
+  "strength": "Strong",
+  "source": "*Systems Performance*, Chapter 10, Network (p. 88 / 106)."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 573,
+  "title": "Blindly Mapping Value Objects as Normalized Entities (ORM Join Table Abuse)",
+  "category": "Data Query Modeling Smells",
+  "damaged_code": "```xml\n<!-- Mapping a collection of Value Objects as a database Entity in ORM -->\n<set name=\"groupMembers\" table=\"tbl_group_member\">\n    <key column=\"group_id\"/>\n    <composite-element class=\"GroupMember\">\n        <property name=\"name\" column=\"name\"/>\n    </composite-element>\n</set>\n```",
+  "pattern": "Mapping a small collection of domain Value Objects (e.g., a set of contact phone numbers or group members) to a separate database table using join tables with foreign keys.",
+  "why_bad": "Unnecessary database normalization. It forces expensive `JOIN` queries to fetch basic values that are always read together with the parent aggregate, introduces database-level locks, and prevents columns from being `NULL` in certain set operations [242, 528].",
+  "detection": "ORM mappings representing lightweight Value Objects (non-identifiable types) inside dedicated database tables with foreign keys.",
+  "counterexample": "Mapping a collection of rich, independently mutable entities to separate tables.",
+  "fix": "Denormalize the Value Objects directly into the parent table's columns (e.g., using serialized formats or flat columns).",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design (Vernon), p. 471 [242, 528]*"
+}

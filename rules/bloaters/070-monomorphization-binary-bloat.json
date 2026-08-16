@@ -1,0 +1,13 @@
+{
+  "id": 70,
+  "title": "Monomorphization Binary Bloat",
+  "category": "Bloaters",
+  "damaged_code": "```rust\n// Heavy business logic function marked generic on standard types\nfn write_report_log<T: std::fmt::Display>(message: T, filepath: &str) {\n    let mut file = std::fs::OpenOptions::new()\n        .append(true)\n        .open(filepath)\n        .unwrap();\n    // 500 lines of complex formatting logic and file I/O\n    use std::io::Write;\n    writeln!(file, \"LOG: {}\", message).unwrap();\n}\n```",
+  "pattern": "Writing large, non-performance-critical functions that accept highly generic arguments, causing the compiler to duplicate the entire function's machine code for every unique type combination passed.",
+  "why_bad": "Results in static compilation binary bloat. The compiler generates multiple identical copies of heavy formatting and file I/O logic in the final binary (one for `String`, one for `&str`, one for `u32`, etc.), inflating the binary size and severely degrading instruction cache performance.",
+  "detection": "Identify large functions (50+ lines) containing complex, non-trivial logic that accept generic parameters with broad bounds, particularly when they are called with many different concrete types.",
+  "counterexample": "Performance-critical, hot-loop functions (like matrix multiplication or sorting algorithms) where monomorphization and compiler inlining are vital for raw execution speed.",
+  "fix": "Apply the \"inner-function pattern\" or \"type-erasure\". Extract the non-generic core of the function into a private, helper function that works on concrete references (like `&str` or `&dyn Display`).",
+  "strength": "Strong",
+  "source": "*Richard L. Sites - Understanding Software Dynamics (2021)*, Chapter 9, \"Aggregate Measures\" (Code Cache Performance); *Jon Gjengset - Rust for Rustaceans (2021)*, Chapter 2."
+}

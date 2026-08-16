@@ -1,0 +1,13 @@
+{
+  "id": 802,
+  "title": "Zombie Reader/Writer Failures in Redundant Servers",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```rust\n// A replacement server is launched, but the old \"zombie\" server's permissions are not fenced\nasync fn replacement_takeover(new_node: &Node, old_node: &Node) {\n    new_node.activate().await?;\n    // Missing immediate fence/deactivation of old_node!\n}\n```",
+  "pattern": "Activating a replacement server during a rolling migration or failover without immediately deactivating or fencing the old \"zombie\" server's write permissions.",
+  "why_bad": "The zombie server can continue to serve stale reads or accept write requests that conflict with writes accepted by the new server, causing silent, permanent data corruption and lost updates [701].",
+  "detection": "The absence of a fencing token, lease de-registration, or node shutdown call in a server rollover or migration script.",
+  "counterexample": "Valid if the servers are strictly stateless and write to a single centralized database that handles conflict resolution internally.",
+  "fix": "Implement a fencing token pattern, use distributed leases with short TTLs, or physically disable the old node's network credentials before activating the replacement [679, 701].",
+  "strength": "Strong",
+  "source": "A Philosophy of Software Design, \"RAMCloud Zombie Servers\" [701]; Designing Data-Intensive Applications, Chapter 8 [679]"
+}

@@ -1,0 +1,13 @@
+{
+  "id": 541,
+  "title": "Using Bit-Masks / Manual Bit-Packing for Boolean Fields",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\nstruct UserFlags {\n    // Manually packing flags into a single byte to \"save memory and speed up struct copying\"\n    flags: u8, // bit 0: is_active, bit 1: is_admin, bit 2: has_pro\n}\n```",
+  "pattern": "Declaring boolean configuration flags inside a single primitive integer (`u8` or `u32`) and manipulating them via bitwise operators (`&`, `|`, `<<`) to save memory.",
+  "why_bad": "Modern optimizing compilers automatically pack boolean structures efficiently. Manual bit-packing ruins readability, bypasses compiler type safety, and introduces bitwise CPU instruction overhead compared to normal structs with boolean fields [330].",
+  "detection": "Struct fields manipulated via raw numeric bitwise masks or custom binary shift functions instead of clean struct access.",
+  "counterexample": "Implementing low-level hardware device driver registers or custom network frame formats where exact bit structures are mandated by hardware. `Context-dependent`.",
+  "fix": "```rust\nstruct UserFlags {\n    is_active: bool,\n    is_admin: bool,\n    has_pro: bool,\n}\n```",
+  "strength": "Strong",
+  "source": "*Code Complete*, Section 31.5 (p. 330)."
+}

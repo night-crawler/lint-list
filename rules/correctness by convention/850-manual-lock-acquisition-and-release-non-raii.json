@@ -1,0 +1,13 @@
+{
+  "id": 850,
+  "title": "Manual Lock Acquisition and Release (Non-RAII)",
+  "category": "Correctness By Convention",
+  "damaged_code": "```rust\n// C++ / Rust-like pseudocode\nvoid process_data() {\n    mutex.lock();\n    if (has_error()) {\n        return; // BUG: Lock is leaked!\n    }\n    do_work();\n    mutex.unlock();\n}\n```",
+  "pattern": "Manual calling of explicit lock/unlock methods without an RAII guard, or putting lock() inside a try-catch block.",
+  "why_bad": "If an early return, panic, or exception occurs during do_work(), the lock is leaked, causing immediate deadlock in subsequent threads. Putting lock() inside try blocks can cause unlock() to be called on an unacquired lock, causing undefined behavior.",
+  "detection": "Observe direct calls to mutex.lock() and mutex.unlock() (or equivalent) in the same function scope instead of using an RAII-style guard or scope-based locking wrapper.",
+  "counterexample": "Using an RAII lock guard like std::unique_lock in C++ or mutex.lock().unwrap() in Rust which releases the lock automatically on drop.",
+  "fix": "Use an RAII guard: `let _guard = lock.lock().unwrap();` or `std::lock_guard<std::mutex> guard(mutex);` to guarantee release.",
+  "strength": "Strong",
+  "source": "Herlihy, p. 141-142 [157]; or [Addison-Wesley Professional Computing Series] Richard L. Sites - USD, p. 102 [876-877]."
+}

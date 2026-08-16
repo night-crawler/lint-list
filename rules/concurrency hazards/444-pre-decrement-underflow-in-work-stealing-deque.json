@@ -1,0 +1,13 @@
+{
+  "id": 444,
+  "title": "Pre-decrement Underflow in Work-Stealing Deque",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```java\n// Broken popBottom (local thread)\nint b = bottom - 1;\nbottom = b; // Store bottom\nint t = top.getReference();\nif (b < t) {\n    // BUG: No CAS check when bottom and top are equal!\n    // A concurrent thief can steal the last item concurrently!\n    return null; \n}\nreturn tasks[b];\n```",
+  "pattern": "Popping an item from the bottom of a work-stealing deque using simple stores and loads without a CAS operation when the deque has only a single element left.",
+  "why_bad": "When `bottom == top`, there is exactly one element left. A concurrent thief thread could be executing `popTop` and trying to steal that exact element using a CAS on `top`. Without the owner thread also using a CAS on `top` to resolve the conflict, both threads will claim and process the same task.",
+  "detection": "A work-stealing deque implementation where the local worker pops tasks without using a CAS on `top` when the queue length is 1 or less.",
+  "counterexample": "The Chase-Lev deque or BoundedDEQueue which switches to a CAS on `top` when `bottom == top`.",
+  "fix": "Use a CAS to claim the last task and reset the queue.\n```java\nif (b == t) {\n    bottom = 0;\n    if (top.compareAndSet(t, 0, stamp, stamp+1)) {\n        return tasks[b]; // Claimed successfully\n    }\n    return null; // Lost race to a thief\n}\n```",
+  "strength": "Strong",
+  "source": "Herlihy 16.5, Herlihy Figure 16.12"
+}

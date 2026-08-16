@@ -1,0 +1,13 @@
+{
+  "id": 221,
+  "title": "Raw Floating-Point Money Representation",
+  "category": "Primitive Obsession",
+  "damaged_code": "```rust\nstruct ProductItem {\n    price: f64,\n}\n```",
+  "pattern": "Using primitive floating-point types (`f32`, `f64`) to represent monetary values.",
+  "why_bad": "Binary floating-point types cannot represent decimals precisely (e.g., `0.1 + 0.2` equals `0.30000000000000004` rather than `0.3`). Over multiple operations, rounding errors accumulate into real financial discrepancies. It also strip currency context, allowing adding different currencies together.",
+  "detection": "Match struct fields or function parameters named `price`, `amount`, `balance`, `cost`, `tax` typed as `f32` or `f64`.",
+  "counterexample": "Physical or scientific measurements where continuous, approximate floating-point values are mathematically expected:\n```rust\nlet distance_meters: f64 = 102.54;\n```",
+  "fix": "Wrap the money amount in a structured type containing an integer-based count of the minor unit (e.g., cents) or a dedicated decimal library, along with an explicit currency code.\n```rust\nstruct Money {\n    amount_minor_units: i64,\n    currency: Currency,\n}\n```",
+  "strength": "Strong",
+  "source": "*Patterns of Enterprise Application Architecture* by Martin Fowler (p. 488); *Refactoring* by Martin Fowler (p. 84)."
+}

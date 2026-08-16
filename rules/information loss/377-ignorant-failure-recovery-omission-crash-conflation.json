@@ -1,0 +1,13 @@
+{
+  "id": 377,
+  "title": "Ignorant Failure Recovery (Omission-Crash Conflation)",
+  "category": "Information Loss",
+  "damaged_code": "```rust\nfn handle_request_timeout(node_id: u64) {\n    // Immediately assume the node has crashed!\n    remove_from_cluster(node_id);\n    trigger_failover();\n}\n```",
+  "pattern": "Immediately assuming a crash and taking destructive actions (like removing nodes or discarding local data) upon a simple network connection timeout or omission fault.",
+  "why_bad": "It conflates an omission fault (a dropped packet or slow responder) with a crash failure. In-flight state and identity are destroyed. If the node was merely slow, re-adding it causes high resource consumption, churn, or split-brain.",
+  "detection": "Error handlers catching network timeouts that trigger immediate state destruction or node removal.",
+  "counterexample": "Decoupled timeouts where the system enters a degraded \"suspicious\" state before triggering failover:\n```rust\nfn handle_timeout(node_id: u64) {\n    mark_node_probation(node_id);\n}\n```",
+  "fix": "Introduce probation/heartbeat verification and differentiate omission handling from crash-recovery routines.\n```rust\nfn handle_request_timeout(node_id: u64) {\n    if verify_node_alive(node_id) {\n        retry_omitted_message(node_id);\n    } else {\n        remove_from_cluster(node_id);\n    }\n}\n```",
+  "strength": "Contextual",
+  "source": "*Database Internals* by Alex Petrov (Chapter 10, p. 10)."
+}

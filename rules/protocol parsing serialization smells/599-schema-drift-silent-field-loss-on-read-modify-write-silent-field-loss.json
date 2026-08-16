@@ -1,0 +1,13 @@
+{
+  "id": 599,
+  "title": "Schema Drift: Silent Field Loss on Read-Modify-Write (SILENT_FIELD_LOSS)",
+  "category": "Protocol Parsing Serialization Smells",
+  "damaged_code": "```rust\n// System Version 1 schema does not know about photo_url\n#[derive(serde::Deserialize, serde::Serialize)]\nstruct PersonV1 {\n    user_name: String,\n    favorite_number: u64,\n}\n\n// Old service instance reads a document containing {\"user_name\": \"Martin\", \"favorite_number\": 1337, \"photo_url\": \"http://...\"}\nfn update_user_preferences(db_json: &str) -> String {\n    let mut p: PersonV1 = serde_json::from_str(db_json).unwrap(); // Silently discards photo_url\n    p.favorite_number = 42;\n    serde_json::to_string(&p).unwrap() // photo_url is permanently deleted upon write-back!\n}\n```",
+  "pattern": "An application decodes an incoming object using a local structural type that only represents a subset of the fields in the datastore, modifies a field, and writes the object back to the datastore by complete clobbering/overwrite.",
+  "why_bad": "It breaks forward-compatibility during rolling deployments. When newer instances write records containing newer schema extensions, any interleaved write by an older-version instance will silently purge the unrecognized fields, causing severe data loss.",
+  "detection": "Observe cases where a deserialized DTO is serialized back into the exact same database record by an complete overwrite statement, without preserving or mapping unknown fields into an internal buffer.",
+  "counterexample": "```rust\n// Valid: Using a schema-driven serializer that preserves unknown fields, or updating via targeted field set\n#[derive(serde::Deserialize, serde::Serialize)]\nstruct PersonV1 {\n    user_name: String,\n    favorite_number: u64,\n    #[serde(flatten)]\n    extra_fields: std::collections::HashMap<String, serde_json::Value>, // Preserves extra fields\n}\n```",
+  "fix": "Flatten unknown elements into an intermediate map buffer during deserialization and merge them back when writing, or run targeted delta/field-level updates (e.g., `UPDATE ... SET`) instead of full document clobbering.",
+  "strength": "Strong",
+  "source": "*Martin Kleppmann - Designing Data-Intensive Applications (2017)*, Chapter 4 (Figure 4-7); *Vaughn Vernon - Implementing Domain-Driven Design (2013)*, Chapter 14."
+}

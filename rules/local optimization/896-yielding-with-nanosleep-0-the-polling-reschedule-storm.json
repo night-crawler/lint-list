@@ -1,0 +1,13 @@
+{
+  "id": 896,
+  "title": "Yielding with `nanosleep(0)` (The Polling Reschedule Storm)",
+  "category": "Local Optimization",
+  "damaged_code": "```rust\npub fn wait_for_data(ready: &std::sync::atomic::AtomicBool) {\n    while !ready.load(std::sync::atomic::Ordering::Relaxed) {\n        // Yield the CPU, hoping to let other threads run\n        std::thread::sleep(std::time::Duration::from_nanos() == 0);\n    }\n}\n```",
+  "pattern": "A thread waits in a busy-polling loop for a condition to be met, and calls `sleep(0)` or `nanosleep(0)` on each iteration to yield the CPU to other threads.",
+  "why_bad": "Locally, the code is very simple and avoids 100% CPU spinning. Globally, it causes a context-switch meltdown. `nanosleep(0)` forces the operating system kernel to reschedule the thread, triggering a kernel context switch. Because the thread is still runnable, the scheduler often immediately schedules it back on the CPU. The CPU spends all its cycles on kernel scheduling transitions, inflating latency and starving the very threads that are trying to process the data.",
+  "detection": "Loops that repeatedly call `std::thread::sleep` with a duration of zero, or `std::thread::yield_now()` in high-frequency loops.",
+  "counterexample": "Yielding is valid inside a low-frequency background supervisor thread or during thread shutdown.",
+  "fix": "Use a proper blocking mechanism (such as a condition variable, a channel, or an async `Waker`) to park the thread until the data is actually ready, consuming zero CPU.\n```rust\nuse std::sync::{Arc, Mutex, Condvar};\n\npub fn wait_for_data(pair: Arc<(Mutex<bool>, Condvar)>) {\n    let (lock, cvar) = &*pair;\n    let mut ready = lock.lock().unwrap();\n    while !*ready {\n        ready = cvar.wait(ready).unwrap();\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Richard L. Sites, *Understanding Software Dynamics*, Chapter 26.8, \"nanosleep(0) delay\" (p. 329)."
+}

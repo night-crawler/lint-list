@@ -1,0 +1,13 @@
+{
+  "id": 904,
+  "title": "Point-Query Optimized Index Overkill",
+  "category": "Local Optimization",
+  "damaged_code": "```rust\n// Database definition indexing every single column\npub fn setup_tables(db: &mut Database) {\n    db.execute(\"CREATE TABLE users (id INT, age INT, name TEXT, city TEXT)\");\n    db.execute(\"CREATE INDEX idx_users_id ON users(id)\");\n    db.execute(\"CREATE INDEX idx_users_age ON users(age)\");\n    db.execute(\"CREATE INDEX idx_users_name ON users(name)\");\n    db.execute(\"CREATE INDEX idx_users_city ON users(city)\");\n}\n```",
+  "pattern": "A developer or DBA adds indexes to every single column in a relational database table to ensure that every potential search query is blazingly fast.",
+  "why_bad": "Locally, individual SELECT queries are fast. Globally, it severely degrades write performance and bloats storage. Every time a row is inserted, updated, or deleted, *every single index* must also be updated. This turns a simple, sequential insert into a flurry of random write operations across multiple index structures, inflating write amplification and disk latency.",
+  "detection": "Database schemas where the number of indexes is equal to or exceeds the number of columns, or where tables with high write-to-read ratios are heavily indexed.",
+  "counterexample": "Valid for read-only static reference tables where writes occur only during nightly batch jobs. Mark `Context-dependent`.",
+  "fix": "Choose indexes selectively based on actual application query profiles. Index only those columns that are frequently targeted in WHERE clauses or JOIN operations.\n```rust\npub fn setup_tables(db: &mut Database) {\n    db.execute(\"CREATE TABLE users (id INT, age INT, name TEXT, city TEXT)\");\n    db.execute(\"CREATE INDEX idx_users_id ON users(id)\"); // Primary key index only\n}\n```",
+  "strength": "Strong",
+  "source": "Martin Kleppmann, *Designing Data-Intensive Applications*, Chapter 3, \"SSTables and LSM-Trees: Indexing Overhead\" (p. 77, 81) / Michael T. Nygard, *Release It!*, \"Verify gains against real data\" (p. 293)."
+}

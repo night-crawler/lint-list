@@ -1,0 +1,13 @@
+{
+  "id": 50,
+  "title": "Front-End Only Validation",
+  "category": "Essential Complexity Denial Patterns",
+  "damaged_code": "```rust\n// Expecting user_id to be safe because the web UI verified authorization\nfn update_profile(user_id: u32, new_bio: String) {\n    db.execute(\"UPDATE profiles SET bio = ? WHERE id = ?\", new_bio, user_id);\n}\n```",
+  "pattern": "Performing validation/authorization checks only at the entry gateway (such as a front-end form or web client) and assuming inputs to the internal API are secure.",
+  "why_bad": "An attacker can easily bypass the front-end client and send arbitrary HTTP payloads directly to the backend API, modifying other users' resources without authorization [30:235].",
+  "detection": "Administrative or state-mutating endpoints that execute actions on resources using untrusted arguments without verifying the authenticated caller's permissions to modify that specific resource [30:235].",
+  "counterexample": "```rust\nfn update_profile(caller: &Session, user_id: u32, new_bio: String) -> Result<(), AuthError> {\n    if caller.user_id != user_id && !caller.is_admin() {\n        return Err(AuthError::Unauthorized);\n    }\n    db.execute(\"UPDATE profiles SET bio = ? WHERE id = ?\", new_bio, user_id);\n    Ok(())\n}\n```",
+  "fix": "Validate authentication, authorization, and structural constraints on every backend endpoint, regardless of upstream client checks [30:235].",
+  "strength": "Strong",
+  "source": "*Building Secure and Reliable Systems* (Adkins), Chapter 5; *Implementing Domain-Driven Design* (Vernon), Chapter 14 [30:235]."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 621,
+  "title": "Low-Level Cryptoparameter Manipulation (Nonce Reuse)",
+  "category": "Security Boundary Failures",
+  "damaged_code": "```rust\nuse aes_gcm::aead::{Aead, KeyInit};\nuse aes_gcm::{Aes256Gcm, Nonce};\n\nfn encrypt_payload(key: &[u8; 32], plaintext: &[u8]) {\n    let cipher = Aes256Gcm::new_from_slice(key).unwrap();\n    // Static nonce: Reused across multiple encryption operations\n    let nonce = Nonce::from_slice(b\"static_nonce_bytes\");\n    let ciphertext = cipher.encrypt(nonce, plaintext).unwrap();\n}\n```",
+  "pattern": "Writing custom cryptologic that exposes low-level parameters (such as nonces or initialization vectors) to application developers, leading to static nonce assignments.",
+  "why_bad": "Reusing a nonce in Galois Counter Mode (GCM) destroys its authenticity guarantees. An adversary observing two payloads encrypted with the same nonce can recover the authentication key, causing complete system failure.",
+  "detection": "Static string literals or array constants passed to initialization parameters for nonces or IVs in standard crypto APIs.",
+  "counterexample": "```rust\n// Rely on Tink or high-level AEAD libraries that manage nonce generation automatically\n```",
+  "fix": "Utilize high-level, correct-by-construction cryptographic libraries (like Tink) that abstract parameter management and prevent nonce reuse by design.",
+  "strength": "Strong",
+  "source": "`Heather Adkins et al. - Building Secure and Reliable Systems (2020)`, Ch 6, p. 118."
+}

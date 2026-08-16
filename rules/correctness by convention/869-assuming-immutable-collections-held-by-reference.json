@@ -1,0 +1,13 @@
+{
+  "id": 869,
+  "title": "Assuming Immutable Collections Held by Reference",
+  "category": "Correctness By Convention",
+  "damaged_code": "```rust\n// Java-like\nclass CppClass {\n    private List<Token> tokens;\n    public CppClass(List<Token> t) {\n        this.tokens = t; // BUG: Stores raw reference!\n    }\n}\n```",
+  "pattern": "Storing a raw reference to a mutable collection passed into a constructor, assuming the caller will not modify it post-construction.",
+  "why_bad": "If the caller modifies, sorts, or appends items to the collection after passing it to the constructor, the internal invariants of the class are silently mutated, leading to undefined or buggy state.",
+  "detection": "A constructor copies a mutable collection reference directly into an instance field without performing a clone or deep copy.",
+  "counterexample": "Performing defensive copying during construction: `this.tokens = new ArrayList<>(t);`.",
+  "fix": "Perform a defensive copy of the collection: `this.tokens = t.clone();` or wrap it in an immutable list wrapper.",
+  "strength": "Strong",
+  "source": "[Robert C. Martin series] Feathers, Michael C - WEWLC, p. 632 [632]."
+}

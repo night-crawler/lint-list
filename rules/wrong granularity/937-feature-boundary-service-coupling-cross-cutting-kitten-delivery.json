@@ -1,0 +1,13 @@
+{
+  "id": 937,
+  "title": "Feature-Boundary Service Coupling (Cross-Cutting Kitten Delivery)",
+  "category": "Wrong Granularity",
+  "damaged_code": "```\nAdding a new \"Kitten Delivery\" feature requires modifying:\n- Driver Service (to track kitten transport safety)\n- Payment Service (to charge the kitten fee)\n- Inventory Service (to count available kittens)\n- Dispatcher Service (to coordinate kitten pickup)\n```",
+  "pattern": "Decomposing services strictly by functional behavior (e.g., Drivers, Payments, Dispatching) instead of partitioning them around domain-driven bounded contexts.",
+  "why_bad": "Violates independent deployability. Adding a single, cross-cutting feature forces developers to coordinate, modify, test, and deploy code changes across every single service in the cluster simultaneously, rendering the distributed architecture obsolete.",
+  "detection": "Observe cases where adding a single business feature requires coordinated commits and deployments across more than 80% of active service repositories.",
+  "counterexample": "`Context-dependent`. Highly cohesive pipelines where step-by-step sequential changes are fundamentally required to pass new transaction states.",
+  "fix": "Reorganize service boundaries around domain-driven Bounded Contexts where a single team and service can own and deploy the entire lifecycle of a feature.\n```\n/services/kitten_delivery_service/ // Owns payment, tracking, and dispatch for kitten deliveries\n```",
+  "strength": "Strong",
+  "source": "*Robert C. Martin - Clean Architecture (2017)*, Chapter 27, \"Services: Great and Small\" (The Kitty Problem / Cross-cutting concerns, p. 242)."
+}

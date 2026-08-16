@@ -1,0 +1,13 @@
+{
+  "id": 51,
+  "title": "String-Concatenated SQL Queries",
+  "category": "Essential Complexity Denial Patterns",
+  "damaged_code": "```rust\n// Injectable raw string query construction\nlet query = format!(\"SELECT * FROM users WHERE name = '{}'\", user_input);\ndb.execute(&query)?;\n```",
+  "pattern": "Concatenating raw, untrusted user strings into query templates instead of using parameter bindings.",
+  "why_bad": "It exposes the application to SQL injection attacks, where malicious actors can manipulate the command structure, leading to data exfiltration or loss [13:104].",
+  "detection": "Dynamic query string construction containing variable formatting of non-vetted strings, immediately passed to query compilation API sinks [13:104].",
+  "counterexample": "```rust\ndb.query(\"SELECT * FROM users WHERE name = ?\").bind(user_input).fetch_all()?;\n```",
+  "fix": "Use typed query parameters or parameterized placeholder bindings exclusively [13:104].",
+  "strength": "Strong",
+  "source": "*Building Secure and Reliable Systems* (Adkins), Chapter 12 [13:104]; *Code Complete* (McConnell), Chapter 8 [28:214]."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 653,
+  "title": "Assertion Detail Sprawl",
+  "category": "Test Smells",
+  "damaged_code": "```rust\n#[test]\nfn test_get_log_entry() {\n    let logger = Logger::new();\n    let entry = logger.create_entry(\"User logged in\");\n\n    // Brittle assertion on exact timestamp format and wording details\n    assert_eq!(\n        entry.to_string(),\n        \"LOG [2026-08-15 14:26:27] - SUCCESS: User logged in\"\n    );\n}\n```",
+  "pattern": "Assertions that verify exact string matches, formatting, whitespace, or irrelevant fields that are not part of the functional contract under test.",
+  "why_bad": "It causes high test fragility [269, 572]. Simple, harmless formatting or text changes (e.g., tweaking logging layout) break tests across the suite, leading to refactoring friction [269, 572].",
+  "detection": "Assertions checking exact string matches containing volatile data (timestamps, absolute file paths, formatted messages) [269, 572].",
+  "counterexample": "```rust\n#[test]\nfn test_get_log_entry_flexible() {\n    let logger = Logger::new();\n    let entry = logger.create_entry(\"User logged in\");\n    \n    // Asserting only on the stable functional invariant\n    assert!(entry.to_string().contains(\"User logged in\"));\n}\n```",
+  "fix": "Build custom domain-specific assertion methods or simplify expectations to assert strictly on core stable invariants rather than presentation formatting [269, 572].",
+  "strength": "Strong",
+  "source": "*   *The Pragmatic Programmer*, \"Unreliable things / Fragile tests\" (p. 269) [269, 572]\n*   *Clean Code*, \"Avoid details / Expressive assertions\" (p. 127) [70, 72]"
+}

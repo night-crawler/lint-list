@@ -1,0 +1,13 @@
+{
+  "id": 265,
+  "title": "Busy-Polling for State Transitions",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```rust\nloop {\n    if let Some(msg) = channel.try_recv() {\n        process(msg);\n        break;\n    }\n}\n```",
+  "pattern": "Spinning in a loop repeatedly checking an event source or state variable without yielding to the scheduler or OS reactor.",
+  "why_bad": "Burns 100% CPU on the polling thread, starving other processes and wasting massive system resources.",
+  "detection": "An active loop containing non-blocking state checks without sleeps, yields, or waker registrations.",
+  "counterexample": "Yielding spinlocks used under extremely low-latency, controlled scheduling contexts.",
+  "fix": "Use blocking synchronizations or async-await wakers that register event interest with the OS reactor:\n```rust\nlet msg = channel.recv().await?;\nprocess(msg);\n```",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust For Rustaceans*, Chapter 9."
+}

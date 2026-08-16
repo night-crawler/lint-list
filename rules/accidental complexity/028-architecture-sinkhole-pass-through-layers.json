@@ -1,0 +1,13 @@
+{
+  "id": 28,
+  "title": "Architecture Sinkhole / Pass-Through Layers",
+  "category": "Accidental Complexity",
+  "damaged_code": "```rust\nfn get_user_presentation(id: u64) -> User {\n    get_user_business(id)\n}\nfn get_user_business(id: u64) -> User {\n    get_user_rules(id)\n}\nfn get_user_rules(id: u64) -> User {\n    get_user_database(id)\n}\n```",
+  "pattern": "In a strictly layered architecture, an action or request traverses from the top layer to the bottom layer via simple pass-through calls, with no logical transformations or business rules applied at intermediate levels.",
+  "why_bad": "It results in immense boilerplate and processing overhead, making changes extremely tedious. Adding a single field forces the developer to modify signatures and code across all adjacent layers, with zero architectural or encapsulation benefits.",
+  "detection": "A series of nested functions/methods across physical directories or modules (e.g., `web` -> `domain` -> `db`) that perform identical delegate forwarding with matching signatures and no local logic.",
+  "counterexample": "`Context-dependent`. Boundaries where strict security checks, RPC marshaling, or cross-network serialization are required.",
+  "fix": "Adopt an \"open\" layered architecture style, allowing simple read/write requests to bypass intermediate layers when no business logic or transformation is required.",
+  "strength": "Contextual",
+  "source": "Mark Richards & Neal Ford, *Fundamentals of Software Architecture* (2020), Chapter 10 (\"Layered Architecture Style - Architecture Sinkhole\"), p. 138."
+}

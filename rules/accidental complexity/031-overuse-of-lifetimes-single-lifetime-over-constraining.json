@@ -1,0 +1,13 @@
+{
+  "id": 31,
+  "title": "Overuse of Lifetimes / Single Lifetime Over-Constraining",
+  "category": "Accidental Complexity",
+  "damaged_code": "```rust\nstruct StrContainer<'a> {\n    outer: &'a mut &'a str,\n}\n```",
+  "pattern": "Declaring multiple nested references inside a struct using a single generic lifetime parameter.",
+  "why_bad": "It unnecessarily over-constrains the flexibility of the type. The compiler is forced to unify them and infer the shortest lifetime for all nested references, making it impossible to compile subsequent borrows or loops, leading to cryptic borrow checker errors.",
+  "detection": "A struct definition containing multiple references (especially nested mutable references) that all share a single generic lifetime parameter `'a`.",
+  "counterexample": "Flat structs containing references with similar lifetimes where no nested mutable borrows are performed.",
+  "fix": "Use multiple generic lifetime parameters (e.g., `struct StrContainer<'a, 'b> { outer: &'a mut &'b str }`) specifically when a type contains nested references.",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust for Rustaceans* (2021), Chapter 2 (\"Foundations - Borrowing and Lifetimes\"), pp. 531-532, 538."
+}

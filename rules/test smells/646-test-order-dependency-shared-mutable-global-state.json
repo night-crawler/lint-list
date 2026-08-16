@@ -1,0 +1,13 @@
+{
+  "id": 646,
+  "title": "Test-Order Dependency (Shared Mutable Global State)",
+  "category": "Test Smells",
+  "damaged_code": "```rust\nuse std::sync::Mutex;\nuse lazy_static::lazy_static;\n\nlazy_static! {\n    static ref GLOBAL_CONFIG: Mutex<Config> = Mutex::new(Config::default());\n}\n\n#[test]\nfn test_a_modifies_globals() {\n    let mut config = GLOBAL_CONFIG.lock().unwrap();\n    config.set_port(8080);\n    // Success, but pollutes the global state for subsequent tests!\n    assert_eq!(config.get_port(), 8080);\n}\n\n#[test]\nfn test_b_assumes_defaults() {\n    let config = GLOBAL_CONFIG.lock().unwrap();\n    // FAILS if test_a_modifies_globals runs first!\n    assert_eq!(config.get_port(), 80); \n}\n```",
+  "pattern": "Tests that modify shared global variables, database records, static singletons, or environment contexts without isolating or resetting state in cleanup teardown routines.",
+  "why_bad": "It violates test isolation (hermeticity) [507]. Tests become non-deterministic, flaky, and highly order-dependent [507]. It makes parallel execution impossible and causes confusing failures located far from the actual bug [331, 460].",
+  "detection": "The presence of mutable static globals, file writes, environmental changes, or shared databases inside tests without accompanying `tearDown` or rollback blocks.",
+  "counterexample": "Writing to a thread-local variable or an isolated, memory-allocated database instance configured uniquely per test case.",
+  "fix": "Make each test hermetic by setting up its own environment locally [507]. If singletons must be used, introduce static setup/teardown setters (`setTestingInstance`) to reset state between runs [310, 620].",
+  "strength": "Strong",
+  "source": "*   *Software Engineering at Google*, \"Properties common to all test sizes\" (p. 218) [507]\n*   *Working Effectively with Legacy Code*, \"Introduce Static Setter / Static Cling\" (p. 120-125, 372) [310, 331, 620, 653]\n*   *A Philosophy of Software Design*, \"Global variables\" (p. 46) [460]"
+}

@@ -1,0 +1,13 @@
+{
+  "id": 672,
+  "title": "Blind Startup Sequence (The Unguarded Storefront)",
+  "category": "Observability Operability Smells",
+  "damaged_code": "```rust\nfn main() {\n    // Binds and starts accepting client connections instantly\n    start_http_server(\"0.0.0.0:8080\"); \n}\n```",
+  "pattern": "Binding network listeners and accepting external traffic before verifying that essential system resources, environment configuration keys, and database connections are accessible and validated.",
+  "why_bad": "The application starts accepting user transactions immediately but fails 100% of requests because underlying directories, databases, or schemas are missing, creating a storm of failed transactions and triggering cascading downstream alerts [266, 686].",
+  "detection": "Inbound network listeners starting before bootstrap validation sequences.",
+  "counterexample": "```rust\nfn main() {\n    verify_system_environment_and_db().expect(\"Bootstrap sanity check failed\");\n    start_http_server(\"0.0.0.0:8080\");\n}\n```",
+  "fix": "Enforce a rigid bootstrap sanity check sequence where all necessary files, local assets, and database connections are validated, preventing the server from accepting any incoming traffic until the system is verified healthy.",
+  "strength": "Strong",
+  "source": "*Release It!*, page 266 [266, 686]."
+}

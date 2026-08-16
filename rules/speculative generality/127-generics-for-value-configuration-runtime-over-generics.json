@@ -1,0 +1,13 @@
+{
+  "id": 127,
+  "title": "Generics for Value Configuration (Runtime Over-Generics)",
+  "category": "Speculative Generality",
+  "damaged_code": "```rust\nstruct Connection<const TIMEOUT_SECS: u64>;\n```",
+  "pattern": "Using compile-time type parameters or const generics for parameters that are only known or configured at runtime.",
+  "why_bad": "Prevents simple configuration updates at runtime, degrades compile times, and forces distinct type instantiations for different configuration values.",
+  "detection": "Const generic parameters on structs that represent simple configuration values (like ports, timeouts, limits).",
+  "counterexample": "Array sizes or matrix dimensions that must be checked at compile time.",
+  "fix": "Pass configuration values as fields or parameters during struct initialization.",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust for Rustaceans* (2021)."
+}

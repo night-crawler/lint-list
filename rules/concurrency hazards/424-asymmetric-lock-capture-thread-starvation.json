@@ -1,0 +1,13 @@
+{
+  "id": 424,
+  "title": "Asymmetric Lock Capture (Thread Starvation)",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```cpp\nwhile (running) {\n    lock.lock();\n    process_transaction();\n    lock.unlock(); // Wakes up other threads\n    // Immediately loops and re-acquires\n}\n```",
+  "pattern": "A thread releases a lock and immediately attempts to re-acquire it in a tight loop without intermediate execution delays or yields.",
+  "why_bad": "The releasing thread retains the lock variable's cache line in a modified state. When it re-acquires immediately, it bypasses the scheduling latency of waiting threads (which are still waking up from OS futex blocks), starving other threads indefinitely.",
+  "detection": "A lock release statement followed immediately by a lock acquisition statement within the same loop block, without intermediate yield, sleep, or non-locked work.",
+  "counterexample": "The loop contains an explicit backoff, yield, or sleep statement between release and re-acquisition.",
+  "fix": "Introduce a small delay or a scheduling yield after releasing the lock under high contention.\n```cpp\nwhile (running) {\n    lock.lock();\n    process_transaction();\n    lock.unlock();\n    std::this_thread::yield(); \n}\n```",
+  "strength": "Contextual",
+  "source": "Richard Sites 27.5.1 (p. 347), \"mystery27\" Lock Capture Case Study"
+}

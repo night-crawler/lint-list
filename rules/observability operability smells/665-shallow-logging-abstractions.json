@@ -1,0 +1,13 @@
+{
+  "id": 665,
+  "title": "Shallow Logging Abstractions",
+  "category": "Observability Operability Smells",
+  "damaged_code": "```rust\nstruct NetworkErrorLogger;\n\nimpl NetworkErrorLogger {\n    fn log_rpc_open_error(dest: &str, e: std::io::Error) {\n        log::error!(\"Unable to find or open connection to {}: {:?}\", dest, e);\n    }\n}\n```",
+  "pattern": "Creating a distinct class, structure, or interface whose sole purpose is wrapping single-line log statements.",
+  "why_bad": "Introduces useless conceptual weight and high coupling. A programmer reading the call must constantly jump between files to see what fields are logged, and any change in log parameters forces modifications in multiple places [143-144].",
+  "detection": "A dedicated error-logging class containing several methods that are each invoked in exactly one unique place.",
+  "counterexample": "```rust\n// Log directly at source\nlet rpc_conn = connection_pool.get(dest).map_err(|e| {\n    log::error!(\"Unable to find or open connection to {}: {:?}\", dest, e);\n    e\n})?;\n```",
+  "fix": "Log the error state directly at the operational site where it is detected.",
+  "strength": "Strong",
+  "source": "*A Philosophy of Software Design*, Section 9.6 [143-144]."
+}

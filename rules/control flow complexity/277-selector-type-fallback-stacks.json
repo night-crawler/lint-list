@@ -1,0 +1,13 @@
+{
+  "id": 277,
+  "title": "Selector Type Fallback Stacks",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```rust\nfn handle(req: Request) {\n    if let Err(_) = ServiceA::process(&req) {\n        if let Err(_) = ServiceB::process(&req) {\n            ServiceC::process(&req);\n        }\n    }\n}\n```",
+  "pattern": "Chaining fallback synchronous attempts sequentially inline to recover from service failures.",
+  "why_bad": "Amplifies execution latency and couples caller directly to multiple alternative backend implementations.",
+  "detection": "Deep nested conditional fallback calls on failure return states of distinct services.",
+  "counterexample": "Standard error handling where a single local backup (like a local cache file) is checked once on failure.",
+  "fix": "Decouple via a broker, or route through a structured gateway.",
+  "strength": "Contextual",
+  "source": "Juval Löwy, *Righting Software*, Chapter 5."
+}

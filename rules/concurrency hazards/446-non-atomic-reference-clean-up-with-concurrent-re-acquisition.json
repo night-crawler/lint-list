@@ -1,0 +1,13 @@
+{
+  "id": 446,
+  "title": "Non-Atomic Reference Clean-up with Concurrent Re-Acquisition",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```cpp\nvoid release() {\n    if (ref_count.fetch_sub(1) == 1) {\n        // BUG: Non-atomic gap between count hitting zero and freeing.\n        // A concurrent thread with an existence guarantee could increment\n        // the counter from 0 to 1 and assume the object is valid!\n        delete this; \n    }\n}\n```",
+  "pattern": "Using a simple increment/decrement atomic reference counter where a concurrent thread can increment the reference counter from zero.",
+  "why_bad": "If a thread increments a reference counter that has already hit zero (but the object is not yet deleted), it will assume the object is live, while the releasing thread concurrently deletes the object, causing a fatal crash.",
+  "detection": "Atomic increments on a reference counter that do not check if the current count is zero before incrementing (e.g. not using a compare-and-swap loop).",
+  "counterexample": "Using `fetch_add_unless` or checking for zero atomically.",
+  "fix": "Use an atomic RMW loop that fails to increment if the reference count is already zero.\n```cpp\nbool try_acquire() {\n    int count = ref_count.load();\n    while (count > 0) {\n        if (ref_count.compare_exchange_weak(count, count + 1)) {\n            return true;\n        }\n    }\n    return false; // Already dead, cannot re-acquire\n}\n```",
+  "strength": "Strong",
+  "source": "Paul McKenney 13.2, Quick Quiz 13.6"
+}

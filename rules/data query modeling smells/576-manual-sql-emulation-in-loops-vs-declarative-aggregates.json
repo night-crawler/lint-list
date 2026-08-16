@@ -1,0 +1,13 @@
+{
+  "id": 576,
+  "title": "Manual SQL Emulation in Loops vs Declarative Aggregates",
+  "category": "Data Query Modeling Smells",
+  "damaged_code": "```rust\n// Looping over rows to sum them up on the application side\nlet mut total_hours = 0;\nlet tasks = sqlx::query(\"SELECT hours_remaining FROM tasks WHERE id = $1\")\n    .bind(backlog_id)\n    .fetch_all(&pool).await?;\nfor task in tasks {\n    total_hours += task.get::<i32, _>(\"hours_remaining\");\n}\n```",
+  "pattern": "Retrieving raw rows and iterating over them in application code to compute simple metrics (like sums or counts) instead of using declarative SQL aggregates.",
+  "why_bad": "High memory and CPU cost. It drags thousands of records over the network to the application memory just to compute a single integer, wasting bandwidth and ignoring efficient database index scans [250, 538, 604].",
+  "detection": "Application loops performing basic math (e.g., additions, counts) on lists of rows retrieved from a database query.",
+  "counterexample": "Performing complex business logic or transformations on data that cannot be represented in SQL.",
+  "fix": "Use declarative database aggregates like `SUM` or `COUNT`.\n```rust\nlet total_hours: i32 = sqlx::query_scalar(\n    \"SELECT SUM(hours_remaining) FROM tasks WHERE backlog_id = $1\"\n).bind(backlog_id).fetch_one(&pool).await?;\n```",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design (Vernon), p. 471 [250, 538]*  \n*Patterns of Enterprise Application Architecture (Fowler), p. 110 [604]*"
+}

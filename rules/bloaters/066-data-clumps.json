@@ -1,0 +1,13 @@
+{
+  "id": 66,
+  "title": "Data Clumps",
+  "category": "Bloaters",
+  "damaged_code": "```rust\nfn connect_to_database(\n    host: &str,\n    port: u16,\n    username: &str,\n    ssl_enabled: bool,\n) {\n    todo!()\n}\n\nfn ping_server(\n    host: &str,\n    port: u16,\n    username: &str,\n    ssl_enabled: bool,\n) {\n    todo!()\n}\n```",
+  "pattern": "Multiple independent functions consistently accepting the exact same cluster of 3-4 primitive arguments in their signatures, representing a cohesive domain concept.",
+  "why_bad": "Structural redundancy and high risk of out-of-sync modifications. If the domain concept expands (e.g., adding a connection timeout parameter), every single function signature and call site must be updated in parallel. It indicates that a hidden struct is waiting to be extracted.",
+  "detection": "Look for identical groupings of 3+ parameters of the same names and types appearing across multiple distinct function signatures.",
+  "counterexample": "`Context-dependent`. Highly generic APIs or mathematics libraries where coordinates `(x, y, z)` are passed together but represent independent primitives with no shared domain behavior.",
+  "fix": "Introduce a cohesive parameter struct that groups these variables into a single conceptual unit.",
+  "strength": "Strong",
+  "source": "*Martin Fowler - Refactoring (1999)*, Chapter 3, \"Data Clumps\"; *Steve McConnell - Code Complete (2004)*, Chapter 13."
+}

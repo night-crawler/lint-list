@@ -1,0 +1,13 @@
+{
+  "id": 335,
+  "title": "Identity vs. Structural Equality Ambiguity in Entities",
+  "category": "Semantic Ambiguity",
+  "damaged_code": "```rust\n#[derive(PartialEq)]\nstruct UserEntity {\n    id: u64,\n    username: String,\n    email: String, // email changing breaks equality!\n}\n```",
+  "pattern": "Deriving or implementing structural equality (`PartialEq` comparing all fields) on an object that represents a domain Entity with a persistent identity.",
+  "why_bad": "Entities are defined by a thread of continuity and identity, not their attributes. If a user changes their email, they are still the same physical user. Using structural equality means a modified entity is considered a different object, breaking collections, caches, and repository synchronization.",
+  "detection": "A struct representing a domain Entity (possessing a unique ID field like `id` or `uuid`) that derives `PartialEq` or compares non-ID fields in its `eq` implementation.",
+  "counterexample": "A pure Value Object where structural equality is expected because it has no identity:\n```rust\n#[derive(PartialEq)]\nstruct FullName {\n    first_name: String,\n    last_name: String,\n}\n```",
+  "fix": "Implement `PartialEq` and `Eq` manually to compare only the unique identity field of the Entity.\n```rust\nstruct UserEntity {\n    id: u64,\n    username: String,\n    email: String,\n}\n\nimpl PartialEq for UserEntity {\n    fn eq(&self, other: &Self) -> bool {\n        self.id == other.id\n    }\n}\nimpl Eq for UserEntity {}\n```",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design* by Vaughn Vernon (Chapter 5, p. 218); *Domain Modeling made Functional* by Scott Wlaschin (p. 92)."
+}

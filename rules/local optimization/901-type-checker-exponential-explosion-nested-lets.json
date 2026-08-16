@@ -1,0 +1,13 @@
+{
+  "id": 901,
+  "title": "Type-Checker Exponential Explosion (Nested Lets)",
+  "category": "Local Optimization",
+  "damaged_code": "```rust\n// Extreme nesting of let bindings on the right-hand side\nlet f1 = |x| x;\nlet f2 = |x| f1(f1(x));\nlet f3 = |x| f2(f2(x));\nlet f4 = |x| f3(f3(x));\nlet f5 = |x| f4(f4(x));\n// Compiling this takes minutes due to exponential type expansion\n```",
+  "pattern": "The codebase contains deeply nested sequences of generic `let` bindings where each binding is substituted or nested inside the right-hand side of another binding, especially when working with heavily generic closures or type reconstruction.",
+  "why_bad": "While locally appearing mathematically pure or elegant, it triggers a catastrophic compiler performance blowout. The Hindley-Milner type reconstruction algorithm (and Rust's type inference) has exponential worst-case complexity when handling deeply nested expressions. The compiler can spend minutes or hours attempting to prove the types, blowing up compile times and rendering iterative development impossible.",
+  "detection": "Deeply nested closures or generics in let bindings where type inference is forced to trace type relationships across many levels of recursive right-hand-side substitutions.",
+  "counterexample": "Standard linear sequences of let bindings are perfectly fine and compile instantly.",
+  "fix": "Break the dependency chain by adding explicit type annotations to intermediate bindings, truncating the type inference engine's search tree.\n```rust\nlet f1: fn(i32) -> i32 = |x| x;\nlet f2: fn(i32) -> i32 = |x| f1(f1(x));\n```",
+  "strength": "Strong",
+  "source": "Benjamin C. Pierce, *Types and Programming Languages*, Chapter 22 \"Type Reconstruction\" (p. 336)."
+}

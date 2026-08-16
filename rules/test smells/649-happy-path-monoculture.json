@@ -1,0 +1,13 @@
+{
+  "id": 649,
+  "title": "Happy-Path Monoculture",
+  "category": "Test Smells",
+  "damaged_code": "```rust\n#[test]\nfn test_save_profile_success() {\n    let mut db = InMemoryDb::new();\n    let service = UserService::new(&mut db);\n    let result = service.save_profile(\"alice\", \"profile_data\");\n    \n    // Only verifies the successful path\n    assert!(result.is_ok()); \n}\n```",
+  "pattern": "A test suite consisting entirely of success scenarios (\"happy path\") while completely omitting tests for errors, edge cases, boundaries, or failure recovery paths.",
+  "why_bad": "In real production environments, systems run in a hazardous world (out-of-bounds inputs, disk failures, network drops) [569]. Leaving failure paths untested is a major source of reliability defects and security vulnerabilities [27, 270].",
+  "detection": "The complete absence of tests asserting error types, limits, exceptions, timeouts, or negative bounds.",
+  "counterexample": "Tests verifying correct recovery and bounds (e.g., passing invalid parameters, empty files, or simulated network errors) [498].",
+  "fix": "Systematically test limits (maximums, minimums, off-by-one bounds), empty conditions, and use fault-injection simulators to verify error recovery [267, 270, 498].",
+  "strength": "Contextual",
+  "source": "*   *The Pragmatic Programmer*, \"Ruthless Testing: Boundary Conditions\" (Topic 41) [267, 569, 573]\n*   *Release It!*, \"Emulate out-of-spec failures / Happy Path\" (p. 239) [270, 597]\n*   *Building Secure and Reliable Systems*, \"Testing Error Handling Paths\" (p. 239) [27, 391]"
+}

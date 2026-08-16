@@ -1,0 +1,13 @@
+{
+  "id": 955,
+  "title": "Varying Payload Representations in Parallel API Operations",
+  "category": "Conceptual Integrity",
+  "damaged_code": "```rust\nimpl AlbumService {\n    fn create_album_from_dto(&self, dto: AlbumDto) { ... }\n    fn create_album_from_xml(&self, xml_string: String) { ... }\n    fn update_album_from_json(&self, json_string: String) { ... }\n}\n```",
+  "pattern": "Exposing multiple methods for the same business operation, each accepting a different serialization format or input model.",
+  "why_bad": "It clutters the API surface and pushes serialization responsibility down into the business logic. It violates design consistency and makes testing, versioning, and security audits extremely difficult.",
+  "detection": "Flag service classes that expose multiple methods performing the same logical task but taking different raw inputs (like strings, byte arrays, and objects) in parallel.",
+  "counterexample": "Low-level serialization libraries designed specifically for multi-format decoding. Marked `Context-dependent`.",
+  "fix": "Standardize the service signature on a single, uniform type (e.g., `AlbumDto`) and let outer controller adapters handle the parsing.",
+  "strength": "Strong",
+  "source": "*Patterns of Enterprise Application Architecture* by Martin Fowler (2002), p. 388, 747."
+}

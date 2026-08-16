@@ -1,0 +1,13 @@
+{
+  "id": 671,
+  "title": "The Silent Background Thread Crash",
+  "category": "Observability Operability Smells",
+  "damaged_code": "```rust\nfn init_background_sync() {\n    std::thread::spawn(|| {\n        if let Err(e) = run_periodic_sync() {\n            // thread exits silently, system continues to run \"healthy\"\n        }\n    });\n}\n```",
+  "pattern": "Spawning asynchronous background tasks or threads without registering handlers to propagate, log, or restart on failure.",
+  "why_bad": "The main process remains running and responding to pings, but critical background services (like caching, log-saver daemons, or replication tasks) have crashed permanently, leading to silent data rot or stale states [192, 638].",
+  "detection": "Spawning asynchronous tasks without registering telemetry metrics, panicking on join failure, or exporting thread exit states.",
+  "counterexample": "```rust\nfn init_background_sync() {\n    std::thread::spawn(|| {\n        if let Err(e) = run_periodic_sync() {\n            log::error!(\"Critical sync daemon crashed: {:?}\", e);\n            std::process::exit(1); // Crash hard so scheduler restarts instance\n        }\n    });\n}\n```",
+  "fix": "Connect background thread outcomes directly to application lifecycle managers, ensuring task crashes either terminate the process or log error metrics that trigger immediate automated restarts.",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design*, Chapter 8 [192, 638]; *Kill It with Fire*, Chapter 10 [487, 632]."
+}

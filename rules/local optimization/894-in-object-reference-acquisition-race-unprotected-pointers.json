@@ -1,0 +1,13 @@
+{
+  "id": 894,
+  "title": "In-Object Reference Acquisition Race (Unprotected Pointers)",
+  "category": "Local Optimization",
+  "damaged_code": "```rust\npub struct Route {\n    pub ref_count: usize,\n    pub freed: bool,\n}\n\nimpl Route {\n    // Unprotected initial reference acquisition\n    pub fn acquire_ref(&mut self) {\n        if self.freed {\n            panic!(\"Use after free!\");\n        }\n        self.ref_count += 1;\n    }\n}\n```",
+  "pattern": "A reference counter is placed directly inside the object it is supposed to protect, and the method to increment the count is called directly on the object's pointer without holding an external existence guarantee.",
+  "why_bad": "This creates a critical, severe concurrent race condition. Because the reference counter resides *inside* the object, there is zero protection during the instant when the pointer is dereferenced to fetch the counter itself! If another thread concurrently decrements the count to zero and deallocates the memory, the thread attempting to increment the count will read freed garbage, causing memory corruption or crashes.",
+  "detection": "Reference counter increments (`atomic_inc`, `ref_count += 1`) called on a pointer that is retrieved from a shared data structure without any external lock, RCU read-side barrier, or hazard pointer protecting the dereference.",
+  "counterexample": "Rust's `Arc::clone(&self)` is safe because the clone is called on an *already held* strong reference count, meaning the object's existence is guaranteed for the duration of the call.",
+  "fix": "Protect reference count acquisition using an external mechanism like Read-Copy Update (RCU) or hazard pointers, ensuring the object's existence is guaranteed *before* incrementing its internal counter.\n```rust\n// Use safe RCU to guarantee existence before incrementing\npub fn route_lookup(id: u64) -> Option<Arc<Route>> {\n    let rcu_guard = rcu::read_lock();\n    let route_ptr = rcu_guard.get_route(id)?;\n    if route_ptr.try_increment_ref() {\n        Some(route_ptr.clone())\n    } else {\n        None\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "1701.00854v6 (RCU book), Section 9.2, \"Reference Counting\" (p. 132-133) / Section 13.2.1.4 \"Atomic Counting With Check and Release\" (p. 275)."
+}

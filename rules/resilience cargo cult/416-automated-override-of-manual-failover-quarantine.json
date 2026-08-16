@@ -1,0 +1,13 @@
+{
+  "id": 416,
+  "title": "Automated Override of Manual Failover/Quarantine",
+  "category": "Resilience Cargo Cult",
+  "damaged_code": "```rust\nnode.is_quarantined = true; // Manually isolated for security auditing\n\n// Background auto-healing loop\nif node.ping().is_ok() {\n    node.is_quarantined = false; // BUG: Automation overrides manual isolation!\n}\n```",
+  "pattern": "Allowing automated failback or auto-healing loops to unilaterally override manual quarantine states or administrative overrides.",
+  "why_bad": "If an engineer manually drains or quarantines a node because of an active security compromise, memory leak, or data-corrupting bug, the auto-healing loop will interpret the node's responsiveness as \"healthy\" and automatically reintroduce it into rotation. This sabotages mitigation efforts [59].",
+  "detection": "Look for background state reconciliation loops that can clear manually-set quarantine, drained, or isolated states without requiring explicit manual/administrative confirmation.",
+  "counterexample": "```rust\nif node.ping().is_ok() && node.status != NodeStatus::ManuallyQuarantined {\n    node.status = NodeStatus::Active;\n}\n```",
+  "fix": "Never permit automated systems to override manual administrative states (fail static or preserve manual overrides).",
+  "strength": "Strong",
+  "source": "Heather Adkins et al., *Building Secure and Reliable Systems*, page 173 / passage [59]."
+}

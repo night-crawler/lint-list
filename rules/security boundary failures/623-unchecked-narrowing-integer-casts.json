@@ -1,0 +1,13 @@
+{
+  "id": 623,
+  "title": "Unchecked Narrowing Integer Casts",
+  "category": "Security Boundary Failures",
+  "damaged_code": "```rust\nfn allocate_buffer(length: usize) {\n    // Narrowing cast: Truncation occurs if length exceeds u16::MAX\n    let size = length as u16;\n    let buffer = vec![0u8; size as usize];\n}\n```",
+  "pattern": "Executing narrow casts (`as` conversions in Rust, implicit numeric narrowing in C++) on integer values specifying sizes or offsets derived from client-controlled packets.",
+  "why_bad": "Narrowing casts discard significant bits. Casting `65537` to `u16` yields `1`. This causes the system to allocate a tiny buffer but then write large payloads into it, causing memory corruption or heap overflows in compiled binaries.",
+  "detection": "Narrowing cast operators (e.g., `usize as u16` or `u64 as u32`) operating on data elements loaded from network or external stream lengths.",
+  "counterexample": "```rust\nfn allocate_buffer(length: usize) -> Result<(), &'static str> {\n    let size: u16 = length.try_into().map_err(|_| \"Size overflow\")?;\n    let buffer = vec![0u8; size as usize];\n    Ok(())\n}\n```",
+  "fix": "Utilize safe, checked conversion traits (`try_into()` in Rust) that return errors if the value exceeds target bounds, rather than compiling silent truncations.",
+  "strength": "Strong",
+  "source": "`Steve McConnell - Code Complete (2004)`, Ch 8; `Heather Adkins et al. (2020)`, Ch 12."
+}

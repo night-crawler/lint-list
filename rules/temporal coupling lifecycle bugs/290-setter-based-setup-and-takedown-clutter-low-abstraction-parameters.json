@@ -1,0 +1,13 @@
+{
+  "id": 290,
+  "title": "Setter-Based Setup and Takedown Clutter (Low-Abstraction Parameters)",
+  "category": "Temporal Coupling Lifecycle Bugs",
+  "damaged_code": "```cpp\n// C++\nWithdrawalTransaction withdrawal;\nwithdrawal.SetCustomerId(customerId);\nwithdrawal.SetBalance(balance);\nwithdrawal.SetWithdrawalAmount(withdrawalAmount);\nwithdrawal.SetWithdrawalDate(withdrawalDate);\nProcessWithdrawal(withdrawal); // BUG: High risk of missing a setter or passing invalid state!\n```",
+  "pattern": "A routine requires the caller to execute multiple setter methods in a precise order on a transaction object before executing the main process method, followed by a manual delete.",
+  "why_bad": "Exposes internal object implementation details and enforces a temporal ordering of setters. If a caller misses any setter or calls them out of order, the process method runs on invalid data.",
+  "detection": "Frequent occurrences of sequential `Set...` method calls immediately preceding a call to a processing routine that consumes the modified object.",
+  "counterexample": "A Fluent Builder API where the object cannot be built or consumed until `.build()` is validated.",
+  "fix": "Redesign the function interface to accept all required parameters directly as arguments (`ProcessWithdrawal(customerId, balance, amount, date)`).",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete*, page 557-558 / passage [557, 558]."
+}

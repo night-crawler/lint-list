@@ -1,0 +1,13 @@
+{
+  "id": 123,
+  "title": "Single-Implementation Trait (The \"Just-in-Case\" Trait)",
+  "category": "Speculative Generality",
+  "damaged_code": "```rust\ntrait DataService {\n    fn fetch_data(&self) -> String;\n}\nstruct MyDataService;\nimpl DataService for MyDataService {\n    fn fetch_data(&self) -> String { \"data\".to_string() }\n}\n```",
+  "pattern": "Defining a trait/interface that has exactly one concrete implementer in the codebase.",
+  "why_bad": "It adds a layer of indirection, slows down compilation, and complicates refactoring without providing any polymorphic or decoupling benefit. It directly violates YAGNI.",
+  "detection": "A trait declaration with exactly one `impl` block in both production and test code.",
+  "counterexample": "Decoupling volatile or non-deterministic external systems (like email or SMS gateways) where mocking/faking is required in tests. Mark the rule `Context-dependent`.",
+  "fix": "Collapse the trait and let consumers depend directly on the concrete struct.",
+  "strength": "Contextual",
+  "source": "Martin Fowler, *Patterns of Enterprise Application Architecture* (2002), p. 245; Steve McConnell, *Code Complete* (2004), Chapter 24."
+}

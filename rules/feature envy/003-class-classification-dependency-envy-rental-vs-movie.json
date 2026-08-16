@@ -1,0 +1,13 @@
+{
+  "id": 3,
+  "title": "Class-Classification Dependency Envy (Rental vs. Movie)",
+  "category": "Feature Envy",
+  "damaged_code": "```rust\nimpl Rental {\n    fn charge(&self) -> f64 {\n        let mut result = 0.0;\n        match self.movie.price_code {\n            0 => {\n                result += 2.0;\n                if self.days_rented > 2 {\n                    result += (self.days_rented - 2) as f64 * 1.5;\n                }\n            }\n            1 => result += self.days_rented as f64 * 3.0,\n            _ => {}\n        }\n        result\n    }\n}\n```",
+  "pattern": "A struct method branches (`match` or `if let`) on an enumeration or type-code of an associated object to calculate values, rather than delegating the type-based calculation to the type itself.",
+  "why_bad": "If a new movie classification (e.g., \"Sci-Fi\") is added, the `Rental` struct must be modified. Type-specific variations should be encapsulated inside the class representing that type (or via polymorphism/traits).",
+  "detection": "A method matching on `self.associated_field.classification` and performing different arithmetic paths.",
+  "counterexample": "`Context-dependent`. If the calculation depends heavily on the `Rental`'s properties (`days_rented`) and changing the movie structure to know about days rented would introduce a cyclic dependency.",
+  "fix": "Delegate the calculation to the classifying type, passing the variable properties as arguments.\n```rust\nimpl Movie {\n    fn charge(&self, days_rented: u32) -> f64 {\n        let mut result = 0.0;\n        match self.price_code {\n            0 => {\n                result += 2.0;\n                if days_rented > 2 {\n                    result += (days_rented - 2) as f64 * 1.5;\n                }\n            }\n            1 => result += days_rented as f64 * 3.0,\n            _ => {}\n        }\n        result\n    }\n}\n```",
+  "strength": "Contextual",
+  "source": "Martin Fowler, *Refactoring* (1999), Chapter 1 (page 367-368)."
+}

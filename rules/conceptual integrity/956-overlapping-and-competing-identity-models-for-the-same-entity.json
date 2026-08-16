@@ -1,0 +1,13 @@
+{
+  "id": 956,
+  "title": "Overlapping and Competing Identity Models for the Same Entity",
+  "category": "Conceptual Integrity",
+  "damaged_code": "```rust\nstruct Customer {\n    id: i64,           // Auto-increment DB key\n    uuid: String,      // UUID for integration\n    email_key: String, // Domain natural key\n}\n```",
+  "pattern": "An entity uses multiple, conflicting fields as identity keys, without designating a single, consistent identity strategy.",
+  "why_bad": "It creates severe confusion regarding entity equality and lookup. It leads to synchronization failure, as different database tables or microservices store different ID representations of the same customer.",
+  "detection": "Entities containing multiple identifier-like fields that are used interchangeably in equality (`Eq`) and query methods.",
+  "counterexample": "Using secondary indices for search optimization, provided the primary unique key is explicitly defined. Marked `Context-dependent`.",
+  "fix": "Unify on a single, primary identity key (e.g., an immutable `Uuid` wrapper) and use it exclusively for comparison and reference.",
+  "strength": "Strong",
+  "source": "*Domain-Driven Design* by Eric Evans (2003), p. 28."
+}

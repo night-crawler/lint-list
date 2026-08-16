@@ -1,0 +1,13 @@
+{
+  "id": 833,
+  "title": "Bypassing Repository boundaries with Free Database Queries",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Executing free database queries directly in the client application code\nlet user = sqlx::query(\"SELECT * FROM users WHERE status = 'Banned'\")\n    .fetch_all(&pool).await?;\n```",
+  "pattern": "Executing raw database queries directly in user-interface or client code, bypassing standard Repository isolation layers.",
+  "why_bad": "It leads to business logic leaking into SQL queries and client code. The domain entities become mere data containers, and the domain model becomes completely irrelevant.",
+  "detection": "Raw SQL strings or direct database connection queries located in controllers, views, or application coordinators.",
+  "counterexample": "Repository implementation classes utilizing raw SQL to execute structured interface queries.",
+  "fix": "Enforce strict layered boundaries, routing all persistence and query retrieval through the Repository interface.",
+  "strength": "Strong",
+  "source": "*Domain-Driven Design (Evans), Chapter 6, p. 144 [51, 413]*"
+}

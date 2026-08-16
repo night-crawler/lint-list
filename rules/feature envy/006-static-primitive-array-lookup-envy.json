@@ -1,0 +1,13 @@
+{
+  "id": 6,
+  "title": "Static Primitive Array Lookup Envy",
+  "category": "Feature Envy",
+  "damaged_code": "```rust\nstatic LAST_DAY_OF_MONTH: [u32; 13] = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];\nstruct DateUtil;\nimpl DateUtil {\n    fn last_day_of_month(month: u32, year: u32) -> u32 {\n        let mut d = LAST_DAY_OF_MONTH[month as usize];\n        if month == 2 && is_leap_year(year) {\n            d += 1;\n        }\n        d\n    }\n}\n```",
+  "pattern": "A utility method retrieves calendar constraints or properties by indexing into a static array using primitive parameters.",
+  "why_bad": "The static array and calculation lack cohesion with any type. By keeping this logic in `DateUtil` under primitive formats, we pollute the date utilities with details that belong entirely to the `Month` enum.",
+  "detection": "Accessing global lookup arrays using a primitive parameter in an unassociated utility class.",
+  "counterexample": "Global tables for system-wide performance or hardware configuration indexes.",
+  "fix": "Define the lookup array and query behavior directly on the `Month` type.\n```rust\nimpl Month {\n    fn last_day(self, year: u32) -> u32 {\n        let d = match self {\n            Month::February => if is_leap_year(year) { 29 } else { 28 },\n            Month::April | Month::June | Month::September | Month::November => 30,\n            _ => 31,\n        };\n        d\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 16 (page 279)."
+}

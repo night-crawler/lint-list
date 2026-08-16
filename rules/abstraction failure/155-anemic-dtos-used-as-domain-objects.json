@@ -1,0 +1,13 @@
+{
+  "id": 155,
+  "title": "Anemic DTOs Used as Domain Objects",
+  "category": "Abstraction Failure",
+  "damaged_code": "```rust\n// DTO designed strictly for database serialization\nstruct UserDto {\n    pub name: String,\n    pub login_count: u32,\n}\n\n// Logic using the DTO is written directly in UI or Controller\nfn render_dashboard(user: UserDto) {\n    if user.login_count > 10 {\n        // Business logic leaked into view presentation\n    }\n}\n```",
+  "pattern": "Using raw Data Transfer Objects (DTOs) as the primary objects inside core business logic or UI rendering, instead of converting them to proper domain models.",
+  "why_bad": "It leaks serialization and persistence formats directly into presentation or calculation layers. Changes to database serialization libraries or fields break presentation layers immediately, causing tight horizontal coupling.",
+  "detection": "DTOs or JSON/SQL serialization structs crossing deep into the UI, calculation, or validation layers of an application.",
+  "counterexample": "Very simple, database-driven administrative CRUD panels with zero business logic or validation.",
+  "fix": "Keep DTOs strictly at the serialization boundaries, and immediately map them to rich, behavioral domain models once they cross into application logic.",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Patterns of Enterprise Application Architecture* (2002), Chapter 15 (\"Data Transfer Object\")."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 326,
+  "title": "Ambiguous Boolean Flag (Command vs State)",
+  "category": "Semantic Ambiguity",
+  "damaged_code": "```rust\nlet read_password = true; // Does this mean \"already read\" or \"need to read\"?\n```",
+  "pattern": "A boolean variable or field named with a verb phrase (e.g., `read_password`, `write_cache`, `validate_order`) that can be interpreted as either an imperative command or a past-tense state.",
+  "why_bad": "The lack of structural indicators (like `is_` or `has_`) causes severe cognitive confusion. A reader cannot tell if setting `read_password = true` triggers a password-reading routine (imperative) or marks a password as already processed (state).",
+  "detection": "Match variables, struct fields, or function arguments typed as `bool` named with bare verbs.",
+  "counterexample": "Using auxiliary verbs to differentiate state from command:\n```rust\nlet password_has_been_read = true;\nlet should_read_password = true;\n```",
+  "fix": "Use prefixes such as `is_`, `has_`, `should_`, or `can_` to clarify the semantic meaning of the boolean.\n```rust\nlet has_read_password = true;\n// Or\nlet should_read_password = true;\n```",
+  "strength": "Strong",
+  "source": "*The Art of Readable Code* by Dustin Boswell and Trevor Foucher (Chapter 3, p. 26)."
+}

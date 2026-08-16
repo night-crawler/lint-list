@@ -1,0 +1,13 @@
+{
+  "id": 759,
+  "title": "Boilerplate Field Replication (Trivial Structural Delegation)",
+  "category": "Ceremony Boilerplate",
+  "damaged_code": "```rust\nstruct Address {\n    street: String,\n    city: String,\n}\nstruct Customer {\n    street: String,\n    city: String,\n}\n```",
+  "pattern": "Replicating multiple individual fields from a nested struct directly into a parent struct, and manually writing mapping logic to copy data back and forth.",
+  "why_bad": "It introduces redundant state duplication and high boilerplate ceremony. Rather than using composition directly, developers are forced to replicate signatures, creating maintenance bottlenecks and risking synchronization decay.",
+  "detection": "A parent struct containing a subset of fields with identical types and names as a logical sub-component struct, accompanied by manual field copying.",
+  "counterexample": "DTOs that flatten complex object graphs to conform to external legacy API specifications.",
+  "fix": "```rust\nstruct Customer {\n    address: Address,\n}\n```",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Refactoring* (1999), Chapter 3 (\"Code Smells - Feature Envy\"); Robert C. Martin, *Clean Code* (2008), Chapter 6."
+}

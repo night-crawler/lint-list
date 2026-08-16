@@ -1,0 +1,13 @@
+{
+  "id": 412,
+  "title": "Unfenced Shared Leases/Locks (Lease Expiry Race Condition)",
+  "category": "Resilience Cargo Cult",
+  "damaged_code": "```rust\nif lease.is_valid() {\n    // Process pause (GC, thread scheduling, VM migration) happens here!\n    write_to_shared_storage(data); // BUG: Lease expired during pause; corrupts storage!\n}\n```",
+  "pattern": "Relying on timed leases or locks (such as from ZooKeeper) to protect shared resources (like disk or file storage) without verifying a fencing token.",
+  "why_bad": "If the client experiences a process pause (e.g. garbage collection pause or hypervisor scheduling delay) that exceeds the lease time, the lock service grants the lease to another client. When the paused client resumes, it executes its write, unaware that its lease has expired, corrupting the shared resource [342, 343].",
+  "detection": "Identify write operations to shared resources that rely on lease validation without passing an incrementing token checked by the receiving storage subsystem.",
+  "counterexample": "```rust\nwrite_to_shared_storage(data, lease.fencing_token); // Storage rejects if token < current\n```",
+  "fix": "Ensure every lock allocation returns an incrementing fencing token, which must be passed to and verified by the storage service on every write.",
+  "strength": "Strong",
+  "source": "Martin Kleppmann, *Designing Data-Intensive Applications*, page 287-290 / passage [342, 343]."
+}

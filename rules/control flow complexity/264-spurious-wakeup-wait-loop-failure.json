@@ -1,0 +1,13 @@
+{
+  "id": 264,
+  "title": "Spurious Wakeup Wait Loop Failure",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```rust\nif !self.ready {\n    self.condvar.wait(&mut lock);\n}\n```",
+  "pattern": "Waiting on a condition variable or monitor inside an `if` block instead of a `while` loop.",
+  "why_bad": "Vulnerable to spurious wakeups. The thread can be awakened by the OS or scheduler even when the condition is not met, violating safety invariants.",
+  "detection": "An `if` statement wrapping a condition variable `wait` or `await`.",
+  "counterexample": "None. Waiting on a condition variable must always be in a loop.",
+  "fix": "Wrap the wait statement inside a `while` loop to re-evaluate the invariant on wakeup:\n```rust\nwhile !self.ready {\n    self.condvar.wait(&mut lock);\n}\n```",
+  "strength": "Strong",
+  "source": "Maurice Herlihy, *Monitors and Blocking Synchronization*, Chapter 8."
+}

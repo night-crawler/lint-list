@@ -1,0 +1,13 @@
+{
+  "id": 182,
+  "title": "Bounded-Context Duplication (Splintered Policies)",
+  "category": "Change Preventers",
+  "damaged_code": "```rust\n// File: src/customer_portal.rs\npub fn validate_shipping_address(zip: &str) -> bool {\n    zip.len() == 5 && zip.chars().all(|c| c.is_ascii_digit()) // Duplicated postal rule\n}\n\n// File: src/supplier_portal.rs\npub fn validate_warehouse_address(zip: &str) -> bool {\n    zip.len() == 5 && zip.chars().all(|c| c.is_ascii_digit()) // Leaked duplicated logic\n}\n```",
+  "pattern": "Duplicate business concepts and logical validation rules are written separately in multiple modules that represent distinct boundaries or subdomains.",
+  "why_bad": "Rules get out of sync. When the postal rules change (e.g., supporting alphanumeric zip codes), a developer may update the customer portal but forget the supplier portal, leading to inconsistent system behavior and silent bugs.",
+  "detection": "Outwardly different modules implementing identical logical checks, data shapes, or processing loops on identical string or scalar shapes.",
+  "counterexample": "`Context-dependent`. Validation rules that are coincidentally identical but represent fundamentally different concepts (e.g., validating that an age and a shopping cart quantity are both positive integers).",
+  "fix": "Extract the common business policy into a single shared, generic domain type (e.g., `struct PostalCode`) that enforces the validation rule upon instantiation and distribute it.",
+  "strength": "Contextual",
+  "source": "Eric Evans, *Domain-Driven Design* (2003), Chapter 14 (\"Recognizing Splinters Within a BOUNDED CONTEXT\"), pp. 354-355."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 404,
+  "title": "Unbounded Read/Write Network Socket Timeouts",
+  "category": "Resilience Cargo Cult",
+  "damaged_code": "```rust\nuse std::net::TcpStream;\nlet mut stream = TcpStream::connect(\"127.0.0.1:8080\").unwrap(); // OS default timeouts apply\n```",
+  "pattern": "Establishing a network socket or stream connection without explicitly setting connection, read, or write timeouts.",
+  "why_bad": "If a network partition or hardware failure occurs (such as a dropped TCP ACK), the socket blocks waiting for data. Operating system default socket timeouts are extremely long (often minutes), which keeps the request-handling thread or async task tied up, reducing server capacity to zero [161, 162, 166].",
+  "detection": "Detect socket creation (`TcpStream`, socket connections, etc.) where methods like `.set_read_timeout()`, `.set_write_timeout()`, or future-based wrappers with a `timeout` select are absent.",
+  "counterexample": "```rust\nuse std::net::TcpStream;\nuse std::time::Duration;\nlet stream = TcpStream::connect(\"127.0.0.1:8080\").unwrap();\nstream.set_read_timeout(Some(Duration::from_secs(5))).unwrap();\nstream.set_write_timeout(Some(Duration::from_secs(5))).unwrap();\n```",
+  "fix": "Always configure explicit read and write timeouts immediately after socket instantiation, or wrap async operations in a tokio timeout.",
+  "strength": "Strong",
+  "source": "Michael T. Nygard, *Release It!*, page 111-114, 161 / passage [161, 162, 166]."
+}

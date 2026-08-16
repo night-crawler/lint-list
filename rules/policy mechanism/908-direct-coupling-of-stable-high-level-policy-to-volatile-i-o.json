@@ -1,0 +1,13 @@
+{
+  "id": 908,
+  "title": "Direct Coupling of Stable High-Level Policy to Volatile I/O",
+  "category": "Policy Mechanism",
+  "damaged_code": "```rust\nfn encrypt_file(input_path: &str, output_path: &str) -> std::io::Result<()> {\n    let mut file = std::fs::File::open(input_path)?; // Direct I/O coupling\n    let mut data = Vec::new();\n    file.read_to_end(&mut data)?;\n    let encrypted = perform_encryption(&data);\n    std::fs::write(output_path, encrypted)?;\n    Ok(())\n}\n```",
+  "pattern": "A high-level policy or core algorithmic function directly instantiates or depends on concrete file system, console, or network I/O mechanisms.",
+  "why_bad": "High-level policies should be highly stable and reusable. Coupling them directly to I/O devices or system structures makes them volatile and limits their reuse (e.g., encrypting stream data, network sockets, or testing with in-memory buffers).",
+  "detection": "A module categorized as \"Core Domain\" or \"Policy\" imports and directly invokes concrete I/O functions (`std::fs`, `std::net`, `std::io::stdout`).",
+  "counterexample": "Low-level drivers, CLI main entry points, or infrastructural adapters are expected to bind directly to I/O.",
+  "fix": "Decouple the high-level policy by accepting abstract read/write traits instead of physical file paths or concrete sockets.\n```rust\nfn encrypt_stream<R: std::io::Read, W: std::io::Write>(mut reader: R, mut writer: W) -> std::io::Result<()> {\n    let mut data = Vec::new();\n    reader.read_to_end(&mut data)?;\n    let encrypted = perform_encryption(&data);\n    writer.write_all(&encrypted)?;\n    Ok(())\n}\n```",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Architecture* (2017), Chapter 19, \"Policy and Level\", p. 184-187, 280-281."
+}

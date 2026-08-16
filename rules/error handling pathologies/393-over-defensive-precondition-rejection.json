@@ -1,0 +1,13 @@
+{
+  "id": 393,
+  "title": "Over-Defensive Precondition Rejection",
+  "category": "Error Handling Pathologies",
+  "damaged_code": "```rust\nfn remove_item(map: &mut HashMap<String, String>, key: &str) -> Result<(), ItemNotFoundError> {\n    if !map.contains_key(key) {\n        return Err(ItemNotFoundError); // Error because item isn't there\n    }\n    map.remove(key);\n    Ok(())\n}\n```",
+  "pattern": "An API method that returns an error when asked to perform a state removal/cleanup on a resource that is already removed or clean.",
+  "why_bad": "Unnecessary exception complexity. If the caller's intent is simply to ensure that the item no longer exists, returning an error forces them to wrap calls in catch blocks or check existence first, bloating user code. [25, Section 10.3]",
+  "detection": "An idempotent state-reduction function (e.g., delete, clear, unset) returning an error if the item is not found or is already in the target state.",
+  "counterexample": "Situations where the absence of the item indicates a severe internal logical corruption or violation of a strict transactional state machine.",
+  "fix": "Redefine the method to \"ensure state\" rather than \"perform action\". If the state is already met, return success.\n```rust\nfn remove_item(map: &mut HashMap<String, String>, key: &str) {\n    map.remove(key);\n}\n```",
+  "strength": "Contextual",
+  "source": "*John Ousterhout - A Philosophy of Software Design*, Chapter 10.3, \"Define errors out of existence: Tcl unset\" [25]"
+}

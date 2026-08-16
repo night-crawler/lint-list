@@ -1,0 +1,13 @@
+{
+  "id": 206,
+  "title": "Synchronous Callback Deadlock Coupling (The Observer Trap)",
+  "category": "Couplers",
+  "damaged_code": "```rust\nstruct EventSource {\n    callbacks: Vec<Box<dyn Fn()>>,\n}\nimpl EventSource {\n    fn trigger(&self) {\n        // Synchronously executes callbacks while holding implicit lock/borrow\n        for cb in &self.callbacks {\n            cb();\n        }\n    }\n}\n```",
+  "pattern": "An event notifier executes user-registered callbacks synchronously while holding an internal lock or a read borrow on its own structure.",
+  "why_bad": "It is a deadlock minefield. If the registered callback attempts to re-enter the event source, modify the registration list, or acquire a lock that the triggering thread holds, the system deadlocks.",
+  "detection": "Methods that loop over a collection of traits or closures and execute them synchronously within a synchronized block or borrow scope.",
+  "counterexample": "Purely functional map or transform callbacks (like `Iterator::map`) that run entirely on independent thread scopes.",
+  "fix": "Expose asynchronous callback triggers, execute callbacks outside the lock scope, or utilize an event queue that schedules callbacks to run on separate execution ticks.\n```rust\n// Execute callbacks after releasing the internal Mutex lock\n```",
+  "strength": "Strong",
+  "source": "Michael T. Nygard, *Release It!* (2007), Chapter 4 (\"Stability Anti-patterns - UserCallback.java\")."
+}

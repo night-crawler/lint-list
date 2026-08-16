@@ -1,0 +1,13 @@
+{
+  "id": 188,
+  "title": "Subclass-Style Struct Composition (Subclass Coupling)",
+  "category": "Couplers",
+  "damaged_code": "```rust\nstruct BaseConnection {\n    timeout: u32,\n}\nimpl BaseConnection {\n    fn connect(&self) { /* ... */ }\n}\n\nstruct HttpConnection {\n    base: BaseConnection, // Composition mimicking subclass inheritance\n}\nimpl HttpConnection {\n    fn make_request(&self) {\n        // Reaching directly into \"parent\" base field\n        self.base.connect();\n    }\n}\n```",
+  "pattern": "A composite struct deeply couples itself to an inner struct's implementation by acting as a pseudo-subclass, directly exposing and calling base methods internally.",
+  "why_bad": "It mirrors the tightest form of object-oriented coupling. The \"derived\" struct is dependent on the entire private and public interface of the \"base\" struct. Changes in `BaseConnection` ripple downstream.",
+  "detection": "Structs containing a standard wrapper field (often named `base` or `parent`) where the containing struct forwards or directly calls methods of the base in almost every method.",
+  "counterexample": "Valid wrapper wrappers or adapters that implement standard traits (e.g., implementing `Read` by delegating to an inner `Read` type).",
+  "fix": "Use trait composition and delegate only what is necessary, protecting the interface boundary.\n```rust\ntrait Connection {\n    fn connect(&self);\n}\n```",
+  "strength": "Contextual",
+  "source": "Eric Elliott, *Composing Software* (2019) (\"Subclass Coupling\"); Andrew Hunt & David Thomas, *The Pragmatic Programmer* (2019), Chapter 2 (\"Inheritance\")."
+}

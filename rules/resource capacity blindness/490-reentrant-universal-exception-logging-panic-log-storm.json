@@ -1,0 +1,13 @@
+{
+  "id": 490,
+  "title": "Reentrant Universal Exception Logging Panic (Log Storm)",
+  "category": "Resource Capacity Blindness",
+  "damaged_code": "```rust\nfn log_exception(error: &str) {\n    // Writing error to a local file\n    if let Err(e) = std::fs::write(\"error.log\", error) {\n        // Reentrant loop: trying to log a logging failure triggers infinite panic\n        log_exception(&format!(\"Failed to write to file: {}\", e)); \n    }\n}\n```",
+  "pattern": "An exception or error handler that attempts to write error information to a local disk or database, and upon catching an error inside the logging utility itself, recursively calls the logging function or spawns a thread to log it.",
+  "why_bad": "If the local filesystem becomes full (ENOSPC), standard write calls will consistently fail [608]. A reentrant logger that handles writing failures by immediately attempting to log the failure will enter an infinite recursion loop [217]. This causes CPU utilization to spike to 100% and rapidly consumes stack space or heap memory, triggering an immediate crash [217].",
+  "detection": "Identify error handlers that attempt I/O logging operations where the failure path (recovery/fallback block) invokes the same logging API.",
+  "counterexample": "```rust\nfn log_exception(error: &str) {\n    // Write to file, print to stderr on failure to avoid recursive loop\n    if let Err(e) = std::fs::write(\"error.log\", error) {\n        eprintln!(\"Failed to write error.log: {} (original error: {})\", e, error);\n    }\n}\n```",
+  "fix": "Error handlers must be simple and robust. Logging failures should fall back to non-blocking memory buffers or direct `stderr` writing without recursive path execution [217, 608].",
+  "strength": "Strong",
+  "source": "Michael T. Nygard, *Release It!*, Chapter 10 (Steady State) / passages [217, 608]."
+}

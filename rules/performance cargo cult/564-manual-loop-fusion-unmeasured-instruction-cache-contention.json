@@ -1,0 +1,13 @@
+{
+  "id": 564,
+  "title": "Manual Loop Fusion (Unmeasured Instruction Cache Contention)",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\n// Fusing two loops to \"save loop condition checks\"\nfor i in 0..10_000 {\n    complex_unrelated_process_one(i); // Huge instruction size\n    complex_unrelated_process_two(i); // Huge instruction size\n}\n```",
+  "pattern": "Manually merging two distinct and heavy loops into a single loop to \"save loop condition and pointer increments.\"",
+  "why_bad": "Fusing loops containing complex processes spikes the loop's instruction footprint. This causes instruction cache thrashing (L1i misses) and register allocation exhaustion, making the fused loop run much slower than two clean, sequential loops [130, 367].",
+  "detection": "A fused loop containing heavy, completely unrelated functional blocks where separate loops would isolate instructions.",
+  "counterexample": "Extremely tiny loop bodies whose combined instructions easily fit in a few CPU registers. `Contextual`.",
+  "fix": "Keep the loops separated to maintain instruction cache locality and code clarity.",
+  "strength": "Context-dependent",
+  "source": "*Systems Performance*, Chapter 6, Section 6.5 (p. 130); *Code Complete*, Section 31.5 (p. 367)."
+}

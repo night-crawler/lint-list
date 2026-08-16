@@ -1,0 +1,13 @@
+{
+  "id": 720,
+  "title": "User-Space Virtual File System Emulation",
+  "category": "Inner Platform Effect",
+  "damaged_code": "```\n// Simulating files and directories in-memory inside application structs\nstruct VirtualFile {\n    name: String,\n    content: Vec<u8>,\n}\n\nstruct VirtualFileSystem {\n    files: HashMap<String, VirtualFile>,\n}\n\nimpl VirtualFileSystem {\n    fn read_file(&self, path: &str) -> Option<&[u8]> {\n        Some(&self.files.get(path)?.content)\n    }\n}\n```",
+  "pattern": "Simulating folders, permissions, and directory structures entirely inside the application's memory when native file systems are available.",
+  "why_bad": "It ignores the highly optimized caching, file indexing, and permission boundaries provided natively by the operating system kernel. It duplicates file management bugs and increases memory usage.",
+  "detection": "The presence of string-keyed tree structures representing files and folder paths parsed at runtime, rather than utilizing OS standard directories.",
+  "counterexample": "**Unit Testing Fakes:** Simulating a file target for unit tests that run in memory without touching real disks.",
+  "fix": "Utilize the native operating system file primitives or a standardized abstract file system crate.\n\n```\n// Utilizing standard library file operations\nuse std::fs::File;\nuse std::io::Read;\n\nfn read_file_data(path: &str) -> std::io::Result<Vec<u8>> {\n    let mut file = File::open(path)?;\n    let mut buffer = Vec::new();\n    file.read_to_end(&mut buffer)?;\n    Ok(buffer)\n}\n```",
+  "strength": "Strong",
+  "source": "[Robert C. Martin Series] Robert C. Martin - _Clean Architecture_ A Craftsman’s Guide to Software Structure and Design_ (2017, Prentice Hall).pdf, Chapter 17."
+}

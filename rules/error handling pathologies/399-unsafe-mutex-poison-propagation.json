@@ -1,0 +1,13 @@
+{
+  "id": 399,
+  "title": "Unsafe Mutex Poison Propagation",
+  "category": "Error Handling Pathologies",
+  "damaged_code": "```rust\nlet mut data = my_mutex.lock().unwrap();\nif data.is_invalid() {\n    panic!(\"Severe data inconsistency!\"); // Mutex is poisoned, crashing subsequent locks!\n}\n```",
+  "pattern": "Invoking a panic or abort statement while actively holding a mutable reference or lock on shared state (e.g., inside a lock guard scope).",
+  "why_bad": "State safety violation. Panicking while holding a Mutex poisons the lock. Any other thread that subsequently attempts to acquire the Mutex will get a `PoisonError` and crash, spreading a single thread's failure like a contagion across the system. [15, Chapter 11, \"panic setting\"]",
+  "detection": "A `panic!`, `unwrap()`, or `expect()` within the scope of an acquired mutex/rwlock guard.",
+  "counterexample": "Highly critical security kernels where lock poisoning is explicitly desired to freeze all threads upon any suspected memory corruption.",
+  "fix": "Release the lock guard explicitly or structure the code so that validation and panic occur outside the lock guard's lifetime.\n```rust\nlet is_invalid = {\n    let data = my_mutex.lock().unwrap();\n    data.is_invalid()\n};\nif is_invalid {\n    panic!(\"Severe data inconsistency!\");\n}\n```",
+  "strength": "Strong",
+  "source": "*Jon Gjengset - Rust for Rustaceans*, Chapter 11 / Chapter 10, \"panic settings\" [15]"
+}

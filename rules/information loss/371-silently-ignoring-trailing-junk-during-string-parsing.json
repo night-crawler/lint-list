@@ -1,0 +1,13 @@
+{
+  "id": 371,
+  "title": "Silently Ignoring Trailing Junk during String Parsing",
+  "category": "Information Loss",
+  "damaged_code": "```rust\nfn parse_port(input: &str) -> Option<u16> {\n    // \"8080abc\" parses as Some(8080)\n    input.chars().take_while(|c| c.is_ascii_digit())\n         .collect::<String>().parse().ok()\n}\n```",
+  "pattern": "Extracting and parsing a valid prefix from a string while silently ignoring trailing unparsed characters.",
+  "why_bad": "It hides bad input data, leading to garbage-in-garbage-out bugs or security vulnerabilities (e.g., bypassing network bounds because `\"8080/admin\"` was parsed as simply `\"8080\"`).",
+  "detection": "Regexes or custom iterator chains that extract matching prefixes and discard the rest of the string without asserting that the remainder is empty or valid.",
+  "counterexample": "Intentionally parsing a streaming token stream where a remainder is expected:\n```rust\nfn parse_next_token(input: &str) -> Option<(Token, &str)> { ... }\n```",
+  "fix": "Assert that the entire input matches the parse criteria or explicitly validate that the remainder is empty.\n```rust\nfn parse_port(input: &str) -> Option<u16> {\n    let port: u16 = input.parse().ok()?;\n    Some(port)\n}\n```",
+  "strength": "Strong",
+  "source": "*Type-driven Development with Idris* by Edwin Brady (p. 70, 163)."
+}

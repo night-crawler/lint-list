@@ -1,0 +1,13 @@
+{
+  "id": 892,
+  "title": "The Micro-Optimization Trap (Chasing Small Gains at Complexity's Expense)",
+  "category": "Local Optimization",
+  "damaged_code": "```rust\n// Optimized with complex inline assembly / bitwise tricks to save 2 instructions\npub fn truncate_log_base2(n: u32) -> u32 {\n    let mut val = n;\n    let mut r = 0;\n    if val >= 0x10000 { val >>= 16; r |= 16; }\n    if val >= 0x100 { val >>= 8; r |= 8; }\n    if val >= 0x10 { val >>= 4; r |= 4; }\n    if val >= 0x4 { val >>= 2; r |= 2; }\n    if val >= 0x2 { r |= 1; }\n    r\n}\n```",
+  "pattern": "A local utility function is hand-tuned with elaborate, highly obscure bit-shifting operations, pointer dereferences, or assembly tricks to save a negligible number of instructions, sacrificing readability.",
+  "why_bad": "As Donald Knuth famously warned, premature optimization is the root of all evil. It introduces immense accidental complexity for negligible or non-existent gains. Even worse, hand-tuned micro-code often *defeats* more powerful compiler optimizations (like vectorization or loop unrolling) that are designed to operate on clean, straightforward code. It also locks the codebase into specific processor architectures, making portability and future upgrades highly fragile.",
+  "detection": "Highly convoluted loops, bitwise logic, or inline assembly used for common mathematical or utility routines that have clean standard library equivalents, in code that has not been profiled under realistic workloads.",
+  "counterexample": "Valid when profiling reveals that a specific instruction path is a genuine hot-spot, or when writing low-level kernel drivers or game engines where every instruction is measured. Mark `Context-dependent`.",
+  "fix": "Use standard, idiomatic compiler-optimized built-ins or clean readable logic.\n```rust\npub fn truncate_log_base2(n: u32) -> u32 {\n    31 - n.leading_zeros() // Uses the native CPU instruction directly\n}\n```",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete*, Chapter 25.2, \"Prem premature optimization's drawbacks\" (p. 234) / Ousterhout, Chapter 20.2 (p. 110)."
+}

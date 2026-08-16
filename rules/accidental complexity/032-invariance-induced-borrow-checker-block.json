@@ -1,0 +1,13 @@
+{
+  "id": 32,
+  "title": "Invariance-Induced Borrow Checker Block",
+  "category": "Accidental Complexity",
+  "damaged_code": "```rust\nstruct Logger<'a> {\n    out: &'a mut &'a str, \n}\n```",
+  "pattern": "Forcing a covariant type (like a shared reference or lifetime) into an invariant context (like mutable references `&mut T` or `Cell<T>`) under a single generic lifetime parameter.",
+  "why_bad": "It prevents the compiler from performing lifetime coercion (shortening a lifetime), because invariance requires that the type parameter must be exactly identical. This causes the borrow checker to reject perfectly safe code.",
+  "detection": "A struct containing nested references within a mutable reference or cell that uses a single unified lifetime parameter.",
+  "counterexample": "`Context-dependent`. Invariance is essential for memory safety when mutability is present (to prevent writing a short-lived reference into a long-lived container).",
+  "fix": "Avoid collapsing distinct lifetimes inside mutable references; use multiple lifetime parameters when nesting references under mutability.",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust for Rustaceans* (2021), Chapter 2 (\"Foundations - Borrowing and Lifetimes - Lifetime Variance\"), pp. 536-541."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 865,
+  "title": "Unchecked Null Pointers from FFI Calls",
+  "category": "Correctness By Convention",
+  "damaged_code": "```rust\n// Rust\nextern \"C\" {\n    fn get_db_connection() -> *mut Connection;\n}\nunsafe {\n    let conn = get_db_connection();\n    (*conn).execute(\"SELECT 1;\"); // BUG: conn may be Null!\n}\n```",
+  "pattern": "Directly dereferencing a raw pointer returned by an external C library or FFI function without performing a null check.",
+  "why_bad": "C libraries commonly return NULL on allocation or connection failure. Directly dereferencing a NULL pointer leads to immediate segment faults or undefined behavior.",
+  "detection": "Dereferencing a pointer returned from an `extern \"C\"` block inside an unsafe block without checking `ptr.is_null()` first.",
+  "counterexample": "Checking nullness and converting to a safe Rust Option: `Option::from_raw`.",
+  "fix": "Check for nullness before dereferencing: `if conn.is_null() { return Err(Error::NullPointer); }`.",
+  "strength": "Strong",
+  "source": "Steve McConnell, Code Complete (Checklist: Data Declarations) [549, 571]."
+}

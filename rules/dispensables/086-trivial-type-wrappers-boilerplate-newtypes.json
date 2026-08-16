@@ -1,0 +1,13 @@
+{
+  "id": 86,
+  "title": "Trivial Type Wrappers (Boilerplate Newtypes)",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nstruct Score {\n    pub value: i32,\n}\n```",
+  "pattern": "A newtype struct wrapping a single primitive field that enforces no invariants, has no custom behavior, and defines no trait implementations.",
+  "why_bad": "Forces callers to constantly wrap and unwrap the value (e.g., `Score { value: x }`), adding syntactic noise without providing compile-time type-safety.",
+  "detection": "Single-field structs with no methods, no validation on construction, and only public field access.",
+  "counterexample": "Domain-specific newtypes (e.g., `CustomerId(u64)`) used to prevent accidental parameter swapping in function signatures.",
+  "fix": "Replace the struct with the raw primitive, or use a simple type alias (`type Score = i32;`).",
+  "strength": "Contextual",
+  "source": "John K. Ousterhout, *A Philosophy of Software Design* (2018), Chapter 4 (\"Modules Should Be Deep - Classitis\"), p. 25."
+}

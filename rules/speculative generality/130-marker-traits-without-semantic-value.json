@@ -1,0 +1,13 @@
+{
+  "id": 130,
+  "title": "Marker Traits Without Semantic Value",
+  "category": "Speculative Generality",
+  "damaged_code": "```rust\npub trait Processable {}\n```",
+  "pattern": "Declaring empty traits and implementing them for multiple types without actual compile-time safety or type-checking benefit.",
+  "why_bad": "Adds visual noise and cognitive load with zero structural benefit.",
+  "detection": "Empty traits (`trait Name {}`) with zero methods or associated types, whose bounds are never checked or used to alter compilation behavior.",
+  "counterexample": "Standard library marker traits (`Send`, `Sync`).",
+  "fix": "Delete the marker trait.",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust for Rustaceans* (2021)."
+}

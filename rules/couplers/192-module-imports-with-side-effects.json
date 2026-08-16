@@ -1,0 +1,13 @@
+{
+  "id": 192,
+  "title": "Module Imports with Side-Effects",
+  "category": "Couplers",
+  "damaged_code": "```rust\n// In some library module file\nlazy_static! {\n    static ref REGISTRY: Mutex<Vec<String>> = {\n        let m = Mutex::new(Vec::new());\n        // Side-effect executed automatically on module load/import\n        println!(\"Initializing connection to external socket...\");\n        m\n    };\n}\n```",
+  "pattern": "A module file contains global initialization blocks (e.g., `lazy_static!`, `ctor`, or static initializers) that perform network, file I/O, or thread-spawning side effects simply by being imported.",
+  "why_bad": "It causes implicit side-effect coupling. Merely importing a library or compiling a file triggers active execution that can fail or hang, creating unpredictable build environments and test execution failures.",
+  "detection": "Lazy or static initialization blocks that perform blocking system calls, read files, or establish network connections.",
+  "counterexample": "Static compile-time constant arithmetic or pure local memory structures configured statically.",
+  "fix": "Expose an explicit, manual initialization function that the application must call at its startup.\n```rust\npub fn init_services() -> Result<(), Error> {\n    println!(\"Initializing connection...\");\n    Ok(())\n}\n```",
+  "strength": "Strong",
+  "source": "Eric Elliott, *Composing Software* (2019) (\"Module imports with side-effects\"); Michael Feathers, *Working Effectively with Legacy Code* (2004), Chapter 12 (\"The Case of the Horrible Include Dependencies\")."
+}

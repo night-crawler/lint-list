@@ -1,0 +1,13 @@
+{
+  "id": 960,
+  "title": "Mixing Raw SQL Mapping and ORM Queries in the Same Database Layer",
+  "category": "Conceptual Integrity",
+  "damaged_code": "```rust\n// Method A: Manual raw SQL query\nlet name: String = row.get(\"name\").unwrap();\n// Method B: Diesel ORM query\nlet user = users::table.find(id).first(conn).unwrap();\n```",
+  "pattern": "Using raw SQL mapping queries alongside an ORM query builder for the same database tables in the same persistence module.",
+  "why_bad": "It breaks data access consistency, creating dual maintenance overhead whenever database schemas change and leading to subtle schema-desynchronization bugs.",
+  "detection": "Modules that import both ORM table definitions and raw string query executables targeting the same database tables.",
+  "counterexample": "Raw SQL used exclusively for highly optimized, read-only bulk query operations that cannot be generated cleanly by the ORM. Marked `Context-dependent`.",
+  "fix": "Unify on a single data access strategy (e.g., using the ORM query builder) for the database.",
+  "strength": "Strong",
+  "source": "*Domain-Driven Design* by Eric Evans (2003), p. 31, 444."
+}

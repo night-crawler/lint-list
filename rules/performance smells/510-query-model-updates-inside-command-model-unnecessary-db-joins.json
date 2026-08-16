@@ -1,0 +1,13 @@
+{
+  "id": 510,
+  "title": "Query Model Updates inside Command Model (Unnecessary DB Joins)",
+  "category": "Performance Smells",
+  "damaged_code": "```ruby\ndef update_cargo_status(cargo_id, status)\n    cargo = CargoRepository.find(cargo_id) # Loads full aggregate\n    cargo.status = status                  # Saves back to DB\nend\n```",
+  "pattern": "Loading a highly complex, multi-entity domain aggregate merely to perform a simple status update or field write.",
+  "why_bad": "Forces expensive multi-table joins and object instantiation overhead just to execute a trivial state mutation that only requires a target ID reference.",
+  "detection": "Commands that load full entity state or join parent-child tables before modifying a minor attribute.",
+  "counterexample": "The database is a pure object-oriented database where memory object traversal is exceptionally fast. `Contextual`.",
+  "fix": "Decouple reads and writes using CQRS (Command-Query Responsibility Segregation), updating target fields by direct ID reference.",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design*, Chapter 10, CQRS (p. 503) and *Domain Modeling Made Functional*, Chapter 10 (p. 470)."
+}

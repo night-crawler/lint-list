@@ -1,0 +1,13 @@
+{
+  "id": 936,
+  "title": "Single-Operation Service Contracts (Nanocontracts)",
+  "category": "Wrong Granularity",
+  "damaged_code": "```rust\n// An API containing dozens of tiny, single-purpose services\ntrait UpdateUserEmailService {\n    fn update_email(&self, user_id: u64, email: String);\n}\n\ntrait UpdateUserPhoneService {\n    fn update_phone(&self, user_id: u64, phone: String);\n}\n```",
+  "pattern": "Defining separate remote service contracts or API interfaces containing only a single operation for every possible variation of a functionality.",
+  "why_bad": "This represents functional decomposition masked as service-oriented design. It leads to service contract explosion, duplicates boilerplates, increases client integration and testing costs, and dilutes the semantic clarity of the service boundary.",
+  "detection": "Remote APIs or service contracts containing only one RPC or HTTP endpoint, especially when multiple such services share identical underlying state.",
+  "counterexample": "Highly specialized, stateless serverless functions (like AWS Lambda) designed strictly for event-driven utility tasks (like image resizing).",
+  "fix": "Consolidate related domain actions into a cohesive, deep service contract representing the entity.\n```rust\ntrait UserService {\n    fn update_contact_info(&self, user_id: u64, email: Option<String>, phone: Option<String>);\n}\n```",
+  "strength": "Strong",
+  "source": "*Juval Löwy - Righting Software (2019)*, Appendix B, \"SERVICE CONTRACT DESIGN\" (Service contracts with just one operation are a red flag, p. 411)."
+}

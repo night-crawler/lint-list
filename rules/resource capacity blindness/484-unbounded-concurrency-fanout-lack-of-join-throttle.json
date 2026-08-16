@@ -1,0 +1,13 @@
+{
+  "id": 484,
+  "title": "Unbounded Concurrency Fanout (Lack of Join Throttle)",
+  "category": "Resource Capacity Blindness",
+  "damaged_code": "```rust\nuse futures::future::join_all;\n\nasync fn process_requests(urls: Vec<String>) {\n    // Spawning and joining infinite parallel operations concurrently\n    let tasks = urls.into_iter().map(|url| {\n        tokio::spawn(async move { fetch_url(url).await })\n    });\n    join_all(tasks).await;\n}\n```",
+  "pattern": "Iterating over a collection of items, mapping them to async tasks spawned directly into the runtime, and executing/joining them concurrently (e.g., using `join_all`) without limiting active task concurrency.",
+  "why_bad": "Fanning out to perform thousands of concurrent asynchronous tasks can saturate client resources, exhausting socket limits, file descriptors, and local memory [158, 204]. It also floods downstream servers with a \"tsunami of requests,\" degrading network switches and triggering connection backlog drops or timeouts [158, 204].",
+  "detection": "Mapping an array or iterator of arbitrary length to spawned async tasks or futures that are evaluated concurrently without semaphores or rate limiters.",
+  "counterexample": "```rust\nuse tokio::sync::Semaphore;\nuse std::sync::Arc;\n\nasync fn process_requests(urls: Vec<String>) {\n    let sem = Arc::new(Semaphore::new(10)); // Maximum 10 concurrent requests\n    let mut tasks = Vec::new();\n    for url in urls {\n        let permit = sem.clone().acquire_owned().await.unwrap();\n        tasks.push(tokio::spawn(async move {\n            let res = fetch_url(url).await;\n            drop(permit); // Release permit\n            res\n        }));\n    }\n    futures::future::join_all(tasks).await;\n}\n```",
+  "fix": "Control concurrent task execution using an async `Semaphore` or stream concurrency limiters like `.buffer_unordered(limit)` [206].",
+  "strength": "Strong",
+  "source": "Richard L. Sites, *Understanding Software Dynamics*, Chapter 1.4 (Long-Tail Latency) / passage [158]; Michael T. Nygard, *Release It!*, Chapter 4 (Unbalanced Capacities) / passages [204, 206]."
+}

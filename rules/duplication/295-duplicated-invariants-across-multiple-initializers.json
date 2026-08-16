@@ -1,0 +1,13 @@
+{
+  "id": 295,
+  "title": "Duplicated Invariants Across Multiple Initializers",
+  "category": "Duplication",
+  "damaged_code": "```rust\nstruct Loan {\n    notional: f64,\n    outstanding: f64,\n    rating: i32,\n    expiry: Option<Date>,\n}\n\nimpl Loan {\n    fn new_with_expiry(notional: f64, outstanding: f64, rating: i32, expiry: Date) -> Self {\n        assert!(notional > 0.0); // Duplicate check\n        Loan { notional, outstanding, rating, expiry: Some(expiry) }\n    }\n\n    fn new_without_expiry(notional: f64, outstanding: f64, rating: i32) -> Self {\n        assert!(notional > 0.0); // Duplicate check\n        Loan { notional, outstanding, rating, expiry: None }\n    }\n}\n```",
+  "pattern": "Multiple constructor/initializer functions in a struct separately validating invariants and assigning duplicate fields.",
+  "why_bad": "If a new validation rule or a new field is introduced, a developer must remember to update every constructor function. Forgetting one results in uninitialized fields or broken invariants.",
+  "detection": "Multiple `impl` constructors containing textually identical guard assertions, validation checks, or duplicate struct instantiation blocks.",
+  "counterexample": "Builders that accumulate transient state before passing validation inside a single unified `.build()` consumer.",
+  "fix": "Chain specific constructors to delegate to a single comprehensive private initializer.\n```rust\nimpl Loan {\n    fn new(notional: f64, outstanding: f64, rating: i32, expiry: Option<Date>) -> Self {\n        assert!(notional > 0.0);\n        Loan { notional, outstanding, rating, expiry }\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Refactoring to Patterns*, \"Chain Constructors\", p. 340, 382."
+}

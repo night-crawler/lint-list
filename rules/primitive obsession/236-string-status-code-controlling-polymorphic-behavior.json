@@ -1,0 +1,13 @@
+{
+  "id": 236,
+  "title": "String Status Code Controlling Polymorphic Behavior",
+  "category": "Primitive Obsession",
+  "damaged_code": "```rust\nif product.status == \"NEW_RELEASE\" {\n    charge = days * 3;\n} else if product.status == \"REGULAR\" {\n    charge = days * 2;\n}\n```",
+  "pattern": "Using raw strings or integer code constants to control behavioral branching in business logic.",
+  "why_bad": "Adding a new status or type code requires finding and manually updating every inline conditional block across the system, violating the Open-Closed Principle. Spelling mistakes compile silently, causing runtime failures.",
+  "detection": "Frequent conditional `if-else` or `match` statements evaluating a raw string variable against a list of string literals.",
+  "counterexample": "Simply logging a status code or returning it directly to an external API boundary.",
+  "fix": "Use an `enum` to enforce compile-time exhaustiveness, or use polymorphism (Strategy pattern) to delegate state-specific calculations.\n```rust\nenum ProductStatus {\n    NewRelease,\n    Regular,\n}\n```",
+  "strength": "Strong",
+  "source": "*Refactoring* by Martin Fowler (p. 286); *Refactoring to Patterns* (p. 166)."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 338,
+  "title": "Verb-Adjective Ambiguity in Method Names",
+  "category": "Semantic Ambiguity",
+  "damaged_code": "```rust\nif connection.clear() { // Does this mean \"is it clear?\" or \"wipe the state?\"\n    println!(\"Ready.\");\n}\n```",
+  "pattern": "Naming a boolean-returning function or method with a word that can be interpreted as either a mutating command (verb) or a state query (adjective).",
+  "why_bad": "It causes dangerous misunderstandings at call sites. A developer reading `if connection.clear()` may assume it is a pure query checking if the connection is clear, when in reality it is wiping the connection state, leading to catastrophic silent state corruption.",
+  "detection": "Methods returning `bool` named with words like `clear`, `set`, `empty`, `close` that act as both verbs and adjectives.",
+  "counterexample": "Unambiguous method names separating actions from checks:\n```rust\nif connection.is_clear() { ... }\n```",
+  "fix": "Rename query methods with descriptive prefixes (like `is_` or `has_`) and action methods with explicit verbs (like `wipe_` or `try_clear`).\n```rust\nimpl Connection {\n    fn is_clear(&self) -> bool { ... } // Clear adjective query\n    fn wipe_state(&mut self) { ... } // Clear verb command\n}\n```",
+  "strength": "Strong",
+  "source": "*Clean Code* by Robert C. Martin (Chapter 2, p. 158)."
+}

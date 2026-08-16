@@ -1,0 +1,13 @@
+{
+  "id": 755,
+  "title": "Trivial Newtype Deref Abuse",
+  "category": "Ceremony Boilerplate",
+  "damaged_code": "```rust\nstruct Email(String);\nimpl std::ops::Deref for Email {\n    type Target = String;\n    fn deref(&self) -> &Self::Target {\n        &self.0\n    }\n}\n```",
+  "pattern": "Implementing the `Deref` trait on custom newtypes solely to bypass wrapping/unwrapping boilerplate, allowing callers to access all methods of the underlying primitive.",
+  "why_bad": "This represents an 'inheritance hack.' It defeats the entire purpose of the newtype pattern (which is to restrict interfaces and enforce invariants), instead exposing the whole raw primitive API. It adds trait boilerplate while introducing silent type-coercion bugs.",
+  "detection": "A manual `Deref` implementation on a newtype struct that delegates directly to the wrapped inner field's type without restricting access or adding custom behaviors.",
+  "counterexample": "Smart pointer types (like `Box`, `Rc`, or `Arc`) that exist specifically to manage memory and are semantically transparent.",
+  "fix": "```rust\n// Keep fields private and expose a targeted slice/reference accessor, or keep the field public if no invariants are needed.\nstruct Email {\n    pub value: String,\n}\n```",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust for Rustaceans* (2021), Chapter 1 (\"Foundations - Ergonomics\"), pp. 18-20."
+}

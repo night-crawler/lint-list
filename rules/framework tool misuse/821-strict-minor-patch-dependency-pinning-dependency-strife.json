@@ -1,0 +1,13 @@
+{
+  "id": 821,
+  "title": "Strict Minor/Patch Dependency Pinning (Dependency Strife)",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n# Cargo.toml containing highly pinned version requirement\nhugs = \"=1.7.3\" # Restricts cargo's version solver unnecessarily\n```",
+  "pattern": "Specifying strict, exact version constraints on common dependency packages (e.g. `=1.7.3`) in library crates.",
+  "why_bad": "It triggers diamond dependency failures. If a higher-level consumer uses another crate that relies on a different minor version of the same library, the package manager SAT-solver gives up.",
+  "detection": "An exact match constraint (`=`) or restrictive minor match used on shared utility packages in library configuration files.",
+  "counterexample": "Pinning dependencies in a top-level binary deployment manifest to ensure identical production builds.",
+  "fix": "Use looser, compatible version constraints (e.g. `^1.7` or `1`) to allow the package manager to find compatible versions.",
+  "strength": "Strong",
+  "source": "*Rust for Rustaceans (Gjengset), Chapter 8, p. 184 [433, 841]*"
+}

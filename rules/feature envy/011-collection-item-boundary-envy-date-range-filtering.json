@@ -1,0 +1,13 @@
+{
+  "id": 11,
+  "title": "Collection-Item Boundary Envy (Date Range Filtering)",
+  "category": "Feature Envy",
+  "damaged_code": "```rust\nstruct Entry {\n    value: f64,\n    date: NaiveDate,\n}\nstruct Account {\n    entries: Vec<Entry>,\n}\nimpl Account {\n    fn get_flow_between(&self, start: NaiveDate, end: NaiveDate) -> f64 {\n        let mut result = 0.0;\n        for entry in &self.entries {\n            // Feature Envy: manually extracting and comparing date boundaries\n            if entry.date == start || entry.date == end || (entry.date > start && entry.date < end) {\n                result += entry.value;\n            }\n        }\n        result\n    }\n}\n```",
+  "pattern": "A method checks if an item falls within bounds by repeatedly querying the item's properties and comparing them against locally-scoped variables representing the range.",
+  "why_bad": "The logic of \"checking if a date falls within a range\" is duplicated and coupled. It envies the `DateRange` concept, which should manage its own boundary check invariants.",
+  "detection": "Loop bodies containing multiple logic gates (`&&`, `||`) checking a single property against start/end parameters.",
+  "counterexample": "Simple equality checks or simple checks against a single constant value.",
+  "fix": "Introduce a `DateRange` struct and delegate the inclusion check to it.\n```rust\nstruct DateRange {\n    start: NaiveDate,\n    end: NaiveDate,\n}\nimpl DateRange {\n    fn includes(&self, target: NaiveDate) -> bool {\n        target >= self.start && target <= self.end\n    }\n}\nimpl Account {\n    fn get_flow_between(&self, range: &DateRange) -> f64 {\n        self.entries.iter()\n            .filter(|e| range.includes(e.date))\n            .map(|e| e.value)\n            .sum()\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Refactoring* (1999), Chapter 10 (page 181, 396)."
+}

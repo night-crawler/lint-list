@@ -1,0 +1,13 @@
+{
+  "id": 124,
+  "title": "Unused Type Parameters (Speculative Generics)",
+  "category": "Speculative Generality",
+  "damaged_code": "```rust\nstruct UserProcessor<T> {\n    name: String,\n    _marker: std::marker::PhantomData<T>,\n}\n```",
+  "pattern": "Structs or methods that declare type parameters that are never bound or used in active execution or validation logic, represented only in `PhantomData` fields.",
+  "why_bad": "It forces all downstream call sites to specify dummy type arguments, making API usage highly repetitive and verbose without any type-checking benefit.",
+  "detection": "A type parameter declared on a struct that is only used in a `PhantomData` field and is never constrained or utilized in any field values or method bounds.",
+  "counterexample": "Typing parameters that enforce strict compile-time state machines or type-safe session types.",
+  "fix": "Remove the generic type parameter and the `PhantomData` marker.",
+  "strength": "Strong",
+  "source": "Benjamin C. Pierce, *Types and Programming Languages* (2002), Chapter 19; Fowler, *Refactoring*, Chapter 3 (\"Speculative Generality\")."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 390,
+  "title": "Dropping Request/Trace Identifiers in Client RPC Calls",
+  "category": "Information Loss",
+  "damaged_code": "```rust\nfn send_rpc(payload: &str) {\n    // Sends raw payload, stripping logging tracing headers!\n    let req = format!(\"RPC: {}\", payload);\n    network.send(req);\n}\n```",
+  "pattern": "Calling external services or RPC gateways without propagating correlation IDs, trace contexts, or request identifiers.",
+  "why_bad": "It breaks the observability flow of distributed systems. Downstream service failures cannot be correlated with the upstream user request, making distributed debugging impossible.",
+  "detection": "RPC client functions that accept only body payloads without injecting or forwarding header structures.",
+  "counterexample": "Client calls wrapping context:\n```rust\nfn send_rpc(ctx: &Context, payload: &str) { ... }\n```",
+  "fix": "Define a standard Context wrapper that carries trace metadata and injects it into every client call.\n```rust\nstruct RpcRequest<'a> {\n    request_id: &'a str,\n    payload: &'a str,\n}\n\nfn send_rpc(req: RpcRequest) { ... }\n```",
+  "strength": "Strong",
+  "source": "*Rust for Rustaceans* by Jon Gjengset (p. 140)."
+}

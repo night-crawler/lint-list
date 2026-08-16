@@ -1,0 +1,13 @@
+{
+  "id": 852,
+  "title": "Exhaustive Pattern Matching on Public Structs",
+  "category": "Correctness By Convention",
+  "damaged_code": "```rust\n// Rust - Library\npub struct Config {\n    pub dry_run: bool,\n}\n// Client code\nlet Config { dry_run } = config; // BUG: adding a field will break compilation!\n```",
+  "pattern": "A library defines a public struct with all public fields without restricting pattern matching, exposing it to exhaustive destructuring by clients.",
+  "why_bad": "Adding a new private or public field to the struct in a future library update will instantly break compilation of all downstream client code because their pattern matches are no longer exhaustive.",
+  "detection": "A public struct is declared with all public fields and lacks the `#[non_exhaustive]` attribute, allowing external pattern matches.",
+  "counterexample": "An external library uses `#[non_exhaustive]` on public structs or keeps at least one field private.",
+  "fix": "Add the `#[non_exhaustive]` attribute to the struct: `#[non_exhaustive] pub struct Config { pub dry_run: bool }`.",
+  "strength": "Strong",
+  "source": "Rust For Rustaceans, Chapter 4 (#[non_exhaustive]) [433-434]."
+}

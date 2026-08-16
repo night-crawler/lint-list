@@ -1,0 +1,13 @@
+{
+  "id": 225,
+  "title": "Identical Primitive Identifier Swap",
+  "category": "Primitive Obsession",
+  "damaged_code": "```rust\nfn assign_project_to_customer(customer_id: u64, project_id: u64) { ... }\n\n// Call site:\nassign_project_to_customer(project_id, customer_id); // Swapped!\n```",
+  "pattern": "Function signatures taking multiple parameters of the exact same primitive type representing different domain identifiers.",
+  "why_bad": "Because both arguments are of the same primitive type (e.g., `u64`), the compiler cannot detect when a developer accidentally swaps the order of arguments at the call site. This leads to silent logic bypasses and data mismatches.",
+  "detection": "Adjacent or near-adjacent function parameters ending in `_id` that share an identical primitive type.",
+  "counterexample": "A generic comparison function explicitly designed to operate on two identical ID spaces:\n```rust\nfn are_matching(id1: u64, id2: u64) -> bool { id1 == id2 }\n```",
+  "fix": "Wrap identifiers in distinct domain-specific newtype structs.\n```rust\nstruct CustomerId(pub u64);\nstruct ProjectId(pub u64);\n\nfn assign_project_to_customer(customer_id: CustomerId, project_id: ProjectId) { ... }\n```",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design* by Vaughn Vernon (p. 578)."
+}

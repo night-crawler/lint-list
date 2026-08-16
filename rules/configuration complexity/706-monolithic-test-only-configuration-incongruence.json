@@ -1,0 +1,13 @@
+{
+  "id": 706,
+  "title": "Monolithic Test-Only Configuration Incongruence",
+  "category": "Configuration Complexity",
+  "damaged_code": "```yaml\n# test_configuration.yaml\n# Completely ignores the firewall and cluster settings of the target deployment\ndatabase_host: \"localhost\"\ninstances: 1\n```",
+  "pattern": "Maintaining isolation profiles or integration test configurations that omit fundamental topological realities (such as cluster layouts, firewalls, or load-balancers) of production.",
+  "why_bad": "Masks catastrophic configuration bugs. Code that functions perfectly under simple single-node local testing profiles crashes instantly when hitting multi-node production firewalls or clustering rules.",
+  "detection": "Integration test setups that execute against custom, stripped-down configurations instead of staging setups matching production topologies.",
+  "counterexample": "Verifying deployments in environment profiles containing matched network policies and load balancers.",
+  "fix": "Ensure test configurations mirror production topology as closely as possible; include simulated network layers and firewall gates within test runners.",
+  "strength": "Context-dependent",
+  "source": "[Pragmatic Programmers] Michael T. Nygard - *Release It!_ Design and Deploy Production-Ready Software* (2007, Pragmatic Bookshelf).pdf, Section 11.2 / Section 14.2."
+}

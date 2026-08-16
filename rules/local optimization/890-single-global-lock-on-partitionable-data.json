@@ -1,0 +1,13 @@
+{
+  "id": 890,
+  "title": "Single Global Lock on Partitionable Data",
+  "category": "Local Optimization",
+  "damaged_code": "```rust\nuse std::collections::HashMap;\nuse std::sync::Mutex;\n\n// Global single-lock state\npub struct SharedRegistry {\n    entries: Mutex<HashMap<String, String>>,\n}\n\nimpl SharedRegistry {\n    pub fn lookup(&self, key: &str) -> Option<String> {\n        let lock = self.entries.lock().unwrap();\n        lock.get(key).cloned()\n    }\n}\n```",
+  "pattern": "A shared multithreaded collection or registry is guarded by a single, monolithic, system-wide mutual exclusion lock (`Mutex` or `RwLock`).",
+  "why_bad": "Locally, a single global lock is exceptionally simple to write and verify. Globally, it destroys multicore scalability. As more CPU cores or threads are added to the system, thread contention for the single lock spikes, turning the concurrent program into a serialized bottleneck. Threads spend all their time spinning or sleeping, causing latency \"tail spikes\" when the system is heavily loaded.",
+  "detection": "A single `Mutex` or `RwLock` wrapping a large collection (e.g., `HashMap`, `BTreeMap`, `Vec`) that is frequently queried or modified by many concurrent threads.",
+  "counterexample": "A global lock is valid when access frequency is demonstrably low (e.g., once on startup) or when the protected data is extremely tiny and lock hold times are sub-microsecond.",
+  "fix": "Partition the registry using bucket-level sharding, or use lock-free concurrent collections (like `dashmap` in Rust) or Read-Copy Update (RCU / `arc-swap`).\n```rust\n// Sharded hash map or concurrent hash map\npub struct SharedRegistry {\n    entries: dashmap::DashMap<String, String>,\n}\n```",
+  "strength": "Strong",
+  "source": "Richard L. Sites, *Understanding Software Dynamics*, Chapter 7, \"Contention and Locks\" (p. 126-127) / 1701.00854v6 (RCU book), Chapter 5.1 (Atomic increment / global counters)."
+}

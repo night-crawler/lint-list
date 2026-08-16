@@ -1,0 +1,13 @@
+{
+  "id": 315,
+  "title": "Superclasses/Traits Containing Subclass-Specific Behavior (Leaky Abstractions)",
+  "category": "Dry Abuse",
+  "damaged_code": "```rust\ntrait Vehicle {\n    fn start_engine(&self);\n    fn check_payload_capacity(&self) -> f64; // Only applicable to Trucks!\n}\n\nstruct Bicycle;\nimpl Vehicle for Bicycle {\n    fn start_engine(&self) {} // Dummy override\n    fn check_payload_capacity(&self) -> f64 { 0.0 } // Meaningless default\n}\n```",
+  "pattern": "Putting specialized methods in a shared superclass or trait that are only applicable to a subset of implementations, forcing the others to write dummy or panic implementations.",
+  "why_bad": "It erodes the integrity of the abstraction. Callers are forced to know the specific implementer's quirks to avoid calling invalid methods (like checking engine status on a bicycle), leading to fragile client-side logic.",
+  "detection": "A trait implementation containing multiple methods that do nothing, return arbitrary dummy defaults, or panic with \"not supported\" errors.",
+  "counterexample": "Algebraic data types (closed enums) where the absence of a behavior is structurally modeled via `Option` values.",
+  "fix": "Refactor the trait to only contain behaviors that are strictly applicable to all implementers. Isolate specialized behaviors into separate traits.\n```rust\ntrait Vehicle {\n    fn move_to(&self, destination: &str);\n}\n\ntrait Motorized {\n    fn start_engine(&self);\n}\n\ntrait CargoCarrier {\n    fn check_payload_capacity(&self) -> f64;\n}\n```",
+  "strength": "Strong",
+  "source": "Sandi Metz *POODR*, Chapter 7.2.2: \"Insist on the Abstraction\", p. 158, 196."
+}

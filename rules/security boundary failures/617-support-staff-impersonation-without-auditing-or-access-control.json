@@ -1,0 +1,13 @@
+{
+  "id": 617,
+  "title": "Support-Staff Impersonation without Auditing or Access Control",
+  "category": "Security Boundary Failures",
+  "damaged_code": "```rust\nfn get_user_view(admin_user: &str, target_user: &str) -> UserView {\n    // Directly bypasses normal authentication to retrieve user interface state\n    db::load_user_profile(target_user)\n}\n```",
+  "pattern": "Exposing diagnostic or debugging endpoints that allow administrators or support staff to impersonate standard users without checking for strict validation tokens, authentication context, or auditing.",
+  "why_bad": "Provides a massive backdoor vector. If an attacker compromises a support workstation or has administrative privileges, they can read or manipulate customer records without detection, breaching user privacy.",
+  "detection": "Methods providing administrative impersonation (`impersonate`, `get_view_as`) lacking multi-party authorization or deep logging wrappers.",
+  "counterexample": "```rust\nfn get_user_view(ctx: &RequestContext, target_user: &str, ticket_id: &str) -> UserView {\n    ctx.assert_has_role(\"SupportSpecialist\");\n    ctx.assert_authorized_by_mpa(ticket_id).unwrap();\n    audit_impersonation(ctx.operator(), target_user, ticket_id);\n    db::load_user_profile(target_user)\n}\n```",
+  "fix": "Require support staff to use safe proxies with multi-party authorization (MPA), structured ticketing system justifications, and tamper-resistant audit logs of the action.",
+  "strength": "Strong",
+  "source": "`Heather Adkins et al. - Building Secure and Reliable Systems (2020)`, Ch 15, p. 359."
+}

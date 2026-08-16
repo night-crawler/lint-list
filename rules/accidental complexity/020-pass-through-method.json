@@ -1,0 +1,13 @@
+{
+  "id": 20,
+  "title": "Pass-Through Method",
+  "category": "Accidental Complexity",
+  "damaged_code": "```rust\nstruct Document {\n    text: String,\n}\nimpl Document {\n    pub fn append(&mut self, data: &str) { self.text.push_str(data); }\n}\n\nstruct Editor {\n    doc: Document,\n}\nimpl Editor {\n    pub fn append_text(&mut self, text: &str) {\n        self.doc.append(text);\n    }\n}\n```",
+  "pattern": "A method in an outer layer that does virtually nothing except invoke a method in an adjacent lower layer with a highly similar or identical signature.",
+  "why_bad": "It increases interface complexity (making modules shallower) and creates tight coupling. It adds boilerplate and visual noise without providing any functional value, validation, or abstraction transformation. If the lower signature changes, it must be propagated up.",
+  "detection": "A public method on a struct whose body consists exclusively of a single delegation call to a field's method with a near-identical signature and identical arguments, without performing any local operations or checks.",
+  "counterexample": "`Context-dependent`. Implementing a required trait (e.g. `Deref` or decorator/proxy pattern) where delegation is structurally mandatory, or establishing an API facade to decouple a volatile third-party library.",
+  "fix": "Redefine boundaries: let the caller invoke the underlying object's method directly, or merge the adjacent layers if their responsibilities heavily overlap.",
+  "strength": "Strong",
+  "source": "John K. Ousterhout, *A Philosophy of Software Design* (2018), Chapter 7 (\"Different Layer, Different Abstraction - Pass-Through Methods\"), pp. 46, 310–313."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 349,
+  "title": "Over-Generalized Interface Hiding Fault Semantics (Exception Masking)",
+  "category": "Boundary Representation",
+  "damaged_code": "```rust\nfn fetch_data() -> Option<String> {\n    match get_network_payload() {\n        Ok(data) => Some(data),\n        Err(_) => None, // Swallows error types entirely\n    }\n}\n```",
+  "pattern": "Swallowing fine-grained boundary errors (network failures, DB lock timeouts) to expose a generic, error-free API representation.",
+  "why_bad": "Callers cannot build robust retry mechanisms, fallbacks, or security logging because vital structural failure details are discarded.",
+  "detection": "Match block matchers or `Result` helpers (`map_err`, `and_then`) that map complex error structs into simple `None` or generic `Err(\"Error\")` at boundaries.",
+  "counterexample": "Security gates intentionally sanitizing diagnostic errors to prevent exposing internal details to public users.",
+  "fix": "Define rich, context-specific error types at layer boundaries.\n```rust\nenum BoundaryError {\n    Timeout,\n    Unauthenticated,\n    FormatCorrupted(String),\n}\n```",
+  "strength": "Contextual",
+  "source": "*A Philosophy of Software Design* by John K. Ousterhout (Chapter 6, \"Masking Exceptions\", p. 119)."
+}

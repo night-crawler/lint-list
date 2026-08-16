@@ -1,0 +1,13 @@
+{
+  "id": 104,
+  "title": "Duplicated Representation (State Synchronization Debt)",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nstruct Wheel {\n    rim: f64,\n    tire: f64,\n    diameter: f64, // calculated and stored redundantly\n}\n```",
+  "pattern": "Storing raw inputs alongside their calculated derivatives within the fields of the same struct, requiring manual synchronization.",
+  "why_bad": "Violates the single source of truth. If one field is updated but its derivative is not, the struct enters an invalid, corrupted state.",
+  "detection": "Fields in a struct that represent simple mathematical or logical calculations derived from other fields in the same struct.",
+  "counterexample": "Pre-calculating and caching highly expensive computational results to meet strict performance micro-benchmarks.",
+  "fix": "Remove the redundant derived field and calculate the value dynamically on-demand using a method.",
+  "strength": "Strong",
+  "source": "Sandi Metz, *Practical Object-Oriented Design* (2019), Chapter 2 (\"Designing Classes with a Single Responsibility\"), pp. 177-178."
+}

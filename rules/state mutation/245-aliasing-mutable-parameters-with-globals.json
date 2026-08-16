@@ -1,0 +1,13 @@
+{
+  "id": 245,
+  "title": "Aliasing Mutable Parameters with Globals",
+  "category": "State Mutation",
+  "damaged_code": "```rust\nstatic mut GLOBAL_BALANCE: i32 = 100;\n\nunsafe fn deduct_and_log(account_balance: &mut i32) {\n    GLOBAL_BALANCE = 50; // Directly modifies global state\n    *account_balance -= 20; // Aliasing hazard: what if account_balance points to GLOBAL_BALANCE?\n}\n```",
+  "pattern": "A function accepts a mutable reference/pointer parameter while also directly modifying a global variable, where the caller might pass a reference to that very same global variable.",
+  "why_bad": "This creates a severe \"aliasing\" bug. If the mutable parameter is an alias for the global variable, updates to one will silently overwrite the other in non-obvious, chaotic ways. It destroys equational reasoning and lexical isolation.",
+  "detection": "A function reads/writes a global/static mutable variable `G` while simultaneously taking a mutable parameter `P`, without proving that `P` and `G` reside at distinct memory locations. (In safe Rust, this is prevented at compile-time, but is common in `unsafe` blocks or in C++).",
+  "counterexample": "The function only operates on parameters passed by value or proven distinct, with no global mutable accesses inside the routine:\n```rust\nfn deduct_clean(account_balance: &mut i32, global_val: i32) {\n    // Distinct, isolated operations\n}\n```",
+  "fix": "Eliminate global mutable states. Pass the global value as an explicit parameter so that the compiler can enforce aliasing/exclusivity invariants.\n```rust\nfn deduct_safely(balance: &mut i32, global_balance: &mut i32) {\n    // Compiler guarantees at compile-time that balance and global_balance do not overlap.\n}\n```",
+  "strength": "Strong",
+  "source": "*Code Complete* by Steve McConnell (Chapter 13, \"Bizarre and exciting aliasing problems with global data\"); *Types and Programming Languages* by Benjamin C. Pierce (Chapter 13, \"References\", \"Aliasing\")."
+}

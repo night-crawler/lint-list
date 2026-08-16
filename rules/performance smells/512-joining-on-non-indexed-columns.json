@@ -1,0 +1,13 @@
+{
+  "id": 512,
+  "title": "Joining on Non-Indexed Columns",
+  "category": "Performance Smells",
+  "damaged_code": "```sql\nSELECT * FROM orders o \nJOIN shipping_details s ON o.tracking_code = s.tracking_code; -- tracking_code is unindexed\n```",
+  "pattern": "Executing SQL join operations on columns that lack indexes.",
+  "why_bad": "Forces the database engine to perform O(N) sequential table scans, reading every physical block from the disk to find matching rows, destroying performance as data volume scales.",
+  "detection": "Join statements where the target attributes in the `ON` clause do not have matching database index entries.",
+  "counterexample": "Small table structures with negligible rows (< 100 rows) where index scans are slower than table scans. `Contextual`.",
+  "fix": "Create explicit indexes on columns used in join clauses or foreign key relationships.",
+  "strength": "Strong",
+  "source": "*Release It!*, Section 9.7 & 9.8 (p. 246 / 540)."
+}

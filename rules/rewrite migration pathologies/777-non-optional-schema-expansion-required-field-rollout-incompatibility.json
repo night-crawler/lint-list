@@ -1,0 +1,13 @@
+{
+  "id": 777,
+  "title": "Non-Optional Schema Expansion (Required Field Rollout Incompatibility)",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```protobuf\n// protobuf v2 schema definition\nmessage UserRecord {\n  required string username = 1;\n  required string email = 2;\n  required string phone_number = 3; // Added in v2 migration!\n}\n```",
+  "pattern": "Adding a new field to a serialized data schema (Protobuf, Thrift, Avro) and marking it as `required` (or failing to provide a default value) while old reader code is still running in the wild.",
+  "why_bad": "During a rolling upgrade, or on client devices, older compiled binaries still run the v1 schema. When they receive messages written by v2 writers containing the new field, they cannot parse it as optional, or worse, newer readers reading v1 data written by old writers will immediately fail to parse because the required field is missing, causing application-wide deserialization crashes [176, 631].",
+  "detection": "Any schema modifications that introduce a field annotated as `required` (or lacking a fallback `default` value) after the initial release.",
+  "counterexample": "None. Adding a required field to a deployed schema is always a breaking change.",
+  "fix": "All newly added fields in schema revisions must be optional or have a declared default value [176, 631].\n```protobuf\n// protobuf v2 schema definition\nmessage UserRecord {\n  required string username = 1;\n  required string email = 2;\n  optional string phone_number = 3; // Safe optional migration field\n}\n```",
+  "strength": "Strong",
+  "source": "Designing Data-Intensive Applications, Chapter 4, \"Protobuf / Thrift / Avro compatibility\" [176, 630, 631]"
+}

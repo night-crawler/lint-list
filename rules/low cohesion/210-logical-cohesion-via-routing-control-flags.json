@@ -1,0 +1,13 @@
+{
+  "id": 210,
+  "title": "Logical Cohesion via Routing Control Flags",
+  "category": "Low Cohesion",
+  "damaged_code": "```rust\nenum Operation { Read, Write, Delete }\n\nstruct FileHandler;\nimpl FileHandler {\n    // Logical Cohesion: Completely different tasks stuffed into one routine \n    // selected by a control flag.\n    fn handle(&self, op: Operation, path: &str, content: Option<&str>) {\n        match op {\n            Operation::Read => { /* reads file */ },\n            Operation::Write => { /* writes file */ },\n            Operation::Delete => { /* deletes file */ },\n        }\n    }\n}\n```",
+  "pattern": "A single function executes entirely different operations depending on a control flag (enum or boolean) passed in as an argument.",
+  "why_bad": "The operations are only bound together by the control flow inside the method, which artificially inflates complexity. It forces callers to supply irrelevant arguments (e.g., passing `None` to a `Read` call) and couples unrelated task changes.",
+  "detection": "A function takes a control flag parameter that immediately drives a top-level `match` or `if/else` block partition, where each branch performs a distinct, non-overlapping workflow.",
+  "counterexample": "Factory patterns or dispatchers where the sole, explicitly documented purpose of the struct is polymorphic routing.",
+  "fix": "Split the single logically cohesive function into distinct, functionally cohesive functions.\n```rust\nstruct FileHandler;\nimpl FileHandler {\n    fn read_file(&self, path: &str) -> String { /* ... */ }\n    fn write_file(&self, path: &str, content: &str) { /* ... */ }\n    fn delete_file(&self, path: &str) { /* ... */ }\n}\n```",
+  "strength": "Strong",
+  "source": "*Steve McConnell - Code Complete, Chapter 7, Section \"Aim for Strong Cohesion\" (Logical Cohesion)*"
+}

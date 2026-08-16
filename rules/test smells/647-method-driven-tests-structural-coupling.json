@@ -1,0 +1,13 @@
+{
+  "id": 647,
+  "title": "Method-Driven Tests (Structural Coupling)",
+  "category": "Test Smells",
+  "damaged_code": "```rust\npub struct CargoShip { ... }\nimpl CargoShip {\n    pub fn load_cargo(&mut self, item: Item) { ... }\n    pub fn calculate_weight(&self) -> u64 { ... }\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    // Strictly mirroring class architecture: one test per method\n    #[test]\n    fn test_load_cargo() { ... }\n\n    #[test]\n    fn test_calculate_weight() { ... }\n}\n```",
+  "pattern": "A test suite designed to structurally mirror the exact files, classes, and methods of the production codebase (one test method per production method).",
+  "why_bad": "Structural coupling. It binds tests to the system's internal structural organization [277]. When code is refactored (e.g., splitting a class, extracting methods), the tests are forced to break and be rewritten even if the public behavioral contract remains identical [186, 277].",
+  "detection": "A 1:1 structural correspondence between the production code layout and the test code layout, particularly using test names derived directly from production method names [241].",
+  "counterexample": "Behavior-oriented test layouts verifying complete scenarios (using conventions like given-when-then) regardless of how many methods are invoked [75, 242].",
+  "fix": "Structure tests to focus on verifying **behaviors** and use cases instead of individual methods [186]. Test public contracts and allow internal implementations to shift freely [186, 277].",
+  "strength": "Strong",
+  "source": "*   *Clean Architecture*, \"Structural Coupling / Fragile Tests\" (p. 251-253) [275, 277]\n*   *Software Engineering at Google*, \"Test Behaviors, Not Methods\" (p. 241-246) [186, 241]"
+}

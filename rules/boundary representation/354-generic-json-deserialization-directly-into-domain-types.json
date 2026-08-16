@@ -1,0 +1,13 @@
+{
+  "id": 354,
+  "title": "Generic JSON Deserialization Directly Into Domain Types",
+  "category": "Boundary Representation",
+  "damaged_code": "```rust\n#[derive(Deserialize)]\npub struct InventoryItem {\n    pub name: String,\n    pub quantity: i32, // Bypasses business rule: quantity cannot be negative\n}\n```",
+  "pattern": "Deriving deserialization rules directly on core domain models containing public mutable fields.",
+  "why_bad": "It allows external network clients to bypass your domain logic and validated constructors. This can inject corrupted or logically invalid states directly into memory.",
+  "detection": "Structs inside domain directories implementing `serde::Deserialize` without a validated intermediate DTO wrapper.",
+  "counterexample": "Internal serialization of domain states for trusted database engines.",
+  "fix": "Deserialize untrusted payload streams into flat DTOs, then invoke domain constructors to instantiate the validated domain type.\n```rust\n#[derive(Deserialize)]\nstruct ItemPayload { name: String, quantity: i32 }\n\nimpl InventoryItem {\n    pub fn new(name: String, quantity: i32) -> Result<Self, Error> {\n        if quantity < 0 { return Err(Error); }\n        Ok(InventoryItem { name, quantity })\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Domain Modeling made Functional* by Scott Wlaschin (Chapter 11, p. 245, \"Deserialization Gates\")."
+}

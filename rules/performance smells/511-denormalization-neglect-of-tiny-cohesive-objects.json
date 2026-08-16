@@ -1,0 +1,13 @@
+{
+  "id": 511,
+  "title": "Denormalization Neglect of Tiny Cohesive Objects",
+  "category": "Performance Smells",
+  "damaged_code": "```sql\nCREATE TABLE tbl_backlog_item (id INT PRIMARY KEY);\nCREATE TABLE tbl_priority_ratings ( -- Separate table for ratings\n    backlog_item_id INT REFERENCES tbl_backlog_item(id),\n    benefit INT,\n    cost INT\n);\n```",
+  "pattern": "Placing highly nested value objects or small tightly coupled attributes in separate tables, requiring SQL joins for every retrieval.",
+  "why_bad": "It forces the database to perform costly table joins and separate disk seeks to load tiny value components that are always read and modified together.",
+  "detection": "Multi-table relationships where the child tables represent immutable value objects containing only a few attributes.",
+  "counterexample": "The value object is shared globally across millions of entities and is very large (e.g., product images). `Contextual`.",
+  "fix": "Denormalize the value object attributes directly into the parent table's columns (or serialize as a LOB column).",
+  "strength": "Strong",
+  "source": "*Domain-Driven Design*, Chapter 5, Value Objects (p. 348) and *Implementing Domain-Driven Design*, Chapter 7 (p. 500)."
+}

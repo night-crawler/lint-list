@@ -1,0 +1,13 @@
+{
+  "id": 332,
+  "title": "Ambiguous Number Qualifier Suffix (`num` vs `count`/`index`)",
+  "category": "Semantic Ambiguity",
+  "damaged_code": "```rust\nlet customer_num = 5; // Is this the 5th customer, or are there 5 customers?\n```",
+  "pattern": "Using the suffix or prefix `num` (e.g., `customer_num`, `num_files`) to represent both index counters and total tallies.",
+  "why_bad": "`num` is highly ambiguous. Conventionally, `num` at the beginning (`num_customers`) means a total count, while at the end (`customer_num`) it means an index. However, developers frequently mix them, leading to severe off-by-one and indexing bugs.",
+  "detection": "Variables containing the substring `_num` or `num_` where the context does not make its role (index vs. tally) structurally explicit.",
+  "counterexample": "Explicitly naming the role of the variable:\n```rust\nlet customer_count = 5; // Total count\nlet customer_index = 5; // Specific index\n```",
+  "fix": "Replace `num` with `count` or `total` for tallies, and `index` or `id` for sequential positions.\n```rust\nlet customer_count = 5; // Clear total tally\nlet customer_index = 5; // Clear index\n```",
+  "strength": "Contextual",
+  "source": "*Code Complete* by Steve McConnell (p. 192)."
+}

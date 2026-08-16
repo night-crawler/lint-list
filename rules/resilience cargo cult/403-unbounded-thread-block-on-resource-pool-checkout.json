@@ -1,0 +1,13 @@
+{
+  "id": 403,
+  "title": "Unbounded Thread Block on Resource Pool Checkout",
+  "category": "Resilience Cargo Cult",
+  "damaged_code": "```rust\n// Rust (tokio or r2d2)\nlet conn = pool.get(); // Blocks indefinitely until a connection is available\n```",
+  "pattern": "Attempting to check out a resource from a thread or connection pool without specifying a timeout.",
+  "why_bad": "If the database or remote service crashes or experiences a severe latency spike, connection checkouts block indefinitely. This quickly exhausts the request-handling thread pool, turning a localized database slowdown into a complete application freeze [160, 201].",
+  "detection": "Identify invocations of connection pool checkouts (e.g., `.get()`, `.checkout()`, `pool.acquire()`) where no timeout argument is supplied, or where the pool configuration sets the checkout timeout to infinite/none.",
+  "counterexample": "```rust\nlet conn = pool.get_timeout(Duration::from_secs(2)); // Fails fast if unavailable\n```",
+  "fix": "Ensure every resource checkout has a strict, bounded timeout, allowing the request-handling thread to fail fast and release capacity.",
+  "strength": "Strong",
+  "source": "Michael T. Nygard, *Release It!*, page 81, 111-114, 201 / passage [160, 201]."
+}

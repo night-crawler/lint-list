@@ -1,0 +1,13 @@
+{
+  "id": 818,
+  "title": "Reimplementing Standard Library Utilities",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Custom implementation of a string whitespace trimmer\npub fn trim_spaces(s: &str) -> String {\n    let mut result = String::new();\n    for c in s.chars() {\n        if c != ' ' { result.push(c); }\n    }\n    result\n}\n```",
+  "pattern": "Writing custom algorithms or utility procedures to perform basic, common tasks (e.g., string manipulation, command-line parsing, file operations) that are already solved by the language standard library.",
+  "why_bad": "It wastes precious development time, introduces untested code paths, increases maintenance surface area, and misses optimized standard library implementations.",
+  "detection": "Routines executing custom loops, string character comparisons, or file parsing logic that mirror standard library methods (e.g. `.trim()`).",
+  "counterexample": "Implementing custom parsing where standard library parser utilities are insufficient for complex performance constraints.",
+  "fix": "Remove the custom routine and replace it with direct calls to standard library methods.",
+  "strength": "Strong",
+  "source": "*Code Complete (McConnell), Chapter 24, p. 130 [103, 130, 353]*"
+}

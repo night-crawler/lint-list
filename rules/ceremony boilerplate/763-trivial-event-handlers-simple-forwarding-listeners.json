@@ -1,0 +1,13 @@
+{
+  "id": 763,
+  "title": "Trivial Event Handlers (Simple Forwarding Listeners)",
+  "category": "Ceremony Boilerplate",
+  "damaged_code": "```rust\nstruct ClickHandler {\n    dispatcher: Dispatcher,\n}\nimpl ClickHandler {\n    pub fn on_click(&self, event: ClickEvent) {\n        self.dispatcher.dispatch(event);\n    }\n}\n```",
+  "pattern": "Creating custom handler classes or structs that do nothing but catch an event and forward it directly to an underlying dispatcher or processor.",
+  "why_bad": "It introduces useless class and method ceremony. It clutters the event pipeline with shallow pass-through components, forcing developers to wade through multiple empty call frames to see how an event is actually processed.",
+  "detection": "A listener or event handler implementation whose handler methods consist solely of a direct forwarding call with zero preprocessing or condition checks.",
+  "counterexample": "Event handlers that serialize events, append analytical telemetry, or conditionally route events based on payload types.",
+  "fix": "```rust\n// Bind the event dispatcher callback directly to the event source instead of using a custom listener class.\nbutton.on_click(|e| dispatcher.dispatch(e));\n```",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Refactoring* (1999), Chapter 3 (\"Code Smells - Middle Man\"), p. 81."
+}

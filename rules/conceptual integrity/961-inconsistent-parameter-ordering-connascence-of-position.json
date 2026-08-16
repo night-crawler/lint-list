@@ -1,0 +1,13 @@
+{
+  "id": 961,
+  "title": "Inconsistent Parameter Ordering (Connascence of Position)",
+  "category": "Conceptual Integrity",
+  "damaged_code": "```rust\n// Method A\nfn update_seat(seat: &str, name: &str) { ... }\n// Method B\nfn change_reservation(name: &str, seat: &str) { ... }\n```",
+  "pattern": "Using different parameter ordering for identical logical arguments in parallel or related method signatures.",
+  "why_bad": "It breaks the expected conceptual position. Because both parameters share the same type (`&str`), compilers cannot prevent accidental inversion, leading to silent database and logic bugs at runtime.",
+  "detection": "Compare sibling functions that accept the same set of argument types but vary their relative positions.",
+  "counterexample": "Functions where parameter order is explicitly bound by language trait contracts (e.g., standard library traits).",
+  "fix": "Unify the parameter order across all signatures (e.g., always placing identity/name first, followed by options/details).",
+  "strength": "Strong",
+  "source": "*Code Complete, Second Edition* by Steve McConnell (2004), p. 93-94, 627."
+}

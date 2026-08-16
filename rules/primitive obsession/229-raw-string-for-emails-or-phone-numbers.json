@@ -1,0 +1,13 @@
+{
+  "id": 229,
+  "title": "Raw String for Emails or Phone Numbers",
+  "category": "Primitive Obsession",
+  "damaged_code": "```rust\nstruct UserContact {\n    email: String,\n    phone: String,\n}\n```",
+  "pattern": "Using unstructured primitive `String` types to represent formatted, verified domain constructs like emails or phone numbers.",
+  "why_bad": "It forces heap allocations and provides no guarantee that the contained text is valid. Every downstream consumer must perform defensive formatting and validation, duplicating sanitization logic across the codebase.",
+  "detection": "Struct fields representing emails, phone numbers, or zip codes typed as `String` without wrapper verification.",
+  "counterexample": "A free-text comment box or address field where any arbitrary Unicode input is valid.",
+  "fix": "Wrap the validated construct in a dedicated type with a private inner value and a smart constructor.\n```rust\npub struct EmailAddress(String);\n\nimpl EmailAddress {\n    pub fn new(email: String) -> Result<Self, String> {\n        if email.contains('@') { // simplified check\n            Ok(EmailAddress(email))\n        } else {\n            Err(\"Invalid email format\".into())\n        }\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Refactoring* by Martin Fowler (p. 84, 144); *Domain Modeling made Functional* (p. 75)."
+}

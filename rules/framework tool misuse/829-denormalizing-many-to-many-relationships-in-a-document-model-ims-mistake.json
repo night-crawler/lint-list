@@ -1,0 +1,13 @@
+{
+  "id": 829,
+  "title": "Denormalizing Many-to-Many Relationships in a Document Model (IMS Mistake)",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Embedding repeated many-to-many relationship data directly inside a JSON document\n{\n    \"user_id\": 251,\n    \"organizations\": [\n        { \"name\": \"Org 1\", \"address\": \"123 Main St\" }, // Repeated across thousands of users\n        { \"name\": \"Org 2\", \"address\": \"456 Oak St\" }\n    ]\n}\n```",
+  "pattern": "Embedding/denormalizing many-to-many relationships directly as nested sub-documents inside a document database.",
+  "why_bad": "It duplicates shared data, leading to inconsistency when the shared record (e.g. Organization's address) is updated. This repeats the hierarchical database mistakes of the 1960s.",
+  "detection": "A document database schema where non-tree, many-to-many relationships are embedded as nested array values.",
+  "counterexample": "Embedding strict one-to-many tree structures where child elements are owned exclusively by a single parent document.",
+  "fix": "Store reference IDs instead of nested objects, and perform client-side or database-level lookup resolution.",
+  "strength": "Strong",
+  "source": "*Designing Data-Intensive Applications (Kleppmann), Chapter 2, p. 35 [518-519]*"
+}

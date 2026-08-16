@@ -1,0 +1,13 @@
+{
+  "id": 237,
+  "title": "Arbitrary JSON Blobs in Domain Models",
+  "category": "Primitive Obsession",
+  "damaged_code": "```rust\nstruct Order {\n    metadata: serde_json::Value,\n}\n```",
+  "pattern": "Storing core domain parameters or attributes using unstructured JSON payloads (`serde_json::Value`).",
+  "why_bad": "It completely bypasses type validation. It allows invalid schema variations to propagate into the database, making runtime business logic fragile to parsing failures and requiring defensive deserialization logic.",
+  "detection": "Struct fields typed as raw JSON or BSON objects inside domain models.",
+  "counterexample": "A database column storing raw external webhook logs for auditing or debugging purposes.",
+  "fix": "Parse the incoming payload into a strongly-typed schema before passing it into the domain model.\n```rust\nstruct OrderMetadata {\n    referral_source: Option<String>,\n    campaign_id: Option<u32>,\n}\n```",
+  "strength": "Strong",
+  "source": "*Domain Modeling made Functional* by Scott Wlaschin (p. 110)."
+}

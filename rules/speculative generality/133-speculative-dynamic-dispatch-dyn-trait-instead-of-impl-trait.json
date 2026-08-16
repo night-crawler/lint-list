@@ -1,0 +1,13 @@
+{
+  "id": 133,
+  "title": "Speculative Dynamic Dispatch (dyn Trait instead of impl Trait)",
+  "category": "Speculative Generality",
+  "damaged_code": "```rust\nfn get_reader() -> Box<dyn Read> {\n    Box::new(std::io::stdin())\n}\n```",
+  "pattern": "Returning or passing `Box<dyn Trait>` when static dispatch (`impl Trait`) is fully practical.",
+  "why_bad": "Avoidable heap allocation and vtable overhead.",
+  "detection": "Dynamic dispatch on non-heterogeneous collections or single-type returns.",
+  "counterexample": "Heterogeneous collections.",
+  "fix": "Use static dispatch with `impl Trait` or generics.",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust for Rustaceans* (2021)."
+}

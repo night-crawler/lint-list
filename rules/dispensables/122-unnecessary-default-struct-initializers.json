@@ -1,0 +1,13 @@
+{
+  "id": 122,
+  "title": "Unnecessary Default Struct Initializers",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nstruct Config { port: u16, host: String }\nlet cfg = Config { port: 80, host: Default::default() };\n```",
+  "pattern": "Manually initializing individual fields with their default values instead of utilizing structural default unpacking.",
+  "why_bad": "Increases boilerplate and maintenance, requiring manual field-by-field definitions instead of relying on the struct's `Default` derivation.",
+  "detection": "Struct initialization where fields are manually mapped to `Default::default()` or equivalent literals, and the struct implements `Default`.",
+  "counterexample": "Structuring types that do not implement `Default`.",
+  "fix": "Use the struct update syntax (`Config { port: 80, ..Default::default() }`).",
+  "strength": "Strong",
+  "source": "Fowler, *Refactoring*, Chapter 3 (\"Bad Smells - Dispensables\")."
+}

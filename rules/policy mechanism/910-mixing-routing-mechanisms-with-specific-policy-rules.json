@@ -1,0 +1,13 @@
+{
+  "id": 910,
+  "title": "Mixing Routing Mechanisms with Specific Policy Rules",
+  "category": "Policy Mechanism",
+  "damaged_code": "```rust\nimpl Router {\n    pub fn find_route(&self, cargo: &Cargo) -> Itinerary {\n        let legs = self.get_all_legs();\n        // Policy mixed into mechanistical pathfinding\n        if cargo.has_hazardous_materials() {\n            legs.into_iter().filter(|leg| !leg.passes_through_cities()).collect()\n        } else {\n            legs\n        }\n        // ... execute Dijkstra search ...\n    }\n}\n```",
+  "pattern": "@Core search or traversal mechanism contains hardcoded, specific conditional statements defining specific selection or filtering policies.",
+  "why_bad": "The algorithm (the mechanism of pathfinding/graph traversal) is coupled to volatile business rules (routing specifications, hazard policies). This prevents the search algorithm from being reused or optimized independently.",
+  "detection": "A pathfinder, query, or solver method directly references domain-specific properties of the items being processed to filter or score candidates inside the search loop.",
+  "counterexample": "Generic heuristics (like cost/distance multipliers) that are passed to a pathfinder are highly appropriate. Marked `Context-dependent`.",
+  "fix": "Factor the filtering and scoring policy into a strategy trait/interface, and pass this strategy object as an argument to the generic mechanism.\n```rust\npub trait RouteBiasPolicy {\n    fn is_allowed(&self, leg: &Leg) -> bool;\n}\n\nimpl Router {\n    pub fn find_route(&self, cargo: &Cargo, policy: &dyn RouteBiasPolicy) -> Itinerary {\n        let legs: Vec<Leg> = self.get_all_legs().into_iter().filter(|l| policy.is_allowed(l)).collect();\n        // ... generic Dijkstra ...\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Eric Evans, *Domain-Driven Design* (2003), Chapter 12, \"Strategy (A.K.A. Policy)\", p. 325."
+}

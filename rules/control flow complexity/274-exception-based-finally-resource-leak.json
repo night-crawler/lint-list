@@ -1,0 +1,13 @@
+{
+  "id": 274,
+  "title": "Exception-Based Finally Resource Leak",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```cpp\ntry {\n    Resource* res = allocate();\n    res->process();\n} finally {\n    res->deallocate();\n}\n```",
+  "pattern": "Attempting to release a resource in a `finally` block when the allocation itself is done in the `try` block and could have thrown.",
+  "why_bad": "Secondary crashes. The deallocation code crashes on null or uninitialized state, swallowing the original allocation error.",
+  "detection": "Variable definitions initialized within a `try` block, and deallocated in `finally`, without validating allocation success.",
+  "counterexample": "Safe cleanup libraries where the deallocator is guaranteed to be a no-op on null inputs.",
+  "fix": "Allocate before entering the try block, or use RAII (`Drop` in Rust) to automatically clean up.",
+  "strength": "Strong",
+  "source": "Andrew Hunt & David Thomas, *The Pragmatic Programmer*, Chapter 5."
+}

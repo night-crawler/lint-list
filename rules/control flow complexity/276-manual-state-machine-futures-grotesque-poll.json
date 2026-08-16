@@ -1,0 +1,13 @@
+{
+  "id": 276,
+  "title": "Manual State Machine Futures (Grotesque Poll)",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```rust\nimpl Future for GrotesqueForward {\n    type Output = ();\n    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<()> {\n        match &mut self.state {\n            State::Receive(recv) => { ... }\n            State::Send(send) => { ... }\n        }\n    }\n}\n```",
+  "pattern": "Manually implementing state enums inside `Future::poll` to track progress across yield points.",
+  "why_bad": "Extremely complex, fragile, and difficult to verify correct borrowing semantics across yields.",
+  "detection": "Manual implementation of the `Future` trait containing a state machine match statement.",
+  "counterexample": "Writing low-level leaf futures (like channel receivers or timer implementations) where no async/await syntax exists.",
+  "fix": "Use standard compiler-generated state machines via `async fn` and `.await`.",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust For Rustaceans*, Chapter 9."
+}

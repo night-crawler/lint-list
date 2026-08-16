@@ -1,0 +1,13 @@
+{
+  "id": 61,
+  "title": "Context Object Smuggling (AppContext Injection)",
+  "category": "Bloaters",
+  "damaged_code": "```rust\nstruct AppContext {\n    db: PgPool,\n    stripe_key: String,\n    mailer_api_key: String,\n    debug_mode: bool,\n}\n\nfn register_user(email: &str, ctx: &AppContext) -> Result<(), Error> {\n    // Only needs PgPool, but has access to stripe keys and mailer keys\n    ctx.db.execute(\"INSERT INTO users ...\", &[email])?;\n    Ok(())\n}\n```",
+  "pattern": "Creating a generic container struct holding all environment parameters and credentials, and passing a reference to it (`&AppContext`) down to almost every function in the application hierarchy.",
+  "why_bad": "Violates interface specificity and information hiding. A function's signature no longer documents what it actually reads or writes. Any change to the global `AppContext` forces a recompilation of every calling module. It also makes isolated unit testing highly painful, as developers must construct a full mock `AppContext` (including unrelated API keys) just to test a simple database write.",
+  "detection": "Observe a broad, flat context struct being passed as a parameter to more than 80% of the functions across multiple distinct modules, especially when those functions only access a single field of the context.",
+  "counterexample": "`Context-dependent`. Web frameworks that inject a standard request-scoped state object at the controller entry point, where framework constraints require a uniform signature.",
+  "fix": "Pass only the specific, individual dependencies that the function actually needs to perform its work.",
+  "strength": "Strong",
+  "source": "*John K. Ousterhout - A Philosophy of Software Design (2018)*, Chapter 8, \"Shared Variables\" (Context Objects); *Robert C. Martin - Clean Code (2008)*, Chapter 3."
+}

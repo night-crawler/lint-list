@@ -1,0 +1,13 @@
+{
+  "id": 309,
+  "title": "Sibling Interfaces Causing Client-Side Duplication",
+  "category": "Duplication",
+  "damaged_code": "```rust\nfn process_sd51_query(q: &QuerySD51) {\n    if q.is_active() {\n        q.execute();\n    }\n}\n\nfn process_sd52_query(q: &QuerySD52) {\n    if q.is_running() {\n        q.run_query();\n    }\n}\n```",
+  "pattern": "Implementing nearly identical client-side control loops for multiple sibling classes because they have slightly different interfaces.",
+  "why_bad": "Changes to the general processing loop must be carefully copied across all client handlers, introducing bug opportunities.",
+  "detection": "Parallel function shapes with identical logic taking different parameter types and invoking different method names.",
+  "counterexample": "None.",
+  "fix": "Unify interfaces with a shared trait, allowing a single generic function to handle both classes.\n```rust\ntrait Query {\n    fn is_active(&self) -> bool;\n    fn execute(&self);\n}\n\nfn process_query<Q: Query>(q: &Q) {\n    if q.is_active() {\n        q.execute();\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Refactoring to Patterns*, \"Unify Interfaces with Adapter\", p. 247."
+}

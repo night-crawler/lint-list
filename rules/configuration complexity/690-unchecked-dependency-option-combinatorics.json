@@ -1,0 +1,13 @@
+{
+  "id": 690,
+  "title": "Unchecked Dependency Option Combinatorics",
+  "category": "Configuration Complexity",
+  "damaged_code": "```toml\n# Cargo.toml - No verification of flag compatibility\n[features]\nfeature_a = []\nfeature_b = []\n```",
+  "pattern": "Defining multiple optional build flags or package features without validating that compilation succeeds under all combinations of those options.",
+  "why_bad": "Downstream users enabling specific combinations of flags will run into compilation errors because the developer only tested the defaults or a fully enabled state.",
+  "detection": "A package with multiple optional features lacking multi-configuration compilation sweeps (e.g., `cargo-hack` loops) in its continuous integration script.",
+  "counterexample": "```yaml\n# .github/workflows/ci.yml\n- name: Test all feature combinations\n  run: cargo hack test --feature-powerset\n```",
+  "fix": "Configure the project's CI pipeline to systematically build and test the codebase under the entire power-set of defined features.",
+  "strength": "Strong",
+  "source": "Jon Gjengset - *Rust For Rustaceans_ Idiomatic Programming for Experienced Developers* (2021, No Starch Press).pdf, Chapter 6."
+}

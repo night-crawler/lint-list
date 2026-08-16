@@ -1,0 +1,13 @@
+{
+  "id": 804,
+  "title": "Single-Table Optional Column Bloat (Single-Table Inheritance Abuse)",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```sql\n-- Single table containing columns for all possible domain types\nCREATE TABLE employees (\n    id INT PRIMARY KEY,\n    employee_type VARCHAR(50),\n    monthly_salary DECIMAL, -- Only for regular employees\n    hourly_rate DECIMAL,     -- Only for contractors\n    commission_rate DECIMAL, -- Only for salespeople\n    bonus DECIMAL            -- Only for managers\n);\n```",
+  "pattern": "Mapping an inheritance hierarchy or a sum type to a single database table containing columns for all possible concrete types, without constraints to prevent invalid combinations.",
+  "why_bad": "Columns used by only some subclasses must be nullable, preventing the database from enforcing structural invariants. The table bloats with null fields, leading to semantic confusion, index degradation, and accidental write corruptions [824].",
+  "detection": "A table containing a type indicator column combined with multiple columns that are logically required but must be declared nullable to support other types.",
+  "counterexample": "Valid for low-complexity hierarchies with very few subclass-specific columns where query performance is prioritized [823]. Mark as `Context-dependent`.",
+  "fix": "Refactor the database schema to use Class Table Inheritance (one table per type, sharing a primary key) or Concrete Table Inheritance (separate tables for each type) [819, 822].",
+  "strength": "Strong",
+  "source": "Patterns of Enterprise Application Architecture, \"Single Table Inheritance\" [819, 822, 823, 824]"
+}

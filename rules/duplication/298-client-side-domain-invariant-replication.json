@@ -1,0 +1,13 @@
+{
+  "id": 298,
+  "title": "Client-Side Domain Invariant Replication",
+  "category": "Duplication",
+  "damaged_code": "```rust\n// Client code checking overbooking logic before calling booking function\nif cargo.size + voyage.booked_cargo_size() <= (voyage.capacity() * 1.1) {\n    voyage.make_booking(cargo);\n}\n\n// Voyage domain code enforcing the exact same logic\nimpl Voyage {\n    fn make_booking(&mut self, cargo: Cargo) {\n        if cargo.size + self.booked_cargo_size() > (self.capacity() * 1.1) {\n            panic!(\"Capacity exceeded\");\n        }\n        self.add_cargo(cargo);\n    }\n}\n```",
+  "pattern": "Checking a business rule or invariant in the calling code (client) and duplicate-checking the exact same rule within the domain receiver.",
+  "why_bad": "If the business rule changes (e.g., capacity allowance reduced to 5% overbooking), the rule must be updated in both places. If they desynchronize, validation gaps or false failures occur.",
+  "detection": "An identical arithmetic comparison or logical guard check involving a recipient's fields is executed immediately before calling a method that itself enforces that check.",
+  "counterexample": "Input/format validation at interface boundaries (DAMP validation) which checks syntactic compliance, as opposed to domain rules which check logical consistency.",
+  "fix": "Encapsulate the business rule strictly inside the domain receiver and let the function return a `Result` indicating success or failure.\n```rust\nimpl Voyage {\n    fn make_booking(&mut self, cargo: Cargo) -> Result<(), BookingError> {\n        if cargo.size + self.booked_cargo_size() > (self.capacity() * 1.1) {\n            return Err(BookingError::Overbooked);\n        }\n        self.add_cargo(cargo);\n        Ok(())\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*The Pragmatic Programmer* (20th Anniversary Edition), Topic 29: \"Juggling the Real World\", Evans *Domain-Driven Design*, Chapter 1."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 208,
+  "title": "Dependency on Transitive Dependencies (Transitive Coupling)",
+  "category": "Couplers",
+  "damaged_code": "```toml\n# Cargo.toml\n[dependencies]\n# Directly imports library_a, which internally uses library_b\nlibrary_a = \"1.0\"\n```\n```rust\n// Code\n// Directly importing and using library_b types in our code\nuse library_b::transitive_type; \n```",
+  "pattern": "An application directly imports and utilizes types or functions from a transitive dependency (a library brought in by one of its direct dependencies) without declaring that library directly in its own manifest.",
+  "why_bad": "It is a silent boundary failure. If `library_a` decides to switch its internal implementation or upgrade to a newer version that does not expose `library_b`, your code will fail to compile.",
+  "detection": "Compiler/linter checking imports where a module references symbols from a crate not explicitly declared in the project's direct dependency manifest (`Cargo.toml`).",
+  "counterexample": "Re-exported types where `library_a` explicitly documents and re-exports `library_b` types as part of its own stable public API.",
+  "fix": "Explicitly declare `library_b` as a direct dependency in the manifest to lock its version independently.\n```toml\n# Cargo.toml\n[dependencies]\nlibrary_a = \"1.0\"\nlibrary_b = \"2.0\" # Declared directly\n```",
+  "strength": "Strong",
+  "source": "Titus Winters et al., *Software Engineering at Google* (2020), Chapter 2 (\"What is Software Engineering?\" - \"Dependency Management\")."
+}

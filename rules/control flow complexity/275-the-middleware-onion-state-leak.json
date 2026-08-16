@@ -1,0 +1,13 @@
+{
+  "id": 275,
+  "title": "The Middleware Onion State Leak",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```rust\nfn before_request(ctx: &mut Context) {\n    ctx.set_metadata(\"request_time\", Instant::now());\n}\n```",
+  "pattern": "Building long chains of deeply nested middleware/interceptors that rely on mutating a shared implicit context object.",
+  "why_bad": "Hidden state dependencies. It is impossible to determine the control flow because execution relies on implicit ordering of onion layers.",
+  "detection": "Chains of interceptors reading and writing untyped values from a shared request context.",
+  "counterexample": "Middleware that only performs logging, authentication checks, or context-independent operations.",
+  "fix": "Replace implicit context maps with explicit typed data structures passed between layers.",
+  "strength": "Contextual",
+  "source": "Heather Adkins et al., *Building Secure and Reliable Systems*, Chapter 12."
+}

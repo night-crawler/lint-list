@@ -1,0 +1,13 @@
+{
+  "id": 496,
+  "title": "Eager Copying of Reference Parameters (Unnecessary Ownership Request)",
+  "category": "Performance Smells",
+  "damaged_code": "```rust\nfn process_data(data: &String) -> String {\n    let owned = data.clone();\n    // Only read-only operations or forwarding occur\n    owned + \" processed\"\n}\n```",
+  "pattern": "A function accepts a reference parameter (`&T` or `&str`) and immediately clones or converts it to an owned type (`T` or `String`).",
+  "why_bad": "It forces a costly heap allocation and memory copy on every call, even when the caller might already own a temporary value that they could have passed directly, losing allocator control and upfront visibility of costs.",
+  "detection": "Look for parameters taken by reference (`&String`, `&Vec<T>`, `&[T]`) that are cloned immediately in the function body without semantic mutation of the underlying shared structure.",
+  "counterexample": "The function only needs to own the data conditionally under rare branches (e.g., error recovery, logging, dynamic format changes). `Context-dependent`.",
+  "fix": "Change the function signature to take an owned value (`String` or `Vec<T>`) or use `std::borrow::Cow` to defer allocation only when modification is needed.",
+  "strength": "Strong",
+  "source": "*Rust For Rustaceans*, Chapter 3, \"Ownership\" (p. 41-42 / 435-436)."
+}

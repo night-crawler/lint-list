@@ -1,0 +1,13 @@
+{
+  "id": 165,
+  "title": "Local Microservice Cosplay (Out-of-Process Utility Loop)",
+  "category": "Indirection Astronautics",
+  "damaged_code": "```rust\n// In-process action calling a local loopback HTTP daemon for utility operations\nfn delete_expired_orders() {\n    let client = reqwest::blocking::Client::new();\n    client.post(\"http://127.0.0.1:8081/purge_expired\")\n        .send()\n        .expect(\"Omission failure: local daemon down\");\n}\n```",
+  "pattern": "Splitting trivial operations (like file purges, logging, or background deletes) into separate local microservice daemons that communicate via loopback network calls (HTTP/gRPC) rather than simple in-process functions.",
+  "why_bad": "*   **Unnecessary Failure Modes:** Introduces network unreliability (connection timeouts, omission failures, port conflicts) into what should be a bulletproof local task.\n*   **Performance Hit:** Forces serialization, socket handshakes, and process context switches for trivial, low-complexity operations.",
+  "detection": "Outgoing socket or HTTP requests targeted at localhost / loopback addresses (`127.0.0.1` or `::1`) within a single monolithic deployment unit.",
+  "counterexample": "**Standard External Datastores:** Connecting to external database systems or message brokers (e.g., PostgreSQL, Redis) over local ports is valid.",
+  "fix": "Inline the utility operation as a local function, or spawn an asynchronous task inside the same process space.\n```rust\nfn delete_expired_orders(db: &Database) {\n    // Executed as a safe, local, in-process transaction\n    db.purge_expired();\n}\n```",
+  "strength": "Strong",
+  "source": "Bellotti, *Kill It with Fire*, Chapter 3 \"Evaluating Your Architecture\" & Adkins, *Building Secure and Reliable Systems*, Chapter 11."
+}

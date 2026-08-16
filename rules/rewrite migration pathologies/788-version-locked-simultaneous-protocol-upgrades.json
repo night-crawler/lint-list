@@ -1,0 +1,13 @@
+{
+  "id": 788,
+  "title": "Version-Locked Simultaneous Protocol Upgrades",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```rust\n// Client requires Server v2 and Server requires Client v2\nfn establish_handshake(version: u32) -> Result<(), Error> {\n    if version != 2 {\n        return Err(Error::ProtocolMismatch); // Requires Big Bang upgrade of both!\n    }\n    Ok(())\n}\n```",
+  "pattern": "Deploying a breaking changes protocol upgrade that requires both the client and server endpoints to be updated and restarted simultaneously.",
+  "why_bad": "It forces a high-risk \"Big Bang\" release. If any node in the cluster fails to upgrade or restart, the entire system breaks, resulting in severe downtime and eliminating the possibility of rolling or canary updates [381, 786, 787].",
+  "detection": "An endpoint validation where the server rejects any requests containing older protocol versions without fallback or translation logic.",
+  "counterexample": "Valid for private, ephemeral point-to-point connections where both ends are strictly compiled and run in a single process.",
+  "fix": "Support protocol versioning where the provider/server can simultaneously read and write both the legacy and the new version of the protocol during the transition window [787, 788].",
+  "strength": "Strong",
+  "source": "Release It!, \"Adaptable Enterprise Architecture\" [381, 786, 787, 788]"
+}

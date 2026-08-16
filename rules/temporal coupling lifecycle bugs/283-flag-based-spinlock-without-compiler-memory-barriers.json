@@ -1,0 +1,13 @@
+{
+  "id": 283,
+  "title": "Flag-Based Spinlock without Compiler/Memory Barriers",
+  "category": "Temporal Coupling Lifecycle Bugs",
+  "damaged_code": "```c\n// C\nvoid shut_it_down(void) {\n    status = SHUTTING_DOWN;\n    start_shutdown();\n    while (!other_task_ready) continue; // BUG: Compiler can fuse/cache this load!\n    finish_shutdown();\n    status = SHUT_DOWN;\n}\n```",
+  "pattern": "Synchronizing shutdown or loop termination in parallel threads using standard shared flag writes and reads without atomic/volatile primitives or compiler barriers.",
+  "why_bad": "The compiler may optimize and fuse consecutive stores or loads, or reorder writes across loops, resulting in infinite lockups or thread starvation.",
+  "detection": "A tight `while` loop that polls a standard, non-atomic boolean or integer variable modified by another thread without volatile annotations or memory barriers.",
+  "counterexample": "Spinning on an atomic variable (`std::sync::atomic::AtomicBool` in Rust) with explicit memory ordering constraints.",
+  "fix": "Wrap shared flags in atomic primitives (`std::sync::atomic` in Rust) or enforce ordering via explicit memory barriers (`smp_mb()`).",
+  "strength": "Strong",
+  "source": "Paul E. McKenney, *Is Parallel Programming Hard...*, Listing 4.19 / passage [4, 5, 299]."
+}

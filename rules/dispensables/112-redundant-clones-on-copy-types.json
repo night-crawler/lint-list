@@ -1,0 +1,13 @@
+{
+  "id": 112,
+  "title": "Redundant Clones on Copy Types",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nlet x: i32 = 42;\nlet y = x.clone();\n```",
+  "pattern": "Calling `.clone()` on a type that implements the `Copy` trait.",
+  "why_bad": "Implicitly suggests that a heavy heap allocation or deep copy is taking place, confusing the reader regarding the type's performance characteristics.",
+  "detection": "Calling `.clone()` on variables whose static type implements `Copy` (e.g., primitives, simple inline aggregates).",
+  "counterexample": "Context-dependent",
+  "fix": "Remove the `.clone()` call, relying on standard implicit copy mechanics.",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust For Rustaceans* (2021)."
+}

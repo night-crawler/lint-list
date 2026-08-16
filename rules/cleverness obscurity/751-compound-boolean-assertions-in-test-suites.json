@@ -1,0 +1,12 @@
+{
+  "id": 751,
+  "title": "Compound Boolean Assertions in Test Suites",
+  "category": "Cleverness Obscurity",
+  "damaged_code": "```rust\n// Rust\n#[test]\nfn test_state() {\n    assert!(a == b && c == d); // Multi-assertion puzzle\n}\n```",
+  "pattern": "Combining multiple independent correctness checks into a single compound boolean expression within an assertion macro.",
+  "why_bad": "When the test fails, the testing framework only outputs \"assertion failed: true == false,\" completely concealing which of the variables (`a` or `c`) caused the failure, making diagnostics difficult.",
+  "detection": "An `assert!` macro containing logical AND (`&&`) operators separating distinct equality checks.",
+  "fix": "Split the checks into individual, descriptive assertion statements.\n```rust\n#[test]\nfn test_state() {\n    assert_eq!(a, b);\n    assert_eq!(c, d);\n}\n```",
+  "strength": "Strong",
+  "source": "*Software Engineering at Google*, Chapter 13."
+}

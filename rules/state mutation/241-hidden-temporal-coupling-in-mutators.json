@@ -1,0 +1,13 @@
+{
+  "id": 241,
+  "title": "Hidden Temporal Coupling in Mutators",
+  "category": "State Mutation",
+  "damaged_code": "```rust\nstruct SuffixFinder {\n    prefix_index: Option<usize>,\n    suffix_index: Option<usize>,\n}\n\nimpl SuffixFinder {\n    pub fn find_common_prefix(&mut self, expected: &str, actual: &str) {\n        self.prefix_index = Some(calculate_prefix(expected, actual));\n    }\n    pub fn find_common_suffix(&mut self, expected: &str, actual: &str) {\n        // Implicitly assumes find_common_prefix was called and updated prefix_index\n        let idx = self.prefix_index.expect(\"Prefix must be calculated first!\");\n        self.suffix_index = Some(calculate_suffix(expected, actual, idx));\n    }\n}\n```",
+  "pattern": "A struct exposes multiple mutators that must be executed in a strict chronological sequence, where earlier methods implicitly write to fields that later methods read as inputs.",
+  "why_bad": "The sequential dependency is hidden from the API contract. If a client developer calls the methods out of order (e.g., calling `find_common_suffix` first), the program crashes with a panic or silently uses default/stale state. It forces the developer to understand the internal implementation to avoid bugs.",
+  "detection": "Find private/public methods on a struct that modify fields, where subsequent methods read those same fields as preconditions, with no type-safe ordering enforced.",
+  "counterexample": "Passing the output of the first calculation explicitly as an input to the second calculation:\n```rust\nimpl SuffixFinder {\n    pub fn find_common_prefix(&self, expected: &str, actual: &str) -> usize {\n        calculate_prefix(expected, actual)\n    }\n    pub fn find_common_suffix(&self, expected: &str, actual: &str, prefix_idx: usize) -> usize {\n        calculate_suffix(expected, actual, prefix_idx)\n    }\n}\n```",
+  "fix": "Thread the intermediate state explicitly through the function signatures, or model the states using the type system (Type-Driven Development) so that invalid sequences do not compile.\n```rust\nstruct PrefixResult {\n    prefix_index: usize,\n}\n\nimpl SuffixFinder {\n    pub fn find_common_prefix(&self, expected: &str, actual: &str) -> PrefixResult {\n        PrefixResult { prefix_index: calculate_prefix(expected, actual) }\n    }\n    pub fn find_common_suffix(&self, expected: &str, actual: &str, prefix: &PrefixResult) -> usize {\n        calculate_suffix(expected, actual, prefix.prefix_index)\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Clean Code* by Robert C. Martin (Chapter G31, \"Hidden Temporal Couplings\")."
+}

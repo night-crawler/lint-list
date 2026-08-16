@@ -1,0 +1,13 @@
+{
+  "id": 134,
+  "title": "Generics with a Single Concrete Type Argument Instance",
+  "category": "Speculative Generality",
+  "damaged_code": "```rust\nfn log_data<T: std::fmt::Debug>(val: T) { println!(\"{:?}\", val); }\n// in the entire codebase, only ever called with String\n```",
+  "pattern": "Declaring generic functions that are only ever instantiated with one concrete type.",
+  "why_bad": "Unnecessary compile-time overhead and signature complexity.",
+  "detection": "Generic parameters whose monomorphized instances in the entire codebase only use a single concrete type.",
+  "counterexample": "Library APIs designed for generic downstream consumption.",
+  "fix": "Replace the generic parameter with the concrete type.",
+  "strength": "Contextual",
+  "source": "Martin Fowler, *Refactoring*, Chapter 3."
+}

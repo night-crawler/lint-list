@@ -1,0 +1,13 @@
+{
+  "id": 10,
+  "title": "Inline Date-Arithmetic Envy (Introduce Foreign Method)",
+  "category": "Feature Envy",
+  "damaged_code": "```rust\nuse chrono::NaiveDate;\n\nfn setup_billing_period(previous_end: NaiveDate) {\n    // Feature Envy: manual rollover arithmetic because NaiveDate doesn't provide next_day\n    let new_start = NaiveDate::from_ymd_opt(\n        previous_end.year(),\n        previous_end.month(),\n        previous_end.day() + 1\n    ).unwrap();\n}\n```",
+  "pattern": "Client code performs manual field extraction and arithmetic on a library struct because the library type lacks a cohesive helper method.",
+  "why_bad": "It clutters client code with low-level details of a foreign class's fields (like boundary conditions for months/years). If month rollovers are handled incorrectly, it introduces bugs across different client call sites.",
+  "detection": "Client code calling multiple getters on a foreign library type to compute a slightly modified instance of that same type.",
+  "counterexample": "Ordinary construction or serialization of a date structure from an external data source.",
+  "fix": "Implement an extension trait in Rust to encapsulate the behavior on the foreign type safely.\n```rust\ntrait NaiveDateExt {\n    fn next_day(&self) -> NaiveDate;\n}\nimpl NaiveDateExt for NaiveDate {\n    fn next_day(&self) -> NaiveDate {\n        self.succ_opt().unwrap()\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Refactoring* (1999), Chapter 10 (\"Introduce Foreign Method\")."
+}

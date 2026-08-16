@@ -1,0 +1,13 @@
+{
+  "id": 90,
+  "title": "Ceremonial Error Wrappers",
+  "category": "Dispensables",
+  "damaged_code": "```rust\n#[derive(Debug)]\nstruct ApplicationError(String);\nimpl From<std::io::Error> for ApplicationError {\n    fn from(err: std::io::Error) -> Self {\n        ApplicationError(err.to_string())\n    }\n}\n```",
+  "pattern": "A custom error wrapper that simply stringifies upstream errors instead of categorizing errors or carrying semantic context.",
+  "why_bad": "Erases the original error types, stack traces, and recovery opportunities, replacing rich structured error handling with fragile string matching.",
+  "detection": "A custom error wrapper whose conversion implementations only invoke `.to_string()` or `.to_string().into()` on upstream errors.",
+  "counterexample": "Domain-specific errors that map concrete error variants to logical domain failures (e.g., `PaymentFailed`).",
+  "fix": "Propagate the original error directly, or use an error-handling library like `thiserror` to define rich structured errors.",
+  "strength": "Contextual",
+  "source": "Fowler, *Refactoring*, Chapter 3 (\"Bad Smells - Dispensables\")."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 709,
+  "title": "Burying Feature Flags in Hot Execution Paths",
+  "category": "Configuration Complexity",
+  "damaged_code": "```rust\nfn decode_frame(packet: &[u8]) {\n    for byte in packet {\n        // Checking flag for EVERY BYTE in a high-bandwidth parser\n        if config.is_enabled(\"use_experimental_decoder\") {\n            process_experimental(byte);\n        } else {\n            process_standard(byte);\n        }\n    }\n}\n```",
+  "pattern": "Evaluating feature flags or dynamic configuration lookups inside tight, CPU-bound execution loops or low-level parser runs.",
+  "why_bad": "Introduces severe performance regressions. Frequent string-based hash maps or atomic lookups inside tight loops disrupt cache alignment, disable compiler loop-unrolling, and burn unnecessary CPU cycles.",
+  "detection": "Evaluation of configuration variables or string keys within high-frequency loops or recursion pipelines.",
+  "counterexample": "```rust\nfn decode_frame(packet: &[u8]) {\n    // Resolve strategy ONCE before entering processing pipeline\n    if config.is_enabled(\"use_experimental_decoder\") {\n        decode_experimental_loop(packet);\n    } else {\n        decode_standard_loop(packet);\n    }\n}\n```",
+  "fix": "Evaluate configurations once outside performance-critical pathways; select the correct processing strategy loop before handling bulk transactions.",
+  "strength": "Strong",
+  "source": "Titus Winters, Tom Manshreck, Hyrum Wright - *Software Engineering at Google_ Lessons Learned from Programming Over Time* (2020, O'Reilly Media).pdf, Chapter 24; Kent Beck - *Tidy First?* (2023, O'Reilly Media).pdf, Chapter 28."
+}

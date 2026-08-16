@@ -1,0 +1,13 @@
+{
+  "id": 945,
+  "title": "Inconsistent Naming of Identical Component Roles (Manager vs. Controller vs. Driver)",
+  "category": "Conceptual Integrity",
+  "damaged_code": "```rust\n// Mixing synonyms in the same layer\nstruct DeviceManager;\nstruct ProtocolController;\nstruct ThreadDriver;\n```",
+  "pattern": "Using different role-suffix names (`Manager`, `Controller`, `Driver`, `Service`, `Executor`) interchangeably in the same codebase for components that share the same architectural and functional purpose.",
+  "why_bad": "It violates uniform lexicon standards and breaks the principle of least surprise. Developers are forced to spend cognitive energy parsing whether a 'Manager' has structurally different behavior, lifecycles, or thread semantics compared to a 'Controller', when they are actually identical synonyms.",
+  "detection": "Identify structs within the same package or layer that carry different role suffixes (e.g., matching both `*Manager` and `*Controller` in a struct-suffix scan) but have similar constructor signatures and lifetimes.",
+  "counterexample": "Distinct role-suffixes that describe distinct, formally defined architectural positions in a system: \n```rust\n// Valid: Manager coordinates, Driver interacts with OS/HW\nstruct DeviceManager { driver: SerialDriver }\n```",
+  "fix": "Standardize on a single, well-defined suffix (e.g., renaming all components to `*Controller`) to maintain a single, cohesive design vocabulary.",
+  "strength": "Strong",
+  "source": "*Clean Code* by Robert C. Martin (2008), p. 25, 292."
+}

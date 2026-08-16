@@ -1,0 +1,13 @@
+{
+  "id": 220,
+  "title": "Connascence of Algorithm",
+  "category": "Low Cohesion",
+  "damaged_code": "```rust\nstruct ServerAuthenticator;\nimpl ServerAuthenticator {\n    fn generate_hash(&self, val: &str) -> String {\n        // Exact same hashing algorithm duplicated on server\n        format!(\"hash_{}_salted\", val)\n    }\n}\n\nstruct ClientAuthenticator;\nimpl ClientAuthenticator {\n    fn generate_hash(&self, val: &str) -> String {\n        // Duplicated client-side algorithm\n        format!(\"hash_{}_salted\", val)\n    }\n}\n```",
+  "pattern": "Multiple distinct modules independently implement the exact same algorithmic steps to produce matching results (e.g., cryptographic hashing, security salting, or custom checksum calculations).",
+  "why_bad": "It is a strong form of coupling. If the algorithm must change (e.g., migrating to a safer hash function), all implementations must be updated in lockstep. If one location is missed, the handshake fails, causing silent system outages.",
+  "detection": "The exact same sequential mathematical operations, cryptographic salting steps, or string formatting sequences are duplicated across separate modules.",
+  "counterexample": "Standard cryptographic libraries (such as `sha2` or `bcrypt`) where implementations are shared via unified external packages.",
+  "fix": "Extract the algorithm into a single shared function or library module that both client and server reference as a single source of truth.\n```rust\npub fn calculate_hash(val: &str) -> String {\n    format!(\"hash_{}_salted\", val)\n}\n```",
+  "strength": "Strong",
+  "source": "*Mark Richards & Neal Ford - Fundamentals of Software Architecture, Chapter 3, Section \"Connascence of Algorithm\"*"
+}

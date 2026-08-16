@@ -1,0 +1,13 @@
+{
+  "id": 658,
+  "title": "Interaction Testing on Non-State-Changing Methods",
+  "category": "Test Smells",
+  "damaged_code": "```rust\n#[test]\nfn test_get_user_permissions() {\n    let mut mock_service = MockPermissionService::new();\n    mock_service.expect_get_permissions()\n        .with(eq(\"alice\"))\n        .returning(|_| Ok(vec![\"READ\"]));\n\n    let authorizer = Authorizer::new(mock_service);\n    let _ = authorizer.check_access(\"alice\", \"READ\");\n\n    // Smell: Verifying query interaction\n    mock_service.verify(); \n}\n```",
+  "pattern": "Verifying interactions (using mocks or spies) on non-state-changing query operations, such as assertions that a data read method was invoked.",
+  "why_bad": "It checks how a system arrived at its result rather than verifying that the result is correct [518]. It adds test brittleness because read interactions represent internal data-flow patterns that are likely to change [529].",
+  "detection": "Using mocking expectations or spies to assert that getter, database query, or read-only collaborator methods were invoked during execution [530].",
+  "counterexample": "Verifying a state-changing operation (such as adding a record or writing to a socket) where the interaction itself is the primary side-effect being verified [530].",
+  "fix": "Verify only state-changing operations via interaction testing, and use state assertions (verifying final return values or mutations) for non-state-changing operations [518, 529].",
+  "strength": "Strong",
+  "source": "*   *Software Engineering at Google*, \"Interaction Testing on Non-State-Changing Functions\" (p. 275-276) [518, 529, 530]"
+}

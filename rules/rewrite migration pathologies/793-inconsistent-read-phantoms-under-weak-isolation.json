@@ -1,0 +1,13 @@
+{
+  "id": 793,
+  "title": "Inconsistent Read Phantoms under Weak Isolation",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```rust\n// Inside a data-migration routine running under Read Committed isolation\nasync fn migrate_balances(db: &Database) -> Result<(), Error> {\n    let sum_before = db.query_sum(\"SELECT SUM(balance) FROM accounts\").await?;\n    // Concurrent transaction inserts a new account here\n    let sum_after = db.query_sum(\"SELECT SUM(balance) FROM accounts\").await?;\n    if sum_before != sum_after {\n        return Err(Error::PhantomDetected); // Migration fails due to phantoms\n    }\n    Ok(())\n}\n```",
+  "pattern": "Running data migration or audit logic that executes range reads or aggregations under read-committed or snapshot isolation levels without serializable isolation.",
+  "why_bad": "Concurrent transactions can insert or delete rows during execution. The reader will see a \"phantom\" state where some changes are partially reflected, leading to invalid calculations or corrupt database migration records [410, 809, 814].",
+  "detection": "Multiple sequential SQL aggregation/range queries executed over the same table inside a single migration transaction when the isolation level is set to anything weaker than `Serializable`.",
+  "counterexample": "Valid if the table is locked exclusively against writes or if the application is running in an offline maintenance window. Mark as `Context-dependent`.",
+  "fix": "Execute critical migrations requiring absolute consistency under `Serializable` isolation, or explicitly lock the affected rows using `SELECT FOR UPDATE` [205, 410, 813].",
+  "strength": "Strong",
+  "source": "Patterns of Enterprise Application Architecture, \"Concurrency\" [410, 809, 810, 813, 814]; Designing Data-Intensive Applications, Chapter 7 [205]"
+}

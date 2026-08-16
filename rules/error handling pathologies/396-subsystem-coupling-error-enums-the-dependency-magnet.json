@@ -1,0 +1,13 @@
+{
+  "id": 396,
+  "title": "Subsystem-Coupling Error Enums (The Dependency Magnet)",
+  "category": "Error Handling Pathologies",
+  "damaged_code": "```rust\n// Global, project-wide error enum\npub enum ProjectError {\n    DatabaseError(sqlx::Error),\n    NetworkTimeout,\n    InvalidPage(String), // unfit for global context\n    DiskFull,\n}\n```",
+  "pattern": "Defining a single, centralized global error enumeration or class that lists the specific error variants of all unrelated subsystems in the project.",
+  "why_bad": "Violates the Open/Closed Principle. The central enum becomes a \"dependency magnet\": if a low-level module needs a new specific error variant, the global error file must be modified, triggering recompilation and redeployment of all unrelated modules in the system. [24, Chapter 3, \"The Error.java Dependency Magnet\"]",
+  "detection": "An error enum or class imported by 5+ distinct, logically unrelated modules where many variants are only relevant to a single specific subsystem.",
+  "counterexample": "Highly cohesive, small utility libraries with a single core purpose.",
+  "fix": "Have each bounded subsystem define its own module-level error enums, only combining them at application integration boundaries.\n```rust\npub enum PageError {\n    InvalidPage(String),\n}\n```",
+  "strength": "Strong",
+  "source": "*Robert C. Martin - Clean Code*, Chapter 3, \"The Error.java Dependency Magnet\" [24]"
+}

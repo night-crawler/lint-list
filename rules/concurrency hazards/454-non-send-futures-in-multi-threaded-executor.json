@@ -1,0 +1,13 @@
+{
+  "id": 454,
+  "title": "Non-Send Futures in Multi-Threaded Executor",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```rust\n// Attempting to spawn a future containing Rc (non-Send) \n// on a multi-threaded executor\nlet shared_data = Rc::new(10);\ntokio::spawn(async move {\n    // Compile error! Rc is not Send\n    println!(\"{}\", shared_data); \n});\n```",
+  "pattern": "Constructing or holding a non-`Send` thread-local reference (such as `Rc` or `RefCell`) across an `.await` boundary in a future intended to be spawned on a multi-threaded work-stealing executor.",
+  "why_bad": "Work-stealing executors dynamically shift tasks across worker threads. If a future contains non-`Send` types across `.await` points, it cannot safely move threads, resulting in compilation failures or localized bottlenecking.",
+  "detection": "A future spawned via a multi-threaded run/spawn API that contains variables that do not implement `Send`.",
+  "counterexample": "Using `Arc` and `Mutex` instead of `Rc` and `RefCell`.",
+  "fix": "Replace thread-local references with thread-safe atomic ones.\n```rust\nlet shared_data = Arc::new(10);\ntokio::spawn(async move {\n    println!(\"{}\", shared_data);\n});\n```",
+  "strength": "Strong",
+  "source": "Jon Gjengset Ch 9 (p. 238)"
+}

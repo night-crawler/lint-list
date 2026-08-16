@@ -1,0 +1,13 @@
+{
+  "id": 926,
+  "title": "Shallow Structs (Getter/Setter Classitis)",
+  "category": "Wrong Granularity",
+  "damaged_code": "```rust\nstruct User {\n    username: String,\n}\n\nimpl User {\n    pub fn get_username(&self) -> &str {\n        &self.username\n    }\n\n    pub fn set_username(&mut self, new_name: String) {\n        self.username = new_name;\n    }\n}\n```",
+  "pattern": "A struct containing private data wrapped entirely in simple getter and setter methods with absolutely no internal invariants, data validation, or core business logic.",
+  "why_bad": "Creates a shallow abstraction. The cost of learning and writing calls to the interface (getters/setters) is equal to or greater than interacting with the fields directly. It provides a false sense of encapsulation while leaking the exact shape of the private data to consumers, leading to high interface maintenance.",
+  "detection": "Structs where 100% of fields are accessed or modified via 1-to-1 matching public getters/setters with no guard conditions, calculations, or invariant verification.",
+  "counterexample": "`Context-dependent`. Shared libraries exporting stable binary interfaces (ABIs) where direct field exposure could break backwards compatibility.",
+  "fix": "Expose fields directly when there are no invariants to maintain, or implement meaningful domain actions on the struct instead of raw state manipulation.\n```rust\nstruct User {\n    pub username: String,\n}\n```",
+  "strength": "Strong",
+  "source": "*John K. Ousterhout - A Philosophy of Software Design (2018)*, Chapter 4, \"Modules Should Be Deep\" (Shallow Modules, p. 25 & Classitis, p. 26)."
+}

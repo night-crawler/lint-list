@@ -1,0 +1,13 @@
+{
+  "id": 322,
+  "title": "Inclusive Limit Ambiguity (`stop` vs `last`)",
+  "category": "Semantic Ambiguity",
+  "damaged_code": "```rust\nfn print_range(start: u32, stop: u32) {\n    for i in start..=stop {\n        println!(\"{}\", i);\n    }\n}\n```",
+  "pattern": "A function or struct defining an inclusive upper limit named `stop` or `end` alongside `start` or `begin`.",
+  "why_bad": "The word `stop` is semantically ambiguous; it does not clearly convey whether the boundary is inclusive or exclusive, leading to classic off-by-one errors (fencepost errors) when developers assume the opposite behavior.",
+  "detection": "Match parameters or fields named `stop` used in inclusive contexts (like `..=` in Rust) or where the name fails to denote inclusion.",
+  "counterexample": "An exclusive upper boundary where `stop` or `end` is used conventionally for exclusive slices, or when using standard inclusive terminology:\n```rust\nfn print_range_exclusive(start: u32, end: u32) {\n    for i in start..end { // end is exclusive\n        println!(\"{}\", i);\n    }\n}\n```",
+  "fix": "Rename the boundary parameter or field to `last` to explicitly denote that the limit is inclusive.\n```rust\nfn print_range(start: u32, last: u32) {\n    for i in start..=last {\n        println!(\"{}\", i);\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*The Art of Readable Code* by Dustin Boswell and Trevor Foucher (Chapter 3, p. 26)."
+}

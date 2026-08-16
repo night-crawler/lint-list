@@ -1,0 +1,13 @@
+{
+  "id": 348,
+  "title": "Missing Anti-Corruption Layer (Upstream Conformist Spill)",
+  "category": "Boundary Representation",
+  "damaged_code": "```rust\nfn process_delivery(order: &upstream_api::OrderPayload) {\n    let address = &order.billing_details.address_v2; // Directly bound to upstream schema\n    shipping_engine::ship_to(address);\n}\n```",
+  "pattern": "Directly using external/upstream API structures and vocabulary deep inside the downstream system's core business logic.",
+  "why_bad": "Downstream context loses its architectural autonomy. A refactoring in the upstream system's API immediately breaks downstream business logic.",
+  "detection": "Functions in local core modules directly accepting and processing types imported from external dependencies or raw API crates.",
+  "counterexample": "Shared kernels explicitly designed and mutually agreed upon by both collaborating teams.",
+  "fix": "Introduce an Anti-Corruption Layer (ACL) that deserializes external schemas and immediately maps them to the downstream's own domain models at the boundary.\n```rust\nfn process_delivery(order: &upstream_api::OrderPayload) {\n    let shipping_address = Address::from_upstream(order); // Mapping at boundary\n    shipping_engine::ship_to(&shipping_address);\n}\n```",
+  "strength": "Strong",
+  "source": "*Domain-Driven Design* by Eric Evans (Chapter 14, \"Anticorruption Layer\", p. 93-94); *Implementing Domain-Driven Design* (Chapter 13, p. 101)."
+}

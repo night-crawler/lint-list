@@ -1,0 +1,13 @@
+{
+  "id": 776,
+  "title": "Dual-System Read-Your-Own-Writes Violation",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```rust\nasync fn save_and_get_user(db: &LegacyDB, migration_target: &NewDB, user_id: u64, email: String) -> Result<User, Error> {\n    db.write(user_id, &email).await?;\n    // Read from the target database before migration replication catches up\n    let user = migration_target.read_user(user_id).await?; \n    Ok(user)\n}\n```",
+  "pattern": "Writing to the primary system of record and subsequently reading the same key from an asynchronously replicated migration target system.",
+  "why_bad": "Due to replication lag, the read from the target database will return stale or missing data, violating read-after-write (read-your-writes) consistency and breaking application invariants [191, 659].",
+  "detection": "A write method call on client A followed within the same call graph or session by a read method call on client B for the same entity key, when B is an asynchronous replica or target of A.",
+  "counterexample": "Valid if the application explicitly tolerates stale reads and does not use the retrieved value for critical decision-making. Mark as `Context-dependent`.",
+  "fix": "Always route read-your-writes requests to the single source of truth (the primary database being written to) during the migration phase, or track a write timestamp/version vector to block reading until the target catches up [192, 659].\n```rust\nasync fn save_and_get_user_fixed(db: &LegacyDB, _migration_target: &NewDB, user_id: u64, email: String) -> Result<User, Error> {\n    db.write(user_id, &email).await?;\n    let user = db.read_user(user_id).await?; // Read from source of truth\n    Ok(user)\n}\n```",
+  "strength": "Strong",
+  "source": "Designing Data-Intensive Applications, Chapter 5, \"Eventual consistency - Read-after-write consistency\" [191, 659]"
+}

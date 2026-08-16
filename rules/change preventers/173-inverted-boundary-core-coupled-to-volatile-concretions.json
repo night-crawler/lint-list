@@ -1,0 +1,13 @@
+{
+  "id": 173,
+  "title": "Inverted Boundary (Core Coupled to Volatile Concretions)",
+  "category": "Change Preventers",
+  "damaged_code": "```rust\n// In Core Domain Module\npub struct OrderProcessor;\n\nimpl OrderProcessor {\n    pub fn process_order(&self, id: u64, amount: f64) {\n        println!(\"Order processed: {}\", id);\n        // Direct compile-time coupling to concrete infrastructure details\n        let mut db = infrastructure::postgres::MyPostgresConnection::new();\n        db.execute_sql(\"INSERT INTO payments VALUES ($1)\", amount);\n    }\n}\n```",
+  "pattern": "Core business domain logic directly imports, instantiates, or calls concrete infrastructure modules (like databases, web framework endpoints, or concrete logging libraries) rather than depending on interfaces or abstractions.",
+  "why_bad": "It makes the high-value core domain logic volatile. Any change in the infrastructure layer (e.g., upgrading the Postgres driver, changing table structures, or replacing the database engine) directly requires modifying and rebuilding the core domain logic, violating the Open-Closed Principle.",
+  "detection": "Files located inside core business logic directories containing imports (`use`) referencing concrete database client adapters, HTTP frameworks, or serialization libraries.",
+  "counterexample": "Dependencies on stable, standard language primitives or ubiquitous runtime libraries (like `std::time` or standard error formats) that are functionally immutable.",
+  "fix": "Apply the Dependency Inversion Principle (DIP). Define a domain-owned trait representing the data port (e.g., `pub trait PaymentRepository`) and have the concrete infrastructure module implement it, passing the trait object to the domain processor.",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Architecture* (2017), Chapter 11 (\"Dependency Inversion Principle\"), pp. 87-88."
+}

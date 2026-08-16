@@ -1,0 +1,13 @@
+{
+  "id": 340,
+  "title": "Identity vs. Value Ambiguity in Value Objects",
+  "category": "Semantic Ambiguity",
+  "damaged_code": "```rust\nstruct PersonalName {\n    first_name: String,\n    last_name: String,\n}\n\nfn are_names_equal(n1: &PersonalName, n2: &PersonalName) -> bool {\n    std::ptr::eq(n1, n2) // Ambiguous pointer equality check\n}\n```",
+  "pattern": "Comparing Value Objects (which represent descriptive attributes with no conceptual identity) using reference/pointer comparison instead of structural equality.",
+  "why_bad": "Value Objects are defined solely by their attributes, not their memory locations. Two separate allocations of the name \"John Smith\" are interchangeable. Checking pointer equality is a semantic defect because it reports they are unequal simply because they reside at different memory addresses.",
+  "detection": "Match comparisons of structs classified as Value Objects (like `Money`, `Name`, `Color`) performed via pointer identity operators (e.g. `std::ptr::eq` or `==` on references when derived Eq is missing).",
+  "counterexample": "Using manual pointer comparisons on Entities where identity matters:\n```rust\nfn are_entities_identical(u1: &UserEntity, u2: &UserEntity) -> bool {\n    std::ptr::eq(u1, u2) // Valid optimization check for same reference\n}\n```",
+  "fix": "Ensure Value Objects derive or implement structural `PartialEq` and perform deep attribute comparisons instead of address matching.\n```rust\n#[derive(PartialEq, Eq)]\nstruct PersonalName {\n    first_name: String,\n    last_name: String,\n}\n\nfn are_names_equal(n1: &PersonalName, n2: &PersonalName) -> bool {\n    n1 == n2 // Correct structural attribute comparison\n}\n```",
+  "strength": "Strong",
+  "source": "*Domain-Driven Design* by Eric Evans (Chapter 5, p. 83); *Domain Modeling made Functional* by Scott Wlaschin (p. 92)."
+}

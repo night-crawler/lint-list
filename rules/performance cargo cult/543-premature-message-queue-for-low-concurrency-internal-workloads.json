@@ -1,0 +1,13 @@
+{
+  "id": 543,
+  "title": "Premature Message Queue for Low-Concurrency Internal Workloads",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\n// Introducing an external RabbitMQ setup to send simple diagnostic stats between two internal threads\n```",
+  "pattern": "Introducing a heavy, broker-backed message queue (like RabbitMQ or Kafka) to communicate asynchronously between internal application components.",
+  "why_bad": "External brokers introduce massive network round-trip overhead, serialization costs (JSON or Protobuf), disk write bottlenecks, and complex failure modes compared to simple in-memory channel passing or thread pool tasks [211, 422].",
+  "detection": "The installation and configuration of an external message broker service to queue tasks between components running inside the same physical process or small cluster.",
+  "counterexample": "Massive microservice architectures where hundreds of independent services need to distribute and process millions of async tasks. `Context-dependent`.",
+  "fix": "Use standard in-memory multi-producer single-consumer channels (`std::sync::mpsc`) or thread pools (`tokio::spawn`) for safe, extremely fast, in-memory async processing.",
+  "strength": "Strong",
+  "source": "*Building Secure and Reliable Systems*, Chapter 10 (p. 211); *Release It!*, Section 10 (p. 422)."
+}

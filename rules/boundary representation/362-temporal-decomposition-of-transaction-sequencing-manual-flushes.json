@@ -1,0 +1,13 @@
+{
+  "id": 362,
+  "title": "Temporal Decomposition of Transaction Sequencing (Manual Flushes)",
+  "category": "Boundary Representation",
+  "damaged_code": "```rust\nfn place_order(order: &mut Order, conn: &mut PgConnection) {\n    save_order_details(order, conn);\n    conn.flush(); // Core logic manually controlling persistence sequencing\n    save_order_items(order, conn);\n}\n```",
+  "pattern": "Core business calculations manually managing database transaction boundaries, flushes, or commit ordering.",
+  "why_bad": "It couples business logic to database-specific transaction flow constraints, leading to fragile core code that easily triggers constraint violations during simple refactorings.",
+  "detection": "Function bodies in domain packages containing direct calls to transaction control APIs (like `.flush()`, `.commit()`, or `.start_transaction()`).",
+  "counterexample": "Low-level integration tests asserting database boundary states. Mark as `Context-dependent`.",
+  "fix": "Move transaction-sequencing control entirely into a separate Unit of Work or infrastructure-level interceptor wrapper.",
+  "strength": "Strong",
+  "source": "*Patterns of Enterprise Application Architecture* by Martin Fowler (p. 184, \"Unit of Work\")."
+}

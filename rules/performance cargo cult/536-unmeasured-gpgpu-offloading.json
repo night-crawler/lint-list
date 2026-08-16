@@ -1,0 +1,13 @@
+{
+  "id": 536,
+  "title": "Unmeasured GPGPU Offloading",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\n// Offloading a 100-element array multiplication to a custom CUDA kernel\n```",
+  "pattern": "Offloading a computation or list iteration to a GPU kernel (via CUDA or OpenCL) without measuring the host-to-device memory transfer size.",
+  "why_bad": "The PCIe bus memory copy latency between host RAM and GPU device memory is massive (~10–100 µs). If the dataset is small or the calculation is simple, this transfer cost completely overshadows any parallel calculation speedup, running much slower than standard CPU execution [12].",
+  "detection": "Invocations of GPU kernels or GPGPU buffers for datasets with limited dimension sizes (e.g., < 100,000 array items) or trivial mathematical operations.",
+  "counterexample": "Complex matrix multiplications of massive images or neural network training where data calculations represent billions of FLOPS. `Context-dependent`.",
+  "fix": "Perform the calculation on the CPU using standard vectorization or parallel threads.",
+  "strength": "Strong",
+  "source": "*1701.00854v6.pdf*, Chapter 2, Section 2.3.2 (p. 12)."
+}

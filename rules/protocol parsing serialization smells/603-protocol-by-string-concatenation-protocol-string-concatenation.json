@@ -1,0 +1,13 @@
+{
+  "id": 603,
+  "title": "Protocol-by-String-Concatenation (PROTOCOL_STRING_CONCATENATION)",
+  "category": "Protocol Parsing Serialization Smells",
+  "damaged_code": "```rust\nfn format_command(id: u32, payload: &str) -> String {\n    // Vulnerable: Constructing protocol messages using ad-hoc string formatting\n    format!(\"STX|{}|{}|ETX\", id, payload)\n}\n```",
+  "pattern": "Formatting low-level network or transport commands by directly concatenating substrings with delimiter strings without escaping boundaries or using structured command builders.",
+  "why_bad": "It leads to boundary injection vulnerabilities. If the `payload` contains a delimiter character (e.g., `|`), it will slice the packet prematurely, allowing attackers to inject downstream commands (Command Injection) or cause protocol desynchronization.",
+  "detection": "Look for occurrences of `format!` or string concatenation (`+`) constructing raw transport command lines containing explicit delimiter characters.",
+  "counterexample": "```rust\n// Valid: Encoding data properly through escaping or explicit length markers\nfn format_command(id: u32, payload: &str) -> String {\n    let escaped = payload.replace('|', \"\\|\");\n    format!(\"STX|{}|{}|ETX\", id, escaped)\n}\n```",
+  "fix": "Sanitize and escape input payloads against protocol delimiters, or serialize using structured, length-prefixed protocol definitions.",
+  "strength": "Strong",
+  "source": "*Michael C. Feathers - Working Effectively with Legacy Code (2004)*, Chapter 19."
+}

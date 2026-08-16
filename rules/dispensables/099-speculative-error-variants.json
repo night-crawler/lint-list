@@ -1,0 +1,13 @@
+{
+  "id": 99,
+  "title": "Speculative Error Variants",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nenum DatabaseError {\n    ConnectionFailed,\n    QueryTimedOut,\n    UnusedHypotheticalCrash, // never constructed or returned\n}\n```",
+  "pattern": "Declaring error variants in custom `enum` types that are never constructed, thrown, or returned in any execution path.",
+  "why_bad": "Forces downstream match statements to handle impossible error conditions with dead branches, increasing cognitive weight.",
+  "detection": "Enum variants that are never used as values in any return or construction path.",
+  "counterexample": "Public library APIs where external consumers might return those variants.",
+  "fix": "Delete the unused enum variant.",
+  "strength": "Strong",
+  "source": "Fowler, *Refactoring*, Chapter 3 (\"Speculative Generality\"); Edwin Brady, *Type-driven Development with Idris* (2017)."
+}

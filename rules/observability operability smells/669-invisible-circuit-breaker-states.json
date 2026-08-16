@@ -1,0 +1,13 @@
+{
+  "id": 669,
+  "title": "Invisible Circuit Breaker States",
+  "category": "Observability Operability Smells",
+  "damaged_code": "```rust\nif self.failures > FAIL_LIMIT {\n    self.state = State::Open; // Breaker opens silently\n}\n```",
+  "pattern": "An inline circuit breaker modifying its routing state (Closed, Open, Half-Open) without raising metrics, state events, or logs.",
+  "why_bad": "The application appears healthy to external observers, yet features are failing silently inside the system boundary, making diagnostics impossible without runtime debugger attachments [250].",
+  "detection": "State mutations on routing gates that do not call telemetry loggers or counter increments.",
+  "counterexample": "```rust\nif self.failures > FAIL_LIMIT {\n    self.state = State::Open;\n    log::warn!(\"[BREAKER_TRIPPED] Fulfillment circuit breaker changed to OPEN\");\n    metrics::counter!(\"circuit_breaker.fulfillment.open\").increment(1);\n}\n```",
+  "fix": "Hook circuit breaker state transitions directly into logging, metric, and operational dashboard subsystems.",
+  "strength": "Strong",
+  "source": "*Release It!*, page 250 [250]."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 762,
+  "title": "Overzealous Layer Isolation (DTO to DTO to DTO Mappers)",
+  "category": "Ceremony Boilerplate",
+  "damaged_code": "```rust\nstruct DatabaseModel { id: u64 }\nstruct DomainModel { id: u64 }\nstruct ControllerDto { id: u64 }\n// Plus mapping functions for DatabaseModel -> DomainModel -> ControllerDto\n```",
+  "pattern": "Creating distinct, structural models for every single layer of an application, requiring three or four layers of identical mapping code for simple data-passing.",
+  "why_bad": "It produces immense boilerplate and performance overhead. Adding a single field requires modifying signatures and copying fields across four distinct files, turning basic updates into an exhausting and error-prone chore with zero isolation benefits.",
+  "detection": "A pipeline where data is converted sequentially across 3+ structs with identical fields inside the same process boundary.",
+  "counterexample": "Systems where different layers require genuinely distinct representations (e.g., a database model containing rich relational joins vs. an optimized, stripped-down public API payload).",
+  "fix": "```rust\n// Share models across adjacent layers if they represent the same data structure and invariants.\nstruct User {\n    pub id: u64,\n}\n```",
+  "strength": "Strong",
+  "source": "Mark Richards, Neal Ford, *Fundamentals of Software Architecture* (2020), Chapter 2; Robert C. Martin, *Clean Architecture* (2017), Part V."
+}

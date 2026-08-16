@@ -1,0 +1,13 @@
+{
+  "id": 60,
+  "title": "The \"God Struct\" (Mega-Context)",
+  "category": "Bloaters",
+  "damaged_code": "```rust\nstruct SystemEngine {\n    db_pool: PgPool,\n    redis_client: RedisClient,\n    http_client: reqwest::Client,\n    config: AppConfig,\n    user_repo: UserRepository,\n    auth_service: AuthService,\n    email_client: SendGridClient,\n    logger: Logger,\n    metrics: MetricsCollector,\n}\n\nimpl SystemEngine {\n    fn process_signup(&self, email: &str) -> Result<(), Error> {\n        // Uses self.db_pool, self.auth_service, self.email_client, self.logger...\n        todo!()\n    }\n}\n```",
+  "pattern": "A single giant struct containing references or instances of almost every repository, client, config, and utility service in the entire application, serving as an omniscient intermediary.",
+  "why_bad": "Extremely tight coupling and heavy borrow-checker friction. Passing the entire `SystemEngine` around (or taking `&mut self` on it) locks down the entire application's resources, preventing concurrent operations or parallel processing of distinct sub-components. It violates the Single Responsibility Principle (SRP) and obscures what individual sub-tasks actually depend on.",
+  "detection": "Look for structs containing more than 7-10 independent service handles, database connections, or clients, coupled with methods that only use a small subset of those handles.",
+  "counterexample": "The root application coordinator or compose root during startup, which exists purely to instantiate and link independent services before entering the execution loop.",
+  "fix": "Decompose the giant struct into smaller, focused service blocks and pass only the specific, required sub-dependencies directly to functions.",
+  "strength": "Strong",
+  "source": "*Martin Fowler - Refactoring (1999)*, Chapter 3, \"Large Class\"; *Steve McConnell - Code Complete (2004)*, Chapter 6, \"Working Classes\" (Riel's heuristic of critical data members); *Robert C. Martin - Clean Architecture (2017)*, Chapter 7, \"SRP\"."
+}

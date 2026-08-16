@@ -1,0 +1,13 @@
+{
+  "id": 525,
+  "title": "Unmeasured Zero-Copy Lifetime Infection",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\n// Infecting the entire codebase with lifetimes just to avoid cloning a 10-byte string\nstruct User<'a> {\n    name: &'a str,\n}\nstruct Session<'a> {\n    user: User<'a>,\n}\n```",
+  "pattern": "Prematurely declaring struct fields as borrowed references (`&'a str`, `&'a [u8]`) rather than owned values (`String`, `Vec<u8>`) to achieve \"zero-copy performance.\"",
+  "why_bad": "It infects the entire codebase with complex lifetime parameters, making structs highly un-composable and difficult to maintain. The time spent by programmers fighting lifetime errors and code complexity far exceeds the negligible cost of cloning a small string [100, 235, 319].",
+  "detection": "The extensive use of lifetime annotations (`'a`) throughout data models, structs, and database entities whose only purpose is holding textual name or reference strings.",
+  "counterexample": "```rust\nstruct User {\n    name: String, // Clean and owned\n}\n```",
+  "fix": "Store owned values (`String`, `Vec<u8>`) directly in data model structs, or use `std::sync::Arc` or `std::borrow::Cow` if reference sharing is strictly necessary under profiled scenarios.",
+  "strength": "Contextual",
+  "source": "*A Philosophy of Software Design*, Chapter 20 (p. 319); *Software Design for Flexibility*, Chapter 1 (p. 100); *Refactoring to Patterns*, Chapter 1 (p. 235)."
+}

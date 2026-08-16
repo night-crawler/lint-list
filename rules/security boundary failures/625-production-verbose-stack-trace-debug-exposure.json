@@ -1,0 +1,13 @@
+{
+  "id": 625,
+  "title": "Production Verbose Stack Trace / Debug Exposure",
+  "category": "Security Boundary Failures",
+  "damaged_code": "```rust\nfn handle_request() {\n    match run_business_logic() {\n        Ok(_) => println!(\"Success\"),\n        Err(e) => {\n            // Emits raw stack trace or internal error struct directly to standard out/client\n            panic!(\"Database Connection Failed at localhost:3306! Trace: {:?}\", e);\n        }\n    }\n}\n```",
+  "pattern": "Emitting full database connection parameters, internal variable trace layouts, or unhandled compiler execution panics directly to production terminal outputs or client interfaces.",
+  "why_bad": "Provides adversaries with sensitive operational context, such as database port addresses, internal directory names, variable schemas, and version dependencies, simplifying targeted exploit craft.",
+  "detection": "Unhandled `panic!` or logging macros containing trace-level context running in production target builds.",
+  "counterexample": "```rust\nfn handle_request() {\n    match run_business_logic() {\n        Ok(_) => println!(\"Success\"),\n        Err(_) => {\n            eprintln!(\"Internal database operation error occurred.\");\n        }\n    }\n}\n```",
+  "fix": "Disable verbose logging outputs or panics in production; map all production logic errors to standardized, abstract client messages while caching traces in secure server logs.",
+  "strength": "Strong",
+  "source": "`Heather Adkins et al. - Building Secure and Reliable Systems (2020)`, Ch 12, p. 252."
+}

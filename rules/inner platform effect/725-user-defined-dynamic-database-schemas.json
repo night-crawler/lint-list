@@ -1,0 +1,13 @@
+{
+  "id": 725,
+  "title": "User-Defined Dynamic Database Schemas",
+  "category": "Inner Platform Effect",
+  "damaged_code": "```\n// Storing schema definitions as a runtime model vector\nstruct AttributeSchema {\n    name: String,\n    data_type: String,\n}\n\nstruct Schema {\n    attributes: Vec<AttributeSchema>,\n}\n\nstruct DataStore {\n    schema: Schema,\n    records: Vec<Vec<String>>,\n}\n```",
+  "pattern": "Representing schema definitions, field layouts, and validation constraints as runtime collections (like arrays of `AttributeSchema`) rather than standard structures.",
+  "why_bad": "It forces developers to write verbose, error-prone parsing and type-coercion routines. It shifts type checking from compile-time to runtime, leading to frequent crashes on schema modifications.",
+  "detection": "Collections containing data types as enum variables (`DataType::String`), used to parse and validate field vectors.",
+  "counterexample": "`Context-dependent`. General-purpose databases or CMS products where users define custom table structures dynamically via UI.",
+  "fix": "Enforce schema constraints via static compile-time structures.\n\n```\n// Explicit, compiled structure representing the data schema statically\npub struct Album {\n    pub title: String,\n    pub artist: String,\n    pub year: u32,\n}\n```",
+  "strength": "Strong",
+  "source": "Edwin Brady - _Type-driven Development with Idris_ (2017, Manning Publications).pdf, Chapter 12."
+}

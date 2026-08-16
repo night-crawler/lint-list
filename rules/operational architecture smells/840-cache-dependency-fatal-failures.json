@@ -1,0 +1,13 @@
+{
+  "id": 840,
+  "title": "Cache-Dependency Fatal Failures",
+  "category": "Operational Architecture Smells",
+  "damaged_code": "```rust\nfn get_user(id: u64) -> User {\n    if let Some(user) = CACHE.get(&id) {\n        user\n    } else {\n        panic!(\"Cache miss on user data!\"); // Cache is expected to always contain it\n    }\n}\n```",
+  "pattern": "Structuring application logic such that cache misses are treated as fatal errors, or failing to size backend databases to handle total load when the cache is cold/evicted.",
+  "why_bad": "If the cache layer goes down or is cleared (e.g., after a restart), the cold start traffic crashes the backend database, causing an unrecoverable cascading outage (cache stampede/cold start storm).",
+  "detection": "Application crashes or returns critical failures upon missing cache entries, or failing to implement a fallback fetch route.",
+  "counterexample": "Ephemeral caches containing only optional latency optimization data where misses safely fall back to DB.",
+  "fix": "Provision the backend database to handle peak traffic load, and make cache misses fetch from DB.",
+  "strength": "Strong",
+  "source": "*Software Engineering at Google*, \"Managing State,\" p. 527; *Release It!*, p. 161."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 113,
+  "title": "Unused Mutability",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nlet mut x = 10;\nprintln!(\"{}\", x);\n```",
+  "pattern": "Declaring a local variable as mutable (`mut`) when it is never reassigned or modified.",
+  "why_bad": "Indicates that the variable was intended to change but didn't, or represents a leftover design, cluttering code analysis.",
+  "detection": "Variables declared with `mut` that are never targeted by assignment or mutable borrow operations.",
+  "counterexample": "Required by specific library API interfaces or macros.",
+  "fix": "Remove the `mut` keyword from the variable declaration.",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust For Rustaceans* (2021)."
+}

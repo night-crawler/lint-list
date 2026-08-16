@@ -1,0 +1,13 @@
+{
+  "id": 899,
+  "title": "Re-exporting Third-Party Types (Ecosystem Lock-In)",
+  "category": "Local Optimization",
+  "damaged_code": "```rust\n// Exposes Tokio's internal types directly in the public API\npub fn execute_query(conn: &str) -> tokio::net::TcpStream {\n    // ...\n    todo!()\n}\n```",
+  "pattern": "A library's public API directly exposes concrete types from third-party dependencies (like `tokio`, `hyper`, or `serde`), rather than wrapping them in domain-specific types or type-erasing them.",
+  "why_bad": "While locally \"convenient\" because it saves the developer from writing newtype wrappers, it is an ecosystem disaster. It tightly couples the library to the specific version of the dependency (e.g., Tokio 1.0). If the library's callers want to use Tokio 2.0, they cannot compile their code because the compiler treats them as completely incompatible types, splitting the ecosystem into fragmented islands.",
+  "detection": "Third-party library types appearing in public function arguments or public struct fields of a library.",
+  "counterexample": "Valid when the library is specifically designed as an extension crate for that dependency (e.g., `serde_json`).",
+  "fix": "Wrap the third-party types in a local newtype wrapper or hide them behind a public trait boundary (type erasure).\n```rust\npub struct DBConnection {\n    // Encapsulated privately\n    inner: tokio::net::TcpStream,\n}\n```",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust for Rustaceans*, Chapter 4, \"Re-exports and SemVer\" (p. 43)."
+}

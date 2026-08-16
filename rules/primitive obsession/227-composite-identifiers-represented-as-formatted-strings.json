@@ -1,0 +1,13 @@
+{
+  "id": 227,
+  "title": "Composite Identifiers represented as Formatted Strings",
+  "category": "Primitive Obsession",
+  "damaged_code": "```rust\nlet product_code = \"APM-P-08-14-2012-F36AB21C\";\n```",
+  "pattern": "Encoding a structured, multi-part domain identifier as a single concatenated string primitive.",
+  "why_bad": "Any down-stream logic that needs to read a sub-component (e.g., extraction date `08-14-2012`) must parse the string or invoke substring splitting, duplicating fragile string-handling logic and increasing parsing overhead.",
+  "detection": "Methods performing substring extraction, regex match operations, or `.split()` calls on an identifier string variable.",
+  "counterexample": "Formatting a composite identifier solely at the system boundary for logging or rendering to the UI.",
+  "fix": "Represent the composite identifier as a strongly-typed struct.\n```rust\nstruct ProductId {\n    context: String,\n    category: char,\n    created_date: chrono::NaiveDate,\n    sequence: u32,\n}\n```",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design* by Vaughn Vernon (p. 190)."
+}

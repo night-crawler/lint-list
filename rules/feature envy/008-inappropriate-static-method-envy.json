@@ -1,0 +1,13 @@
+{
+  "id": 8,
+  "title": "Inappropriate Static Method Envy",
+  "category": "Feature Envy",
+  "damaged_code": "```rust\nstruct HourlyPayCalculator;\nimpl HourlyPayCalculator {\n    fn calculate_pay(employee: &HourlyEmployee, overtime_rate: f64) -> f64 {\n        let straight_time = std::cmp::min(employee.tenths_worked, 400);\n        let over_time = employee.tenths_worked.saturating_sub(straight_time);\n        (straight_time as f64 * employee.hourly_rate) + (over_time as f64 * employee.hourly_rate * overtime_rate)\n    }\n}\n```",
+  "pattern": "A helper class defines a static/associated method that gets all of its input data from its arguments, performing calculations solely on the properties of a single passed-in object.",
+  "why_bad": "It prevents polymorphism. If we want to implement different payment algorithms (such as `StraightTimeCalculator` or `OvertimeCalculator`), we cannot easily do so because the method is bound statically to an unrelated utility class.",
+  "detection": "Statically dispatched methods that do not use any local self/state and operate exclusively on one of the passed parameters.",
+  "counterexample": "Mathematical functions like `f64::max(a, b)` where there is no logical \"owning\" object and no desire for polymorphism.",
+  "fix": "Make the method an instance method of the owning domain object or implement a trait.\n```rust\ntrait PayCalculator {\n    fn calculate_pay(&self, employee: &HourlyEmployee) -> f64;\n}\n```",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 17 (G18 / G14)."
+}

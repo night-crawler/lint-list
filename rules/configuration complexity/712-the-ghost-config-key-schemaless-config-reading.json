@@ -1,0 +1,13 @@
+{
+  "id": 712,
+  "title": "The Ghost Config Key (Schemaless Config Reading)",
+  "category": "Configuration Complexity",
+  "damaged_code": "```rust\n// Silent failure if dynamic string key is misspelled\nlet pool_size = config.get_string(\"db_pool_szie\"); \n```",
+  "pattern": "Reading configuration properties at arbitrary code locations using raw string queries against schemaless containers without schema declarations.",
+  "why_bad": "Allows typos to compile without warnings, leading to runtime failures that are hard to diagnose since values fallback silently to empty states or wrong defaults.",
+  "detection": "In-line string-literal lookups targeting dynamic configuration brokers across multiple functional files.",
+  "counterexample": "```rust\n// Compile-time checked property access\nlet pool_size = config.db_pool_size;\n```",
+  "fix": "Compile configurations directly into structured Rust types on application startup, eliminating dynamic key lookups from business logic.",
+  "strength": "Strong",
+  "source": "Marianne Bellotti - *Kill It with Fire* (2021, No Starch Press).pdf, Chapter 3."
+}

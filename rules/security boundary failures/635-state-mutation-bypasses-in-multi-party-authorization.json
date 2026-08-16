@@ -1,0 +1,13 @@
+{
+  "id": 635,
+  "title": "State Mutation Bypasses in Multi-Party Authorization",
+  "category": "Security Boundary Failures",
+  "damaged_code": "```rust\nstruct PermissionRequest {\n    state: RequestState,\n    command: String,\n}\n\nfn approve_request(req: &mut PermissionRequest) {\n    // Allows approving a request without validating if its command state was altered\n    req.state = RequestState::Approved;\n    execute_command(&req.command);\n}\n```",
+  "pattern": "Approving or validating a multi-party authorization (MPA) request payload without ensuring that the underlying state parameters or command details are frozen and cannot be mutated by the originator post-request.",
+  "why_bad": "If request fields remain mutable during or after approval, a malicious user can submit a benign command for approval, wait for a second party to sign it, and then modify the command payload to a malicious target prior to execution, completely bypassing MPA checks.",
+  "detection": "Mutable borrow references modifying payloads of struct objects that have already completed approval lifecycle checks.",
+  "counterexample": "```rust\n// Enforce immutability: the request is frozen and signed at the moment of submission,\n// and any modification invalidates the cryptographic validation signature.\n```",
+  "fix": "Ensure authorization requests are strictly immutable and cryptographically signed upon creation, so any mutation of parameters automatically invalidates the approval state.",
+  "strength": "Strong",
+  "source": "`Heather Adkins et al. - Building Secure and Reliable Systems (2020)`, Ch 5, p. 81."
+}

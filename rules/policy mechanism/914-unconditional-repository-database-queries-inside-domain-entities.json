@@ -1,0 +1,13 @@
+{
+  "id": 914,
+  "title": "Unconditional Repository/Database Queries inside Domain Entities",
+  "category": "Policy Mechanism",
+  "damaged_code": "```rust\nimpl Discussion {\n    pub fn post_reply(&self, user: &User, body: &str, repo: &mut ReplyRepository) {\n        if repo.count_replies_by_user_today(user.id) > 100 { // Repository call inside entity\n            panic!(\"Spam limit exceeded\");\n        }\n        repo.save(Reply::new(self.id, user.id, body));\n    }\n}\n```",
+  "pattern": "A domain entity directly invokes database repositories, query managers, or out-of-process services inside its business logic methods.",
+  "why_bad": "It tightly couples the domain entity to persistence infrastructure. This prevents the entity from being tested hermetically in memory without mocking out databases, and hides the transactional and performance costs of business operations.",
+  "detection": "Domain entities or aggregates that hold references to or import repository classes or query execution modules.",
+  "counterexample": "Infrastructure adapter implementations designed specifically to bridge queries.",
+  "fix": "Retrieve the required metrics or dependencies in the application service layer first, and pass the simple values or pre-fetched aggregates into the domain method.\n```rust\nimpl Discussion {\n    pub fn post_reply(&self, user_reply_count: usize, body: &str) -> Result<Reply, Error> {\n        if user_reply_count > 100 {\n            return Err(Error::SpamLimitExceeded);\n        }\n        Ok(Reply::new(self.id, body))\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Vaughn Vernon, *Implementing Domain-Driven Design* (2013), Chapter 2, \"Collaboration Context\", p. 515."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 190,
+  "title": "Hidden Global State Dependency in Constructor",
+  "category": "Couplers",
+  "damaged_code": "```rust\nlazy_static! {\n    static ref GLOBAL_CONFIG: Mutex<Config> = Mutex::new(Config::default());\n}\nstruct Connection;\nimpl Connection {\n    fn new() -> Self {\n        // Implicitly pulls in global state inside constructor\n        let host = GLOBAL_CONFIG.lock().unwrap().host.clone();\n        Self { host }\n    }\n}\n```",
+  "pattern": "A struct constructor (`new` or equivalent builder) directly accesses a global singleton or lazy-static context variable to resolve its configuration.",
+  "why_bad": "The dependency on the global is hidden. A developer looking at `Connection::new()` cannot tell that it depends on global configuration. It makes testing impossible without setting up the global state beforehand.",
+  "detection": "Accessing global variables or singleton registry structures inside standard constructors or initialization methods.",
+  "counterexample": "Framework-level dependency injectors that explicitly annotate and manage construction lifetimes, though manual constructor injection is still safer.",
+  "fix": "Pass the required configuration struct directly into the constructor.\n```rust\nimpl Connection {\n    fn new(config: &Config) -> Self {\n        Self { host: config.host.clone() }\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Michael Feathers, *Working Effectively with Legacy Code* (2004), Chapter 14 (\"Dependencies on Globals\"); Andrew Hunt & David Thomas, *The Pragmatic Programmer* (2019), Chapter 2 (\"Globalization\")."
+}

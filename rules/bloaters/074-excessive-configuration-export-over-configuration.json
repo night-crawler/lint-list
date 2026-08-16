@@ -1,0 +1,13 @@
+{
+  "id": 74,
+  "title": "Excessive Configuration Export (Over-Configuration)",
+  "category": "Bloaters",
+  "damaged_code": "```rust\nstruct CacheConfig {\n    initial_capacity: usize,\n    max_capacity: usize,\n    cleanup_interval_ms: u64,\n    eviction_threshold_ratio: f32,\n    concurrency_level: usize,\n    hash_seed: u64,\n    // 50+ other tuning micro-parameters\n}\n```",
+  "pattern": "Moving internal complexity upwards by exporting dozens of private tuning micro-parameters to users under the guise of \"flexibility,\" instead of designing stable, self-tuning internal algorithms.",
+  "why_bad": "Heavy cognitive load on users. Instead of having a clean, simple interface, users must research and specify values for dozens of parameters they do not understand, resulting in fragile, poorly tuned systems. It represents a direct failure of the class to hide its implementation details.",
+  "detection": "Identify configuration structs containing more than 15 fields, particularly when most of those parameters have no obvious or documented impact on standard execution.",
+  "counterexample": "`Context-dependent`. Low-level database engines, operating systems, or game engines where extreme manual hardware tuning is a primary feature.",
+  "fix": "Choose sensible, self-tuning defaults. Keep the public configuration minimal, and hide micro-tuning parameters internally.",
+  "strength": "Contextual",
+  "source": "*John K. Ousterhout - A Philosophy of Software Design (2018)*, Chapter 8, \"Example: configuration parameters\"."
+}

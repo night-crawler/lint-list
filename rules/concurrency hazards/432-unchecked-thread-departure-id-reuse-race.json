@@ -1,0 +1,13 @@
+{
+  "id": 432,
+  "title": "Unchecked Thread Departure (ID Reuse Race)",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```c\n// Main loop matching active threads\nfor_each_thread(t) {\n    // BUG: Assuming t is alive. t may have exited and its ID\n    // is already reassigned to an unrelated thread.\n    status_hist[t->status]++; \n}\n```",
+  "pattern": "Iterating over a list of active threads or using thread IDs to index global tables without holding a lock that prevents threads from exiting and having their IDs recycled.",
+  "why_bad": "Thread IDs are recycled rapidly by the OS. Accessing a thread pointer or ID outside of a synchronization block that guarantees its existence leads to logging status for the wrong thread, or memory corruption.",
+  "detection": "Iterating over active thread data structures without acquiring an exit-coordinating lock (such as `departing_thread_lock`).",
+  "counterexample": "Acquiring a global registration lock during traversal that blocks threads from completing their exit sequence.",
+  "fix": "Acquire an exclusive lock that prevents threads from registering or departing during the check.\n```c\nacquire_lock(&departing_thread_lock);\nfor_each_thread(t) {\n    status_hist[t->status]++;\n}\nrelease_lock(&departing_thread_lock);\n```",
+  "strength": "Strong",
+  "source": "Paul McKenney 17.2.3.1 (p. 399)"
+}

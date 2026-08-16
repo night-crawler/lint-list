@@ -1,0 +1,13 @@
+{
+  "id": 408,
+  "title": "Silent Failure and Defect Masking",
+  "category": "Resilience Cargo Cult",
+  "damaged_code": "```rust\nfn calculate_daily_interest(&self, account_id: u64) -> f64 {\n    match self.db.get_balance(account_id) {\n        Ok(bal) => bal * 0.05,\n        Err(_) => 0.0, // SILENT DEGRADATION: defaulting to 0 masks DB failure!\n    }\n}\n```",
+  "pattern": "Catching all errors in core business transactions or critical calculations and returning a neutral default value (e.g., `0.0` or empty) to \"fail gracefully.\"",
+  "why_bad": "It silently corrupts business state and hides critical infrastructure failures from operators. Graceful degradation should only be applied to non-critical, optional services (e.g., recommendations, ads), never to core financial or transactional data [100].",
+  "detection": "Identify catch-all error handling blocks within core domain or transactional logic that default to dummy or zeroed values instead of propagating the error or panicking.",
+  "counterexample": "```rust\nfn calculate_daily_interest(&self, account_id: u64) -> Result<f64, DbError> {\n    let bal = self.db.get_balance(account_id)?; // Propagate critical database error!\n    Ok(bal * 0.05)\n}\n```",
+  "fix": "Propagate critical errors up the stack so the system fails loud, alerts operators, and blocks further state corruption.",
+  "strength": "Strong",
+  "source": "Marianne Bellotti, *Kill It with Fire*, page 114 / passage [100]."
+}

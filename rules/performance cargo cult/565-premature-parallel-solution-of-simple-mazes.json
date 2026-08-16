@@ -1,0 +1,13 @@
+{
+  "id": 565,
+  "title": "Premature Parallel Solution of Simple Mazes",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\n// Implementing heavy parallel queue processing to search a tiny 10x10 maze grid\n```",
+  "pattern": "Using multi-threaded queues, work-stealing thread pools, or GPU grids to solve simple maze traversals or small graphs.",
+  "why_bad": "Small grids or graphs are solved sequentially in microseconds. Parallel implementations suffer from extreme thread synchronization contention and thread schedule latency, running orders of magnitude slower than a clean sequential Depth-First Search [12, 13].",
+  "detection": "The inclusion of concurrent work queues or threads to perform traversal or search tasks on small, low-dimension grids or arrays (e.g., < 1,000 nodes).",
+  "counterexample": "Massive web-scale search graphs containing millions of connections where distributed parallel processing is required. `Contextual`.",
+  "fix": "Utilize a fast, simple sequential Depth-First Search (DFS) or Breadth-First Search (BFS) algorithm.",
+  "strength": "Strong",
+  "source": "*1701.00854v6.pdf*, Chapter 6, Section 6.5 (p. 12, 13)."
+}

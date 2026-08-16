@@ -1,0 +1,13 @@
+{
+  "id": 383,
+  "title": "Collapsing Timeout Failures into Uninformative Logs",
+  "category": "Information Loss",
+  "damaged_code": "```rust\nfn connect_to_service() {\n    if let Err(e) = client.connect() {\n        log::error!(\"Timeout failure connecting to fulfillment system.\");\n    }\n}\n```",
+  "pattern": "Catching a network error and logging a static generic string, discarding the specific internal details of the exception.",
+  "why_bad": "It throws away contextual information (e.g., port numbers, failed DNS lookups, or IP addresses) that is critical for debugging why the connection timed out, leaving operations completely blind.",
+  "detection": "Logging macros in error handling blocks that print hardcoded text without formatting the wrapped error variable.",
+  "counterexample": "Clean logs formatting structural detail:\n```rust\nlog::error!(\"Timeout connecting to fulfillment system: {:?}\", e);\n```",
+  "fix": "Ensure log messages format and record the root cause and context parameters.\n```rust\nfn connect_to_service() {\n    if let Err(e) = client.connect() {\n        log::error!(\"Timeout failure connecting to fulfillment system: {e:?}\");\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Release It!* by Michael T. Nygard (p. 380); *Rust for Rustaceans* (p. 140)."
+}

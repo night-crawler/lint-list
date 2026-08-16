@@ -1,0 +1,13 @@
+{
+  "id": 586,
+  "title": "Misinterpreting Top-K by Omitting the Tail/Other Bucket",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\nfn process_profile(samples: &[Sample]) {\n    let mut counts = HashMap::new();\n    for s in samples {\n        *counts.entry(s.function_name).or_insert(0) += 1;\n    }\n    // Only display top 5 slow functions\n    display_top_k(counts, 5); \n}\n```",
+  "pattern": "Displaying only the \"Top-K\" slow processes or operations in metrics while completely dropping the sum of the remaining category.",
+  "why_bad": "Dropping the rest of the distribution hides cumulative bottlenecks. For example, 10 million small, fast function calls can collectively consume 50% of total runtime, yet they will never appear in any \"Top 5\" list, misleading developers into optimizing the wrong areas.",
+  "detection": "Look for slice truncation or limit clauses (`take(K)`) on sorted metrics without computing a remainder category.",
+  "counterexample": "None.",
+  "fix": "Always sum and display the remainder of the population under a distinct `-other-` or `remainder` bucket.\n```rust\nfn process_profile_correct(samples: &[Sample]) {\n    let mut counts = HashMap::new();\n    let total_samples = samples.len();\n    for s in samples {\n        *counts.entry(s.function_name).or_insert(0) += 1;\n    }\n    let top_k = get_top_k(&counts, 5);\n    let top_sum: usize = top_k.values().sum();\n    display_top_k(top_k);\n    println!(\"-other-: {} samples ({:.2}%)\", total_samples - top_sum, (total_samples - top_sum) as f64 / total_samples as f64 * 100.0);\n}\n```",
+  "strength": "Strong` — truncating the population hides aggregate tail execution overhead.",
+  "source": "Richard L. Sites - *Understanding Software Dynamics* (2021), Section 11.3, p. 193 / p. 205."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 294,
+  "title": "Calculated Field Stored as State (Inadvertent Data Duplication)",
+  "category": "Duplication",
+  "damaged_code": "```rust\nstruct Line {\n    start: Point,\n    end: Point,\n    length: f64,\n}\n\nimpl Line {\n    fn set_start(&mut self, new_start: Point) {\n        self.start = new_start;\n        // If developer forgets to recalculate self.length here, an invariant breaks.\n    }\n}\n```",
+  "pattern": "Storing a derived or computed value as a structural field alongside its primary independent parameters.",
+  "why_bad": "It duplicates knowledge of state. A change to `start` or `end` requires a synchronized manual update to `length`. If forgotten, the internal invariants of the struct break, leading to silent state corruption.",
+  "detection": "A struct containing a field whose value is purely derivable via a deterministic mathematical or logical computation of other fields within the same struct.",
+  "counterexample": "Caching highly expensive computations where mutations are strictly encapsulated and keep the field updated under the hood (e.g., via interior mutability).",
+  "fix": "Expose the derived value through an on-demand calculation method rather than a data field.\n```rust\nstruct Line {\n    start: Point,\n    end: Point,\n}\n\nimpl Line {\n    fn length(&self) -> f64 {\n        self.start.distance_to(&self.end)\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*The Pragmatic Programmer* (20th Anniversary Edition), Topic 9: \"DRY—The Evils of Duplication\", p. 202-203."
+}

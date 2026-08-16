@@ -1,0 +1,13 @@
+{
+  "id": 270,
+  "title": "Swallowed Interruption Signals",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```java\ntry {\n    Thread.sleep(100);\n} catch (InterruptedException e) {\n    // Swallow interrupt\n}\n```",
+  "pattern": "Catching a thread interruption signal and failing to propagate it or re-assert the thread's interrupt status.",
+  "why_bad": "Discards cancellation requests. Prevents parent threads or executors from safely terminating the thread.",
+  "detection": "Catching thread interruption exceptions without re-throwing them or calling `Thread.currentThread().interrupt()`.",
+  "counterexample": "None. Interruption signals must never be blindly ignored.",
+  "fix": "Re-set the thread's interrupt flag or propagate the error.",
+  "strength": "Strong",
+  "source": "Maurice Herlihy, *Monitors and Blocking Synchronization*, Chapter 8."
+}

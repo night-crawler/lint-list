@@ -1,0 +1,13 @@
+{
+  "id": 259,
+  "title": "Do-While Loops",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```cpp\n// C++ Example:\ndo {\n    process_buffer(&mut buffer);\n} while (buffer.len() > 0);\n```",
+  "pattern": "A loop construct where the body is guaranteed to execute at least once before evaluating its termination condition.",
+  "why_bad": "Non-intuitive reading order. Forces the reader to mentally evaluate the loop body before knowing the condition under which it runs, leading to double-takes.",
+  "detection": "A `do-while` loop block.",
+  "counterexample": "Standard `while` or `for` loops.",
+  "fix": "Refactor with a standard `while` loop, checking preconditions upfront:\n```cpp\nwhile (buffer.len() > 0) {\n    process_buffer(&mut buffer);\n}\n```",
+  "strength": "Context-dependent",
+  "source": "Trevor Foucher & Dustin Boswell, *The Art of Readable Code*, Chapter 7."
+}

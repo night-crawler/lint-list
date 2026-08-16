@@ -1,0 +1,13 @@
+{
+  "id": 815,
+  "title": "Fine-Grained Remote Interfaces on Entity Beans",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Exposing fine-grained methods of a business entity over a remote interface\npub trait RemoteUserEntity {\n    fn get_first_name(&self) -> String;\n    fn get_last_name(&self) -> String;\n    fn set_email(&mut self, email: String);\n}\n```",
+  "pattern": "Configuring highly fine-grained attributes or methods of core business entities to be accessed directly over a remote protocol (e.g. EJB Entity Beans with remote interfaces).",
+  "why_bad": "It triggers high network latency and CPU overhead due to individual remote calls per attribute access, and blocks re-entrant behavior.",
+  "detection": "Exposing domain getters/setters via remote protocol RPC, gRPC, or SOAP APIs, leading to multiple sequential network calls per business operation.",
+  "counterexample": "Exposing a coarse-grained Data Transfer Object (DTO) or Remote Facade for bulk data exchange.",
+  "fix": "Implement a Remote Facade with coarse-grained DTOs to exchange all required data in a single network round-trip.",
+  "strength": "Strong",
+  "source": "*Patterns of Enterprise Application Architecture (Fowler), Chapter 8, p. 306, 1113 [306, 1113]*"
+}

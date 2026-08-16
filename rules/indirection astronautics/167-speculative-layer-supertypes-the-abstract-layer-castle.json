@@ -1,0 +1,13 @@
+{
+  "id": 167,
+  "title": "Speculative Layer Supertypes (The Abstract Layer Castle)",
+  "category": "Indirection Astronautics",
+  "damaged_code": "```rust\npub abstract class IdentifiedDomainObject;\npub abstract class IdentifiedValueObject extends IdentifiedDomainObject;\npub abstract class IdentifiedEntity extends IdentifiedDomainObject;\n```",
+  "pattern": "Defining a deep, rigid hierarchy of abstract layer supertypes or marker traits representing theoretical meta-categories (e.g., `IdentifiedValueObject`) that concrete types must inherit or implement.",
+  "why_bad": "*   **Cognitive Load:** Developers must understand multiple layers of meta-abstractions before they can write a simple data holder or value.\n*   **Rigidity:** It forces an upfront design architecture that does not easily adapt as the team's understanding of the domain shifts.",
+  "detection": "Trait or class hierarchies with $\\ge 3$ levels of nesting where the top-level items are behaviorless marker classes containing only ID fields.",
+  "counterexample": "**Standard Compiler-Checked Traits:** Blanket trait implementations enforced by the compiler (e.g., `Send + Sync + Clone`) are valid.",
+  "fix": "Model values and entities as flat, concrete structs, using composition or simple field attributes when metadata tracking is required.\n```rust\npub struct ValueObject<T> {\n    pub value: T,\n}\n```",
+  "strength": "Contextual",
+  "source": "Vernon, *Implementing Domain-Driven Design*, Chapter 6 \"Value Objects\" (Layer Supertypes) & McConnell, *Code Complete*, Section 24.2."
+}

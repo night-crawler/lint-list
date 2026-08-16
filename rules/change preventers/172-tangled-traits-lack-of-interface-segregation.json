@@ -1,0 +1,13 @@
+{
+  "id": 172,
+  "title": "Tangled Traits (Lack of Interface Segregation)",
+  "category": "Change Preventers",
+  "damaged_code": "```rust\npub trait DocumentService {\n    fn save_document(&self, doc: &str);\n    fn load_document(&self) -> String;\n    // Used only by Admin Panel\n    fn rebuild_search_index(&self); \n}\n\nstruct SimpleViewer;\nimpl DocumentService for SimpleViewer {\n    fn save_document(&self, _doc: &str) { panic!(\"Viewers cannot save\") }\n    fn load_document(&self) -> String { \"Content\".to_string() }\n    fn rebuild_search_index(&self) {} // Viewers do not care about search indices\n}\n```",
+  "pattern": "A single large trait or interface bundles operations used by completely different, independent client consumers, forcing implementers to write dummy methods or panic handlers for unused interface operations.",
+  "why_bad": "If an admin client requires a change to `rebuild_search_index`, the trait definition itself must change. This modification forces a complete recompilation and revalidation of all implementing types (including `SimpleViewer`), even though their local behavior is completely unaffected.",
+  "detection": "Traits where some implementing types leave method bodies empty, print warnings, or return `panic!` / errors signaling that the method is unsupported on this specific implementer.",
+  "counterexample": "Unified cohesive interfaces where every method is fundamentally required to maintain the logical state contract (e.g., an `Iterator` where both `next` and `size_hint` serve a single cohesive consumer).",
+  "fix": "Apply the Interface Segregation Principle (ISP). Split the monolithic trait into smaller, highly cohesive traits (`ReadableDocument`, `WritableDocument`, `IndexableDocument`) and compose them as needed.",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Architecture* (2017), Chapter 10 (\"Interface Segregation Principle\"), pp. 84-86."
+}

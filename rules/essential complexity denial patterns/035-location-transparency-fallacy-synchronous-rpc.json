@@ -1,0 +1,13 @@
+{
+  "id": 35,
+  "title": "Location Transparency Fallacy (Synchronous RPC)",
+  "category": "Essential Complexity Denial Patterns",
+  "damaged_code": "```rust\n// Remote call masquerading as a local function call with no timeout/fallback\nlet user_profile = rpc_client.get_user_profile(user_id)?;\n```",
+  "pattern": "Invocation of a remote service through a synchronous interface that lacks network-specific parameters (timeouts, fallbacks, retry policies) or separate error/success paths.",
+  "why_bad": "Location transparency is a fallacy [32:276]. A local call takes nanoseconds and succeeds deterministically; a network request is unpredictable, has unbounded delays, and can block the calling thread indefinitely [23:170]. This reduces system capacity and causes cascading failures across services [34:264].",
+  "detection": "Observing method calls on client wrappers or endpoint stubs where the invocation matches a remote network signature but lacks configured limits (timeouts, circuit breakers, asynchronous task spawning) [34:264].",
+  "counterexample": "```rust\nlet user_profile = tokio::time::timeout(\n    Duration::from_millis(150),\n    rpc_client.get_user_profile(user_id)\n).await.map_err(|_| Error::Timeout)??;\n```",
+  "fix": "Enforce an explicit timeout and fallback strategy on all outbound network integration boundaries [34:271].",
+  "strength": "Strong",
+  "source": "*Designing Data-Intensive Applications* (Kleppmann), Chapter 4 & 8; *Release It!* (Nygard), Antipattern: Integration Points [34:264, 23:170]."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 189,
+  "title": "Subclass-Specific Downcasting (Semantic Coupling)",
+  "category": "Couplers",
+  "damaged_code": "```rust\ntrait Shape {}\nstruct Circle { radius: f64 }\nimpl Shape for Circle {}\n\nfn draw_shape(shape: &dyn Shape) {\n    // Casting a trait back to a concrete type to access specific fields\n    if let Some(circle) = shape.as_any().downcast_ref::<Circle>() {\n        let r = circle.radius;\n    }\n}\n```",
+  "pattern": "A function accepts a broad trait/interface but attempts to downcast the trait object to a concrete implementation to perform specific logic.",
+  "why_bad": "It is a semantic coupling violation. The calling function claims to work with any `Shape` but makes private assumptions about the concrete implementations, violating polymorphism and the Liskov Substitution Principle.",
+  "detection": "The use of downcasting operations (like `.downcast_ref` or checking `TypeId` of trait objects) in functions that accept trait interfaces.",
+  "counterexample": "Closed matching using Rust enums (`match ShapeEnum`), which is statically checked by the compiler and is robust against unexpected types.",
+  "fix": "Incorporate the required behavior into the trait signature itself, or refactor to an enum dispatch if the set of types is closed.\n```rust\ntrait Shape {\n    fn get_radius(&self) -> Option<f64>;\n}\n```",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 5 (\"Semantic Coupling\")."
+}

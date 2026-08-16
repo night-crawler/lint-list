@@ -1,0 +1,13 @@
+{
+  "id": 230,
+  "title": "String Splitting for Domain Logic Extraction",
+  "category": "Primitive Obsession",
+  "damaged_code": "```rust\nfn get_domain(email: &str) -> &str {\n    email.split('@').nth(1).unwrap_or(\"\")\n}\n```",
+  "pattern": "Parsing and pulling out domain properties by performing raw string operations (slicing, regex matches, or splitting) inside core business logic.",
+  "why_bad": "It couples business logic to raw string patterns, leading to duplicate parsing algorithms, unhandled edge cases (e.g., malformed email inputs causing panics), and brittle refactoring.",
+  "detection": "Slicing or string parsing operations (`.split()`, `.find()`, regex captures) acting on string identifiers within domain services.",
+  "counterexample": "Parsing raw JSON payloads or command-line strings at the system boundary (e.g., HTTP controllers or DTO translation layers).",
+  "fix": "Perform parsing exactly once at the boundary, converting the input into a strongly-typed struct.\n```rust\nstruct EmailAddress {\n    username: String,\n    domain: String,\n}\n```",
+  "strength": "Strong",
+  "source": "*A Philosophy of Software Design* by John K. Ousterhout (p. 45); *Domain Modeling made Functional* (p. 110)."
+}

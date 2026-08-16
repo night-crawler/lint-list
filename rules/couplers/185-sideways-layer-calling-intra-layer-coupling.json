@@ -1,0 +1,13 @@
+{
+  "id": 185,
+  "title": "Sideways Layer Calling (Intra-Layer Coupling)",
+  "category": "Couplers",
+  "damaged_code": "```rust\nstruct OrderManager;\nstruct BillingManager;\n\nimpl OrderManager {\n    fn process_order(&self) {\n        // Manager calling another Manager in the same layer directly\n        let billing = BillingManager;\n        billing.charge_customer();\n    }\n}\n```",
+  "pattern": "A service or manager object directly instantiates and invokes another manager object residing within the same architectural layer.",
+  "why_bad": "It violates layer encapsulation and creates sideways dependencies that make use cases non-independent. Changes to the internal workflows of `BillingManager` directly ripple into and break `OrderManager`.",
+  "detection": "Direct instantiation or reference to a sibling class/struct in the same layer inside a method body.",
+  "counterexample": "Standard utility modules or shared stateless helpers that do not manage domain workflows or use cases.",
+  "fix": "Coordinate sibling interactions through an event bus (asymmetric pub/sub) or orchestrate them via a higher-level controller/coordinator layer.\n```rust\nstruct EventBus;\nimpl OrderManager {\n    fn process_order(&self, bus: &mut EventBus) {\n        bus.publish(\"OrderProcessed\");\n    }\n}\n```",
+  "strength": "Contextual",
+  "source": "Juval Löwy, *Righting Software* (2019), Chapter 3 (\"Structure\" - Calling Sideways)."
+}

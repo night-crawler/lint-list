@@ -1,0 +1,13 @@
+{
+  "id": 115,
+  "title": "Identity Reference-Dereference Operations",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nlet val = *&x;\n```",
+  "pattern": "Writing ref-deref combinations (`*&` or `&*`) where the final type remains exactly the same.",
+  "why_bad": "It is completely redundant, adding cognitive scanning cost and visual boilerplate that resolves to an identity operation.",
+  "detection": "A reference operator immediately nested inside a dereference operator (or vice-versa) returning the original value type.",
+  "counterexample": "Context-dependent (occasionally required in complex macro expansions to force specific coercion rules).",
+  "fix": "Remove both the reference and dereference operators.",
+  "strength": "Strong",
+  "source": "Fowler, *Refactoring*, Chapter 3 (\"Bad Smells - Dispensables\")."
+}

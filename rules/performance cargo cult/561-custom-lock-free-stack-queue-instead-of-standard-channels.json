@@ -1,0 +1,13 @@
+{
+  "id": 561,
+  "title": "Custom Lock-Free Stack/Queue instead of Standard Channels",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\n// Implementing a lock-free queue with atomic pointers and loop compare-exchange for communication\n```",
+  "pattern": "Writing custom concurrent lock-free queue channels with atomic spin checks instead of using standard proven channel libraries.",
+  "why_bad": "Custom concurrent containers are highly prone to data races, compiler optimization hazards, and memory leaks. Standard channels (`std::sync::mpsc` or `crossbeam-channel`) are heavily optimized, battle-tested, and perform much better under high thread contention [29, 217].",
+  "detection": "A custom atomic pointer swap loop (`compare_exchange`) for thread communication instead of safe standard library channels.",
+  "counterexample": "Writing a highly specific, single-purpose low-level lock-free library for academic research or benchmark verification. `Contextual`.",
+  "fix": "Use standard library or crossbeam channels.",
+  "strength": "Strong",
+  "source": "*1701.00854v6.pdf*, Chapter 11 (p. 29); *Herlihy, Maurice*, Chapter 9 (p. 217)."
+}

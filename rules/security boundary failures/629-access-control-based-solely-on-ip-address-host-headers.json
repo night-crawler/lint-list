@@ -1,0 +1,13 @@
+{
+  "id": 629,
+  "title": "Access Control Based Solely on IP Address / Host Headers",
+  "category": "Security Boundary Failures",
+  "damaged_code": "```rust\nfn is_admin_request(client_ip: &std::net::IpAddr) -> bool {\n    // Trusting IP subnet boundary for authorization check\n    client_ip == &std::net::IpAddr::V4(std::net::Ipv4Addr::new(10, 0, 0, 1))\n}\n```",
+  "pattern": "Enforcing administrative permissions or authentication bypass boundaries by simply verifying that the incoming request's IP address matches a trusted local subnet.",
+  "why_bad": "IP addresses and HTTP host headers are easily spoofed, spoofable on local networks, or hijacked via ARP poisoning, routing changes, or server side-channel vulnerabilities. Relying on network position collapses the zero-trust model.",
+  "detection": "Authorization check routines that evaluate access rules using client IP variables as the primary check logic.",
+  "counterexample": "```rust\nfn is_admin_request(ctx: &RequestContext) -> bool {\n    // Require signed cryptographic user credentials regardless of IP location\n    ctx.verify_session_token().is_ok()\n}\n```",
+  "fix": "Enforce identity-based authorization checks using cryptographic session tokens or mutual TLS (mTLS) credentials, rather than relying on network topologies.",
+  "strength": "Strong",
+  "source": "`Heather Adkins et al. - Building Secure and Reliable Systems (2020)`, Ch 5, p. 78."
+}

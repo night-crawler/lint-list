@@ -1,0 +1,13 @@
+{
+  "id": 951,
+  "title": "Direct Exposure of Domain Entities over Remote APIs",
+  "category": "Conceptual Integrity",
+  "damaged_code": "```rust\n#[derive(Serialize)]\nstruct UserEntity {\n    id: u64,\n    username: String,\n    password_hash: String, // Secret leaked!\n    created_at: DateTime<Utc>,\n}\n```",
+  "pattern": "Returning core domain aggregates or database entities directly through remote public endpoints (like REST or gRPC).",
+  "why_bad": "It creates a brittle contract. Any refactoring of the internal domain representation or database schema instantly breaks the public API contract, and risks leaking sensitive internal fields.",
+  "detection": "Look for structs annotated with both database-mapping macros (e.g., `#[derive(Queryable)]`) and serialization macros (e.g., `#[derive(Serialize)]`) that are returned directly by controller functions.",
+  "counterexample": "Trivial CRUD applications with no business logic where entities match the API payload exactly. Marked `Context-dependent`.",
+  "fix": "Decouple the API contract by introducing a distinct Data Transfer Object (DTO) and a mapping layer.",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design* by Vaughn Vernon (2013), p. 512, 675."
+}

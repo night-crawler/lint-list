@@ -1,0 +1,13 @@
+{
+  "id": 774,
+  "title": "Suppressed Failing Tests with Stale Bug References (Stale Suppressions)",
+  "category": "Maintenance Fossils",
+  "damaged_code": "```rust\n#[test]\n#[ignore = \"bug-1234: fails intermittently during youtube plug-in rollout\"]\nfn test_playlist_fetching() {\n    // test logic\n}\n```",
+  "pattern": "Suppressing a failing or flaky test using a suppression attribute (such as `#[ignore]`) with a comment citing a specific bug tracker ID, but leaving it disabled long after the bug has been closed.",
+  "why_bad": "Erosion of test suite integrity. It allows regressions to creep into production silently. Accumulating forgotten \"temporary\" suppressions degrades the confidence of continuous integration runs and masks systemic rot in the test harness.",
+  "detection": "The linter must observe:\n1. A test function marked with an ignore/skip attribute containing a bug ID string.\n2. An automated query to the bug tracking system API reveals that the referenced bug ID has been closed or resolved for an extended period.",
+  "counterexample": "```rust\n// Valid: Temporary ignore for an active, open tracking bug\n#[test]\n#[ignore = \"bug-9999: active block on API refactor\"]\nfn test_api_conformance() {}\n```",
+  "fix": "Resolve the test issues, remove the ignore annotation, and re-enable the test.\n```rust\n#[test]\nfn test_playlist_fetching() {\n    // restored test logic\n}\n```",
+  "strength": "Strong` (Requires querying the bug-tracking API during static analysis)",
+  "source": "- Titus Winters et al., *Software Engineering at Google* (2020) [367, 368]"
+}

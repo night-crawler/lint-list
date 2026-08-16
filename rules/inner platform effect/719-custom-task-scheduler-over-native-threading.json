@@ -1,0 +1,13 @@
+{
+  "id": 719,
+  "title": "Custom Task Scheduler Over Native Threading",
+  "category": "Inner Platform Effect",
+  "damaged_code": "```\n// Manual fiber scheduling and microsecond-level timing loops in user-space\nstruct Task {\n    run: fn(),\n}\n\nfn run_scheduler(tasks: &[Task]) {\n    loop {\n        for task in tasks {\n            let start = std::time::Instant::now();\n            (task.run)();\n            // Manual attempt to enforce temporal fairness and context switching\n            if start.elapsed().as_micros() > 50 {\n                // Yield thread\n                std::thread::yield_now();\n            }\n        }\n    }\n}\n```",
+  "pattern": "Implementing custom thread schedulers, context-switching loops, or timer yield logic on top of operating system threads.",
+  "why_bad": "It interferes directly with the OS kernel scheduler, wastes CPU clock cycles on active spin waiting, increases tail latency, and defeats standard asynchronous runtime optimizations.",
+  "detection": "The presence of loop structures containing active spin-locks, thread yields, and microsecond sleep periods to schedule execution.",
+  "counterexample": "`Context-dependent`. Embedded bare-metal platforms (`no_std` Rust) or customized high-performance database engines where standard OS schedulers are disabled.",
+  "fix": "Utilize the standard library or async runtime execution executors (like Tokio in Rust) to let the operating system or runtime handle context-switching and work-stealing.\n\n```\n// Rely on an optimized standard asynchronous executor\n#[tokio::main]\nasync fn main() {\n    let task1 = tokio::spawn(async { /* ... */ });\n    let task2 = tokio::spawn(async { /* ... */ });\n    let _ = tokio::join!(task1, task2);\n}\n```",
+  "strength": "Strong",
+  "source": "Brendan Gregg - _Systems Performance_ Enterprise and the Cloud_ (2013, Pearson Education Limited (US titles)_Prentice Hall).pdf, Chapter 3 \"Operating Systems\"; Maurice Herlihy - _The Art of Multiprocessor Programming_ (2008, Morgan Kaufmann), Chapter 12."
+}

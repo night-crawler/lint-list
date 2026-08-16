@@ -1,0 +1,13 @@
+{
+  "id": 96,
+  "title": "Speculative Trait Implementations (The Pragmatic Limit)",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nstruct Coordinates { x: i32, y: i32 }\nimpl std::ops::Sub for Coordinates {\n    type Output = Self;\n    fn sub(self, other: Self) -> Self {\n        Coordinates { x: self.x - other.x, y: self.y - other.y }\n    }\n}\n```",
+  "pattern": "Implementing complex math, comparison, or custom traits on a struct 'just in case' it might be needed someday, with zero active callers.",
+  "why_bad": "Increases binary size, extends compilation times, and leaves unused dead code that must be maintained, documented, and tested.",
+  "detection": "An implementation block (`impl Trait for Type`) whose methods have zero active call sites.",
+  "counterexample": "Public library designs where standard traits (`PartialEq`, `Clone`, `Debug`) are expected on all public structs.",
+  "fix": "Delete the unused trait implementation block.",
+  "strength": "Contextual",
+  "source": "Fowler, *Refactoring*, Chapter 3 (\"Bad Smells - Speculative Generality\"); Sandi Metz, *Practical Object-Oriented Design*, Chapter 9."
+}

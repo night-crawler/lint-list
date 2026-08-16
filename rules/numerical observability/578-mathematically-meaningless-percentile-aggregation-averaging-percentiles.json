@@ -1,0 +1,13 @@
+{
+  "id": 578,
+  "title": "Mathematically Meaningless Percentile Aggregation (Averaging Percentiles)",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\nfn aggregate_p99(nodes: &[NodeMetrics]) -> f64 {\n    let sum: f64 = nodes.iter().map(|n| n.p99_latency_ms).sum();\n    sum / nodes.len() as f64\n}\n```",
+  "pattern": "Computing the arithmetic mean of pre-calculated percentile metrics (e.g., `p50`, `p95`, `p99`) across multiple nodes, partitions, or time intervals.",
+  "why_bad": "Percentiles are rank-based values, not linear. Averaging them destroys the rank information. If one node experiences a severe long-tail slowdown (e.g., 5000 ms) while others remain at 10 ms, averaging their `p99` values yields a falsely low number, masking critical outlier behavior. The correct way to aggregate percentiles is to merge the underlying distributions.",
+  "detection": "Look for arithmetic reductions (`sum()`, `mean()`, or division by count) performed on variables with names matching `p+` or `percentile`.",
+  "counterexample": "`Context-dependent`. If all nodes have identical, constant distributions with exactly equal sample sizes, the average would align, but in practice, real-world workloads are never distributed this way.",
+  "fix": "Merge the underlying histograms (using algorithms like `t-digest` or `HdrHistogram`) and calculate the percentile on the merged histogram.\n```rust\nfn aggregate_p99_correct(histograms: &[Histogram]) -> u64 {\n    let mut merged = Histogram::new();\n    for h in histograms {\n        merged.add(h);\n    }\n    merged.value_at_quantile(0.99)\n}\n```",
+  "strength": "Strong` — mathematically invalid metric operation under any uneven distribution.",
+  "source": "Martin Kleppmann - *Designing Data-Intensive Applications* (2017), p. 14 / p. 22."
+}

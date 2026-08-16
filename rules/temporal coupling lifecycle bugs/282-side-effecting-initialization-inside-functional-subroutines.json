@@ -1,0 +1,13 @@
+{
+  "id": 282,
+  "title": "Side-Effecting Initialization inside Functional Subroutines",
+  "category": "Temporal Coupling Lifecycle Bugs",
+  "damaged_code": "```rust\n// Rust\nstruct ExpenseTracker {\n    expense_data: Option<ExpenseData>,\n}\n\nimpl ExpenseTracker {\n    fn compute_marketing_expense(&mut self) {\n        self.expense_data = Some(ExpenseData::init()); // Hidden shared state initialization!\n        // ... compute marketing ...\n    }\n\n    fn compute_sales_expense(&mut self) {\n        let data = self.expense_data.as_ref().unwrap(); // Will panic if marketing wasn't called first!\n        // ... compute sales ...\n    }\n}\n```",
+  "pattern": "A domain-logic computation method (e.g., `compute_marketing_expense`) is implicitly tasked with initializing shared class-level/global data structures that other sibling routines depend on.",
+  "why_bad": "Violates the single-responsibility principle. The method names suggest they are coordinate sibling computations, but one of them has a hidden temporal priority because of its initialization side effect.",
+  "detection": "One sibling method initializes a shared mutable field while other sibling methods read that field and panic/fail if it is uninitialized.",
+  "counterexample": "Two independent functions that both read/write to a pre-initialized data structure without depending on a specific execution order.",
+  "fix": "Extract the shared initialization code into an explicit initialization routine (e.g., `initialize_expense_data()`) and call it independently during lifecycle setup.",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete*, page 554, 556 / passage [255, 256, 554, 555]."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 131,
+  "title": "Associated Type Overuse for Polymorphism",
+  "category": "Speculative Generality",
+  "damaged_code": "```rust\ntrait Engine {\n    type Data;\n    fn run(&self, d: Self::Data);\n}\n```",
+  "pattern": "Using associated types when the type needs to vary dynamically at runtime.",
+  "why_bad": "Locks the type statically at compile-time, preventing dynamic runtime selection.",
+  "detection": "Associated types on traits where callers require dynamic dispatch (`dyn Trait`) over different concrete type values.",
+  "counterexample": "Static traits with one unique output type.",
+  "fix": "Replace associated types with generic parameters on methods.",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust for Rustaceans* (2021)."
+}

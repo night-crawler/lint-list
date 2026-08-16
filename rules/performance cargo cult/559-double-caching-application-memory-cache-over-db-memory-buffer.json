@@ -1,0 +1,13 @@
+{
+  "id": 559,
+  "title": "Double Caching (Application Memory Cache over DB Memory Buffer)",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\n// Storing copy of database row records in an in-memory HashMap inside application code\n```",
+  "pattern": "Caching retrieved database rows inside an in-memory application dictionary to \"avoid database lookup overhead.\"",
+  "why_bad": "Modern databases (like SQLite, Postgres, or MongoDB) already maintain highly optimized, size-bounded buffer caches in RAM. Application-level caching causes double RAM consumption, stale data sync bugs, and wastes CPU cycles on serialization [82, 128].",
+  "detection": "A dictionary cache containing raw database row structures that are queried inside application services where the DB is local or already fully buffered.",
+  "counterexample": "A distributed cache cluster (like Memcached or Redis) separating slow remote disks from fast serving clusters. `Context-dependent`.",
+  "fix": "Query the database directly on-demand and configure the database buffer pool size correctly.",
+  "strength": "Strong",
+  "source": "*Database Internals*, Chapter 1 (p. 82); *Systems Performance*, Chapter 2, Section 2.5 (p. 128)."
+}

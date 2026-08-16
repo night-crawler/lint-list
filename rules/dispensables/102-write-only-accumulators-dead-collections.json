@@ -1,0 +1,13 @@
+{
+  "id": 102,
+  "title": "Write-Only Accumulators (Dead Collections)",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nfn process_metrics() {\n    let mut collected = Vec::new();\n    for i in 0..10 {\n        collected.push(i); // accumulated but never read\n    }\n}\n```",
+  "pattern": "Declaring, instantiating, and pushing items into a collection (Vector, HashMap, etc.) that is never read, returned, or queried.",
+  "why_bad": "Wastes memory allocations and cpu cycles performing dead insertions on a collection that has zero downstream effects.",
+  "detection": "Collection variables that are mutated (e.g., via `push`, `insert`) but are never read, printed, or returned.",
+  "counterexample": "Context-dependent",
+  "fix": "Delete the collection and all operations mutating it.",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 17 (\"Smells and Heuristics - G9: Dead Code\"), p. 168."
+}

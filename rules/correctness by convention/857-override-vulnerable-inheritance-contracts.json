@@ -1,0 +1,13 @@
+{
+  "id": 857,
+  "title": "Override-Vulnerable Inheritance Contracts",
+  "category": "Correctness By Convention",
+  "damaged_code": "```rust\n// C++-like pseudocode\nclass Base {\n    virtual void set_speed(int x) {\n        assert(x >= 0 && x < 10); // Base contract\n        speed = x;\n    }\n};\nclass Subclass : public Base {\n    void set_speed(int x) override {\n        // BUG: Subclass forgot to call base class invariant manually!\n        speed = x; \n    }\n};\n```",
+  "pattern": "Overriding a method that has preconditions, postconditions, or class invariants in languages that do not automatically propagate Design by Contract assertions.",
+  "why_bad": "The contract is not automatically enforced. Subclass maintainers must remember to manually duplicate and call the invariants, leading to silent invariant violations in overridden methods.",
+  "detection": "An overridden method does not call the base class's assertion checks or base invariants upon entry or exit.",
+  "counterexample": "The programming language automatically executes the base preconditions and invariants, or the Template Method pattern is used to prevent overriding the contract check.",
+  "fix": "Use the Template Method Pattern: Keep the contract-checking method final and have it call a private virtual method `do_set_speed` for subclass implementations.",
+  "strength": "Strong",
+  "source": "Pragmatic Programmer, Topic 23 (DBC), p. 605 [605]."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 851,
+  "title": "Implicit Status-Based Update Convention",
+  "category": "Correctness By Convention",
+  "damaged_code": "```rust\n// Java-like\nclass Person {\n    void update_last_name(String name) {\n        // BUG: Senders just 'have to know' not to call this unless state is LOADING\n        this.last_name = name;\n    }\n}\n```",
+  "pattern": "An object provides update/modifier methods that assume an implicit state machine invariant (e.g., can only be called when status is LOADING) but do not assert it.",
+  "why_bad": "Developers can invoke modifier methods at incorrect times (e.g., after the object is committed/frozen), causing invalid state corruption or silent database synchronization anomalies.",
+  "detection": "A modifier method updates fields of an object without verifying an internal state variable or calling an assertion guard.",
+  "counterexample": "Asserting the state inside the method: `Assert.isTrue(state == LOADING);`.",
+  "fix": "Enforce the status-based guard explicitly in the modifier: `fn update_name(&mut self, name: String) { assert_eq!(self.state, State::Loading); self.name = name; }`.",
+  "strength": "Strong",
+  "source": "[The Addison-Wesley signature series] Martin Fowler - PEAA, p. 648 [648]."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 845,
+  "title": "Compile-Time Constants as Configuration",
+  "category": "Operational Architecture Smells",
+  "damaged_code": "```rust\nconst MAX_CONNECTIONS: usize = 10;\n```",
+  "pattern": "Hardcoding tuning parameters (e.g., pool sizes, timeout limits, or IP addresses) as compile-time constants instead of reading them dynamically from external sources.",
+  "why_bad": "Under stress (e.g., an outage requiring immediate adjustment of a connection pool size to zero or one to stop overloading a database), operations must wait for a full build, compile, and rolling deploy cycle, turning a 5-minute fix into a multi-hour outage.",
+  "detection": "Compile-time constants used to set connection pool sizing, socket timeouts, or server endpoint URLs.",
+  "counterexample": "True logical constants like math limits or default internal buffer capacities.",
+  "fix": "Load operational configurations from external environment variables, files, or dynamic services.",
+  "strength": "Strong",
+  "source": "*Release It!*, \"Configuration,\" p. 251."
+}

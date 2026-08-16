@@ -1,0 +1,13 @@
+{
+  "id": 341,
+  "title": "Partial Functions with Panicking Paths",
+  "category": "Semantic Ambiguity",
+  "damaged_code": "```rust\nfn first_element<T>(list: &[T]) -> &T {\n    if list.is_empty() {\n        panic!(\"Empty list!\"); // Panicking path\n    }\n    &list[0]\n}\n```",
+  "pattern": "A function signature claiming to return a pure type `T` but containing implicit execution paths that panic or crash when presented with valid input boundary states.",
+  "why_bad": "Partial functions lie in their signatures. They claim they can successfully return a `T` for any array, forcing callers to manually verify pre-conditions, which is highly error-prone and leads to unexpected runtime crashes.",
+  "detection": "Functions returning non-Option/non-Result types containing `panic!`, `unwrap()`, or unsafe indexing (`[0]`) on inputs whose boundaries are not checked.",
+  "counterexample": "Returning a safe option:\n```rust\nfn safe_first<T>(list: &[T]) -> Option<&T> {\n    list.first()\n}\n```",
+  "fix": "Refactor the function to be a *total function* by returning an `Option<T>` or `Result<T, E>` to make the failure path explicit in the type system.\n```rust\nfn first_element<T>(list: &[T]) -> Option<&T> {\n    if list.is_empty() {\n        None // Safe, explicit boundary handling\n    } else {\n        Some(&list[0])\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Type-Driven Development with Idris* by Edwin Brady (Chapter 2, p. 59); *Types and Programming Languages* by Benjamin C. Pierce (p. 42)."
+}

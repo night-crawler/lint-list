@@ -1,0 +1,13 @@
+{
+  "id": 29,
+  "title": "Semantic Coupling",
+  "category": "Accidental Complexity",
+  "damaged_code": "```rust\nstruct QueryConfig {\n    pub timeout_ms: Option<u64>,\n}\n\n// Caller knows the implementation uses 5000ms internally as fallback if None:\nlet config = QueryConfig { timeout_ms: None };\nexecute_query(config); \n```",
+  "pattern": "One module relies on implicit, undocumented assumptions about the internal workings, defaults, or state transitions of another module, rather than on its explicit syntactic contract.",
+  "why_bad": "It is highly fragile. Any internal change to the used module (such as modifying default values or internal calling sequences) can silently break the using module. These bugs are incredibly difficult to diagnose because they compile cleanly and cause subtle runtime failures.",
+  "detection": "Instantiations of configuration structures with arbitrary partial or missing data, where the consumer module relies on implicit fallback assumptions, or methods that assume a specific uncompiled ordering of operations.",
+  "counterexample": "Standardized default structures using the `Default` trait where the default state is explicitly documented and part of the public API contract.",
+  "fix": "Expose clear, explicit interfaces. Replace optional fields with non-optional values at construction, or use explicit builders that enforce complete initialization.",
+  "strength": "Contextual",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 5 (\"Design in Construction - Keep Coupling Loose - Semantic Coupling\"), p. 345."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 946,
+  "title": "Divergent Lazy-Initialization and Caching Mechanics",
+  "category": "Conceptual Integrity",
+  "damaged_code": "```rust\n// Method A: Manual Option matching\nimpl Config {\n    fn get_data(&mut self) -> &Data {\n        if self.data.is_none() {\n            self.data = Some(fetch_data());\n        }\n        self.data.as_ref().unwrap()\n    }\n}\n\n// Method B: Option::get_or_insert_with closure\nimpl Logger {\n    fn get_log_buffer(&mut self) -> &Buffer {\n        self.buffer.get_or_insert_with(|| init_buffer())\n    }\n}\n```",
+  "pattern": "Implementing identical behavioral idioms (like lazy-initialization or local caching) using multiple distinct syntactic styles across different structs.",
+  "why_bad": "It introduces arbitrary syntactic variation that obscures meaning. In a consistent system, difference in code style should signal a difference in intent. Arbitrary variation forces readers to analyze whether one method has unique safety, borrowing, or re-entrancy guarantees.",
+  "detection": "Scan for lazy-initialization logic (checking for `None` then assigning `Some(val)`) and flag instances where some methods use manual `if self.x.is_none()` branches and others use idiomatic standard library combinators like `get_or_insert_with` or `OnceLock`.",
+  "counterexample": "Standardizing on different techniques because of concrete semantic requirements (e.g., using thread-safe `OnceLock` vs. single-threaded `Option`):\n```rust\nstatic GLOBAL_DATA: OnceLock<Data> = OnceLock::new();\n```",
+  "fix": "Standardize all single-threaded lazy caching on the most idiomatic standard library combinator.",
+  "strength": "Strong",
+  "source": "*Tidy First?* by Kent Beck (2023), p. 7."
+}

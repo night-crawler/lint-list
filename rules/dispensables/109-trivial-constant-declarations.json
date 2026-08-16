@@ -1,0 +1,13 @@
+{
+  "id": 109,
+  "title": "Trivial Constant Declarations",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nconst ONE: i32 = 1;\n```",
+  "pattern": "Defining symbolic constants for values whose meaning is universally obvious and carries no risk of change.",
+  "why_bad": "Adds an extra line of indirection and name tracking for a trivial value that has no symbolic meaning, increasing cognitive load.",
+  "detection": "Constant declarations mapping to universally static numbers (like 1, 0, or empty string) with names that merely repeat the value.",
+  "counterexample": "Configurable parameters, math constants (like PI), or complex magic numbers that control specific layout/business logic.",
+  "fix": "Replace references with the raw literal value and delete the constant.",
+  "strength": "Strong",
+  "source": "Fowler, *Refactoring*, Chapter 3 (\"Bad Smells - Dispensables\")."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 280,
+  "title": "Constructor Invoking Virtual Method (Uninitialized Fields)",
+  "category": "Temporal Coupling Lifecycle Bugs",
+  "damaged_code": "```cpp\n// C++\nclass A {\npublic:\n    A() { someMethod(); } // Invoking virtual method during construction\n    virtual void someMethod() {}\n};\n\nclass B : public A {\n    C *c;\npublic:\n    B() { c = new C; }\n    virtual void someMethod() override { \n        c->doSomething(); // CRASH: 'c' is not yet initialized!\n    }\n};\n```",
+  "pattern": "A base class constructor calls a virtual method on itself. A derived class overrides that virtual method and reads or mutates derived-class-specific member variables in its implementation.",
+  "why_bad": "In object-oriented languages like C++, base class constructors execute *before* derived class constructors. When the base class constructor calls the virtual method, it resolves to the derived class's override, which attempts to access derived-class members (like pointer `c`) before the derived class constructor has run to initialize them. This results in undefined behavior or a null-pointer crash.",
+  "detection": "Identify any invocation of a `virtual` method inside a class constructor. Ensure that any derived class overrides this virtual method and accesses subclass-specific members.",
+  "counterexample": "A base class calling a non-virtual private method inside its constructor.",
+  "fix": "Never call virtual methods within constructors. Instead, separate initialization from construction using a static creation factory or an explicit post-construction setup call.",
+  "strength": "Strong",
+  "source": "Michael Feathers, *Working Effectively with Legacy Code*, page 294 / passage [294, 650]."
+}

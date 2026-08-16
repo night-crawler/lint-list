@@ -1,0 +1,13 @@
+{
+  "id": 302,
+  "title": "Repeated Optional/Null Boilerplate Checks",
+  "category": "Duplication",
+  "damaged_code": "```rust\nfn get_contract_title(emp: Option<&Employee>) -> String {\n    if let Some(e) = emp {\n        e.contract.title.clone()\n    } else {\n        \"No contract\".to_string()\n    }\n}\n\nfn get_contract_id(emp: Option<&Employee>) -> String {\n    if let Some(e) = emp {\n        e.contract.id.clone()\n    } else {\n        \"N/A\".to_string()\n    }\n}\n```",
+  "pattern": "Duplicating matching/unpacking branches checking for missing variables (`Option::None`) across several retrieval functions.",
+  "why_bad": "Boilerplate clutter. It pollutes happy-path code with redundant checks and forces every client method to implement its own default handling.",
+  "detection": "Multiple functions accepting the same `Option<T>` type containing parallel matching structures checking for `None`.",
+  "counterexample": "Chaining standard combinators (`map`, `and_then`) where logic remains highly clean and linear.",
+  "fix": "Introduce a Null Object pattern or default trait implementation.\n```rust\ntrait Employee {\n    fn contract_title(&self) -> String;\n    fn contract_id(&self) -> String;\n}\n\nstruct NullEmployee;\nimpl Employee for NullEmployee {\n    fn contract_title(&self) -> String { \"No contract\".to_string() }\n    fn contract_id(&self) -> String { \"N/A\".to_string() }\n}\n```",
+  "strength": "Strong",
+  "source": "*Refactoring to Patterns*, \"Introduce Null Object\", p. 301."
+}

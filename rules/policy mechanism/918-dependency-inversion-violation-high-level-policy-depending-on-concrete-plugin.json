@@ -1,0 +1,13 @@
+{
+  "id": 918,
+  "title": "Dependency Inversion Violation (High-Level Policy depending on Concrete Plugin)",
+  "category": "Policy Mechanism",
+  "damaged_code": "```rust\n// Core domain policy module imports low-level database client directly\nuse pg_client::PostgresClient; \n\npub fn settle_invoice(invoice_id: u64, db: &mut PostgresClient) {\n    // business calculations directly running on a raw database engine connection\n}\n```",
+  "pattern": "A stable module containing core business logic or high-level policy directly references or imports concrete, volatile implementation details such as low-level frameworks, specific database clients, or physical device adapters.",
+  "why_bad": "High-level policies are the most stable and high-value parts of the application. Allowing details to depend on policies keeps policies isolated. Reversing this direction forces re-compilation or breaks business policies whenever low-level machinery (e.g. database client upgrade) changes.",
+  "detection": "Import declarations (`use`, `import`) referencing external technical dependency crates (such as PostgreSQL, MySQL, Redis, AWS SDK) inside directories designated as core business domain modules.",
+  "counterexample": "Adapter modules or system entry points explicitly designed to orchestrate and wire dependencies.",
+  "fix": "Define a trait (abstract interface) inside the core policy module, and implement the trait in an infrastructure/adapter module, ensuring the dependency points inward towards policy.\n```rust\n// In core domain:\npub trait DatabaseGateway {\n    fn save_invoice(&self, invoice: &Invoice);\n}\n\n// Low-level details then depend on core domain trait\n```",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Architecture* (2017), Chapter 14, \"Component Coupling: The Dependency Inversion Principle\", p. 263, 265."
+}

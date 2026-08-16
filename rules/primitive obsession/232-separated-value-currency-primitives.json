@@ -1,0 +1,13 @@
+{
+  "id": 232,
+  "title": "Separated Value & Currency Primitives",
+  "category": "Primitive Obsession",
+  "damaged_code": "```rust\nstruct InvoiceLine {\n    amount: f64,\n    currency: String,\n}\n```",
+  "pattern": "Splitting a value and its unit (like currency) into separate primitive fields on a parent entity instead of mapping them as a single cohesive type.",
+  "why_bad": "An amount has no semantic meaning without its currency. Splitting them enables developers to accidentally perform operations directly on the raw numerical `amount` while ignoring currency boundaries, causing catastrophic conversion bugs.",
+  "detection": "Numeric fields named `amount`, `balance` directly adjacent to string fields named `currency`, `currency_code` on an entity.",
+  "counterexample": "Raw data warehouse tables denormalized specifically for high-speed SQL analytics or reporting.",
+  "fix": "Group the amount and its currency into a single immutable Value Object.\n```rust\nstruct Money {\n    amount: i64,\n    currency: Currency,\n}\n```",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design* by Vaughn Vernon (p. 357); *Patterns of Enterprise Application Architecture* (p. 488)."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 703,
+  "title": "The Lazy Hardcoded Port/Bind Address",
+  "category": "Configuration Complexity",
+  "damaged_code": "```rust\nfn init_network() -> std::net::TcpListener {\n    // Bind address and port are statically baked in\n    std::net::TcpListener::bind(\"127.0.0.1:8080\").unwrap()\n}\n```",
+  "pattern": "Statically hardcoding network bind addresses, interface names, or port numbers deep inside active functional methods.",
+  "why_bad": "Prevents running multiple instances of the service on the same machine. It causes immediate startup crashes if port conflict occurs, and blocks deployments in standard container topologies.",
+  "detection": "The presence of network binding actions referencing hardcoded host/port socket strings.",
+  "counterexample": "```rust\nfn init_network(bind_address: &str) -> std::net::TcpListener {\n    std::net::TcpListener::bind(bind_address).unwrap()\n}\n```",
+  "fix": "Expose the bind address as a configuration parameter resolved at bootstrap; permit passing the parameter via environment variable or CLI argument.",
+  "strength": "Strong",
+  "source": "[2nd] Andrew Hunt_ David Hurst Thomas - *The Pragmatic Programmer_ Your Journey to Mastery*, 20th Anniversary Edition (2019, Addison-Wesley Professional).pdf, Topic 32."
+}

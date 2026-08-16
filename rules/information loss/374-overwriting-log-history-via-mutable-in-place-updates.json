@@ -1,0 +1,13 @@
+{
+  "id": 374,
+  "title": "Overwriting Log History via Mutable In-Place Updates",
+  "category": "Information Loss",
+  "damaged_code": "```rust\nfn update_user_cart(db: &mut Db, user_id: u64, items: Vec<Item>) {\n    // Mutates row in-place, overwriting the historical state\n    db.execute(\"UPDATE carts SET items = ? WHERE user_id = ?\", (items, user_id));\n}\n```",
+  "pattern": "Mutating records or fields in-place in persistent storage to reflect a state change instead of capturing individual transitional events.",
+  "why_bad": "It destroys temporal context. All historical information about user intent (e.g., adding an item, abandoning the cart, or removing an item before checking out) is permanently wiped out, leaving only the final state.",
+  "detection": "Database write methods or repository abstractions that utilize destructive `UPDATE` or `DELETE` SQL queries rather than append-only logs.",
+  "counterexample": "Transient system-level states where history has no value, such as memory-allocated atomic lock states:\n```rust\nlet active_workers = Arc::new(AtomicUsize::new(0));\n```",
+  "fix": "Use an event-sourcing or append-only log model that captures the full history of transitions.\n```rust\nstruct CartEvent {\n    user_id: u64,\n    timestamp: DateTime<Utc>,\n    action: CartAction, // Add(Item), Remove(Item), Checkout\n}\n```",
+  "strength": "Strong",
+  "source": "*Designing Data-Intensive Applications* by Martin Kleppmann (p. 447)."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 181,
+  "title": "Hard-Coded Global Singleton (Global Access Path)",
+  "category": "Change Preventers",
+  "damaged_code": "```rust\nuse lazy_static::lazy_static;\n\nlazy_static! {\n    // Global static DB pool\n    pub static ref DB_POOL: sqlx::Pool<Postgres> = sqlx::Pool::connect_lazy(\"...\").unwrap();\n}\n\npub fn update_user_status(id: u64, status: &str) {\n    // Directly accessing global static concretion\n    let _ = DB_POOL.execute(format!(\"UPDATE users SET status = '{}' WHERE id = {}\", status, id));\n}\n```",
+  "pattern": "Domain functions or structs access globally shared mutable or connection state directly via global statics, static Singletons, or lazy-static definitions rather than receiving them as arguments.",
+  "why_bad": "It tightly couples the codebase to a single global concretion. Testing methods in parallel becomes impossible due to shared state. Swapping the DB pool or mocking it for localized unit tests requires modifying all calling code.",
+  "detection": "Explicit calls to global static references or static singletons directly inside private helper methods or domain logic functions.",
+  "counterexample": "Truly immutable, global compile-time constants (such as physical constants or mathematical values) that bear zero operational volatility.",
+  "fix": "Utilize dependency injection. Pass the database connection pool reference `&Pool` explicitly into the function signature, or supply it as a field during struct construction.",
+  "strength": "Strong",
+  "source": "Erich Gamma et al., *Design Patterns* (1994), \"Singleton\"; Michael Feathers, *Working Effectively with Legacy Code* (2004), Chapter 9 (\"The Case of the Irritating Global Dependency\"), pp. 120-124."
+}

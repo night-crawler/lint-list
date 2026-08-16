@@ -1,0 +1,13 @@
+{
+  "id": 346,
+  "title": "Active Record Pattern / Domain-Managed Persistence",
+  "category": "Boundary Representation",
+  "damaged_code": "```rust\nimpl Customer {\n    pub fn check_credit(&self) -> bool { ... }\n    pub fn save(&self, conn: &mut PgConnection) -> Result<(), Error> {\n        diesel::insert_into(users::table).values(self).execute(conn)\n    }\n}\n```",
+  "pattern": "Mixing core business rules with persistence methods (`save`, `delete`, `update`) in the same domain structure.",
+  "why_bad": "It violates persistence ignorance and single responsibility principle. Any modification to the database schema or driver forces changes and recompilation of core business logic.",
+  "detection": "Method names `save`, `delete`, `insert_into`, `update` defined directly on core business domain structs and taking database connection parameters.",
+  "counterexample": "Low-level data gateway structures whose explicit, sole purpose is persistence.",
+  "fix": "Decouple domain structures from persistence. Use the Repository pattern where a separate struct or trait maps and saves domain entities.\n```rust\ntrait CustomerRepository {\n    fn save(&self, customer: &Customer) -> Result<(), Error>;\n}\n```",
+  "strength": "Strong",
+  "source": "*Patterns of Enterprise Application Architecture* by Martin Fowler (p. 160); *Implementing Domain-Driven Design* by Vaughn Vernon (p. 226)."
+}

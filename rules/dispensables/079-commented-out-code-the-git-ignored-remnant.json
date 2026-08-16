@@ -1,0 +1,13 @@
+{
+  "id": 79,
+  "title": "Commented-Out Code (The Git-Ignored Remnant)",
+  "category": "Dispensables",
+  "damaged_code": "```rust\n// let data = fetch_historical_payload(id)?;\n// let parsed = parse_payload(&data)?;\nprocess_payload(&parsed);\n```",
+  "pattern": "Valid syntactic expressions or blocks of code that have been commented out instead of being deleted.",
+  "why_bad": "It creates fear among other maintainers, who assume the code is there for a critical reason and refuse to delete it. It clutters visual scanning and references defunct types or APIs.",
+  "detection": "Block or line comments containing syntactically valid Rust expressions or declarations.",
+  "counterexample": "Commented-out code blocks explicitly marked as examples in doc-tests or usage tutorials.",
+  "fix": "Delete the commented-out code completely, relying on version control history to recover it if needed.",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 4 (\"Comments - Commented-Out Code\"), pp. 68-69."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 5,
+  "title": "Formatting Primitive-Envy (Month to String)",
+  "category": "Feature Envy",
+  "damaged_code": "```rust\nimpl DateUtil {\n    fn month_code_to_string(month: u32) -> &'static str {\n        match month {\n            1 => \"January\",\n            2 => \"February\",\n            _ => \"Unknown\",\n        }\n    }\n}\n```",
+  "pattern": "Formatting or converting logic for a domain concept is held in a generic utility class, taking primitive indicators as input.",
+  "why_bad": "Clients must explicitly pass raw integers around, losing type safety, and the formatting rules are disconnected from the data they represent.",
+  "detection": "A matching function mapping a primitive code to its string representation outside of any domain type representing that code.",
+  "counterexample": "A centralized translation service that requires external context or locale configuration.",
+  "fix": "Implement formatting traits like `Display` on the specific domain type.\n```rust\nimpl std::fmt::Display for Month {\n    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n        let name = match self {\n            Month::January => \"January\",\n            Month::February => \"February\",\n            // ...\n        };\n        write!(f, \"{}\", name)\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 16 (page 278)."
+}

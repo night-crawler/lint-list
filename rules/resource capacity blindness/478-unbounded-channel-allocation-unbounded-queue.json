@@ -1,0 +1,13 @@
+{
+  "id": 478,
+  "title": "Unbounded Channel Allocation (Unbounded Queue)",
+  "category": "Resource Capacity Blindness",
+  "damaged_code": "```rust\n// Creating an unbounded channel that can queue infinite messages under slow consumer conditions\nlet (tx, rx) = tokio::sync::mpsc::unbounded_channel();\n```",
+  "pattern": "Invoking `tokio::sync::mpsc::unbounded_channel` or similar unbounded channel creation constructors without bounding maximum capacity.",
+  "why_bad": "Unbounded channels allow producers to queue an infinite number of messages, causing memory consumption to grow linearly with queue size [46]. If consumers are slower than producers or block temporarily, the system will eventually crash with an Out of Memory (OOM) error [46, 583]. A bounded queue or channel provides backpressure, forcing the producer to slow down or fail fast [46, 583].",
+  "detection": "Identify calls to channel constructors that create unbounded channels (e.g., `mpsc::unbounded_channel()`, `crossbeam::channel::unbounded()`) without any associated limit or configuration.",
+  "counterexample": "```rust\n// Bounded channel that enforces a capacity limit and returns an error/blocks when full\nlet (tx, rx) = tokio::sync::mpsc::channel(1024);\n```",
+  "fix": "Use a bounded channel with an explicit capacity, enabling backpressure or returning a `Full` error to producers [46].",
+  "strength": "Strong",
+  "source": "Alex Petrov, *Database Internals*, Chapter 8 (Backpressure) / passage [46]; Richard L. Sites, *Understanding Software Dynamics*, Chapter 29 / passage [583]."
+}

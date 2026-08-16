@@ -1,0 +1,13 @@
+{
+  "id": 306,
+  "title": "Copy-Paste Layer-Crossing Mapping Blocks",
+  "category": "Duplication",
+  "damaged_code": "```rust\nfn map_to_db_record(cargo: &Cargo) -> CargoRecord {\n    CargoRecord {\n        id: cargo.id,\n        size: cargo.size,\n        booking_date: cargo.booking_date,\n    }\n}\n\nfn map_to_dto(cargo: &Cargo) -> CargoDTO {\n    CargoDTO {\n        id: cargo.id,\n        size: cargo.size,\n        booking_date: cargo.booking_date,\n    }\n}\n```",
+  "pattern": "Manually writing identical, straight-line field-to-field assignment mapping logic across multiple layer-boundary transfer models.",
+  "why_bad": "Changing a structural type or field name requires finding and updating every copy-paste translation method, causing frequent compilation breaking gaps.",
+  "detection": "Multiple functions performing isomorphic copying assignments between separate struct types.",
+  "counterexample": "Transformation mappers that filter, rename, or fundamentally enrich structural formats differently.",
+  "fix": "Abstract the transfer mapping into a single reusable mapping function or utilize dynamic/macro-based field mapping.",
+  "strength": "Contextual",
+  "source": "*Patterns of Enterprise Application Architecture*, \"Double Mapping\", p. 251."
+}

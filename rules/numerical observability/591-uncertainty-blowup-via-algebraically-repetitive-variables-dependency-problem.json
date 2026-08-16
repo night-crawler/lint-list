@@ -1,0 +1,13 @@
+{
+  "id": 591,
+  "title": "Uncertainty Blowup via Algebraically Repetitive Variables (Dependency Problem)",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\nfn parallel_resistors(r1: Interval, r2: Interval) -> Interval {\n    // Formula: (R1 * R2) / (R1 + R2)\n    let numerator = r1.mul(r2);\n    let denominator = r1.add(r2);\n    numerator.div(denominator)\n}\n```",
+  "pattern": "Evaluating an uncertain interval or measurement metric by referencing the same interval variable multiple times in a single formula.",
+  "why_bad": "In interval arithmetic, each occurrence of a variable is treated as independent. The \"dependency problem\" treats $R_1$ in the numerator as having no correlation to $R_1$ in the denominator, which mathematically blows up the reported uncertainty band to be falsely wide.",
+  "detection": "Look for functions where an interval, error margin, or range struct is passed, and the same variable name is read more than once in an equation.",
+  "counterexample": "None.",
+  "fix": "Rewrite the formula so that each variable occurs exactly once.\n```rust\nfn parallel_resistors_correct(r1: Interval, r2: Interval) -> Interval {\n    // Formula: 1 / (1/R1 + 1/R2) - R1 and R2 each occur exactly once\n    let inv_r1 = Interval::one().div(r1);\n    let inv_r2 = Interval::one().div(r2);\n    Interval::one().div(inv_r1.add(inv_r2))\n}\n```",
+  "strength": "Strong` — violates interval-mathematics dependency constraints, causing artificial error inflation.",
+  "source": "Harold Abelson et al. - *Structure and Interpretation of Computer Programs* (1996), Section 2.1.4, p. 284."
+}

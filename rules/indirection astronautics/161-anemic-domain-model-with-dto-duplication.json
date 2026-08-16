@@ -1,0 +1,13 @@
+{
+  "id": 161,
+  "title": "Anemic Domain Model with DTO Duplication",
+  "category": "Indirection Astronautics",
+  "damaged_code": "```rust\n// Anemic entity containing no business logic\npub struct Product {\n    pub id: u64,\n    pub price: f64,\n}\n\n// Mirror DTO used within the exact same process\npub struct ProductDto {\n    pub id: u64,\n    pub price: f64,\n}\n\npub struct ProductAssembler;\nimpl ProductAssembler {\n    pub fn assemble(p: &Product) -> ProductDto {\n        ProductDto { id: p.id, price: p.price }\n    }\n}\n```",
+  "pattern": "An application model where domain entities are dumb data containers (getter/setter bags) paired with identical Data Transfer Objects (DTOs) and assembler classes used strictly inside the same process space.",
+  "why_bad": "*   **Accidental Complexity:** Duplicating the data schema across identical structs requires maintenance in multiple places and forces unnecessary in-memory object copying and allocations.\n*   **Procedural Logic:** Business rules leak into external \"Services\" or \"Assemblers\" instead of being safely encapsulated behind entity boundaries.",
+  "detection": "Struct pairs in the same crate with $\\ge 90\\%$ field similarity and matching names (one ending in `Dto`), coordinated by stateless \"Assembler\" or \"Converter\" routines.",
+  "counterexample": "**Strict Serialization Boundary:** DTOs are valid when they represent a stable, versioned public API wire format that must not change when internal domain structures are refactored.",
+  "fix": "Encapsulate the business logic directly inside the domain entity, and pass references to the entity (or lightweight read-only views) directly through internal layers without intermediate translation.\n```rust\npub struct Product {\n    id: u64,\n    price: f64,\n}\n\nimpl Product {\n    pub fn apply_discount(&mut self, percentage: f64) {\n        assert!(percentage > 0.0 && percentage <= 100.0);\n        self.price -= self.price * (percentage / 100.0);\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Vernon, *Implementing Domain-Driven Design*, Chapter 14 \"Application\" & Fowler, *Patterns of Enterprise Application Architecture*, Chapter 15 \"Data Transfer Object\"."
+}

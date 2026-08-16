@@ -1,0 +1,13 @@
+{
+  "id": 823,
+  "title": "Orphaned Third-Party Dependency Imports",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Ingesting a niche github library for a quick vacation prototype\nuse raw_git_library::parse_format; // No tests, zero maintainers assigned\n```",
+  "pattern": "Importing an external OSS package to solve a quick development problem without assigning owners to maintain it or verifying its security compliance.",
+  "why_bad": "The package can easily be abandoned, leaving critical infrastructure tied to an outdated version when a security vulnerability is disclosed.",
+  "detection": "A dependency library checked into the repository with zero registered code owners, failing tests, or no updates for over 2 years.",
+  "counterexample": "Importing standard, heavily-vetted libraries with indefinite compatibility promises (e.g., standard library, Boost).",
+  "fix": "Establish strict import rules, requiring at least two engineers to act as OWNERS to maintain and update the dependency.",
+  "strength": "Contextual",
+  "source": "*Software Engineering at Google (Winters et al.), Chapter 21, p. 436 [178-179, 1017-1018]*"
+}

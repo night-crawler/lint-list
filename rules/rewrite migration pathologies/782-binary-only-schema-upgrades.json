@@ -1,0 +1,13 @@
+{
+  "id": 782,
+  "title": "Binary-Only Schema Upgrades",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```rust\n// Code cast raw bytes from the network directly into a memory struct\n#[repr(C)]\nstruct NetworkPayload {\n    user_id: u64,\n    balance: f64,\n}\n```",
+  "pattern": "Using raw memory layouts, programming-language-specific binary serialization (e.g., Java Serialization, Python pickle, or raw C struct casting), or format-unversioned byte buffers for network communication or long-lived database records.",
+  "why_bad": "Language-specific binary serialization is fragile. Any refactoring—renaming a variable, changing struct alignment, or adding a field—instantly breaks deserialization, preventing rolling upgrades and making older archived data unreadable [187, 828].",
+  "detection": "Casting raw byte pointers directly to struct types (`unsafe { &*(bytes.as_ptr() as *const NetworkPayload) }`) or using serialization libraries lacking field tags or structural tolerance.",
+  "counterexample": "Valid for intra-process communication or ephemeral memory-mapped files where reader and writer are compiled into the exact same binary. Mark as `Context-dependent`.",
+  "fix": "Use versioned, schema-driven binary protocols like Protobuf, Avro, or Thrift, or standard self-describing formats like JSON/MessagePack [187, 829].",
+  "strength": "Strong",
+  "source": "Patterns of Enterprise Application Architecture, \"Assembling a Data Transfer Object\" [828]; Designing Data-Intensive Applications, Chapter 4, \"Programming-language-specific encodings\" [187, 653]"
+}

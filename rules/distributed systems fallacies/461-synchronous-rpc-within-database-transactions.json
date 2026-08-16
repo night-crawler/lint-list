@@ -1,0 +1,13 @@
+{
+  "id": 461,
+  "title": "Synchronous RPC within Database Transactions",
+  "category": "Distributed Systems Fallacies",
+  "damaged_code": "```rust\n// Holding database locks open while waiting for network IO\nfn process_payment(conn: &mut pg::Connection, order_id: u64, amount: u32) {\n    let trans = conn.transaction().unwrap();\n    \n    // 1. Acquire pessimistic database lock on order\n    let order = trans.query_one(\"SELECT * FROM orders WHERE id = $1 FOR UPDATE\", &[&(order_id as i64)]).unwrap();\n    \n    // 2. Erroneous synchronous RPC call to remote payment gateway inside lock boundary\n    let payment_result = payment_gateway::charge_card(order_id, amount); \n    \n    // 3. Update database state\n    if payment_result.is_ok() {\n        trans.execute(\"UPDATE orders SET status = 'paid' WHERE id = $1\", &[&(order_id as i64)]).unwrap();\n    }\n    trans.commit().unwrap();\n}\n```",
+  "pattern": "Executing a remote RPC call, HTTP request, or socket write inside an active database transaction block (e.g., between `BEGIN TRANSACTION` and `COMMIT`), especially when holding pessimistic row locks (e.g., `SELECT ... FOR UPDATE`).",
+  "why_bad": "A database transaction is designed to be short-lived, with memory and disk footprint tracking managed locally [6]. Remote RPC latency is highly variable and can take seconds due to timeouts or packet drops [113]. Holding exclusive database locks open while waiting for external network IO severely spikes transaction duration, starves other database threads, exhausts database connection pools, and can freeze the entire application [6, 7].",
+  "detection": "Identify blocks representing active transactions (e.g., closure arguments in transaction execution or code blocks between a database connection's `.transaction()` and `.commit()`) that invoke functions belonging to remote clients or HTTP wrappers.",
+  "counterexample": "```rust\nfn process_payment(conn: &mut pg::Connection, order_id: u64, amount: u32) {\n    // 1. Run quick transaction to check status and set to \"pending_payment\"\n    // 2. Perform payment gateway RPC outside transaction boundary\n    let payment_result = payment_gateway::charge_card(order_id, amount);\n    // 3. Run second transaction to update to \"paid\" or \"failed\"\n}\n```",
+  "fix": "Refactor the logic to perform all external network communication outside of the database transaction boundary. Ensure transactions only execute quick, local read and write operations.",
+  "strength": "Strong",
+  "source": "*1701.00854v6.pdf*, Section 7.4 (Lock-Based Existence Guarantees) / passages [6, 7]."
+}

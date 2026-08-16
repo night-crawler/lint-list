@@ -1,0 +1,13 @@
+{
+  "id": 369,
+  "title": "Losing Error Provenance in Pipelines",
+  "category": "Information Loss",
+  "damaged_code": "```rust\nfn process_payment(order_id: u64) -> Result<(), String> {\n    validate_order(order_id)?;\n    charge_card(order_id)?;\n    Ok(())\n}\n```",
+  "pattern": "Collapsing distinct subsystem errors (e.g. database errors, HTTP timeouts, validation errors) into a flat common string or generic error within a composite workflow pipeline.",
+  "why_bad": "It wipes out the provenance of the failure, making it impossible for caller logic to route recovery steps programmatically (e.g. retrying a transient HTTP error vs. rejecting a permanent validation error).",
+  "detection": "Composite functions utilizing `?` operators where all subsystem errors are cast to `String` or a flat type-erased container without keeping variant identifiers.",
+  "counterexample": "Selective error erasure when the caller strictly lacks any programmatic way or reason to handle errors differently:\n```rust\nfn is_system_healthy() -> bool {\n    check_db().is_ok() && check_cache().is_ok()\n}\n```",
+  "fix": "Define a composite error enum representing all potential pipeline errors, using `map_err` to adapt specific subsystem errors into clear variants.\n```rust\nenum PaymentError {\n    Validation(ValidationError),\n    Network(reqwest::Error),\n}\n\nfn process_payment(order_id: u64) -> Result<(), PaymentError> {\n    validate_order(order_id).map_err(PaymentError::Validation)?;\n    charge_card(order_id).map_err(PaymentError::Network)?;\n    Ok(())\n}\n```",
+  "strength": "Strong",
+  "source": "*Domain Modeling made Functional* by Scott Wlaschin (p. 262-263); *Rust for Rustaceans* by Jon Gjengset (p. 137-138)."
+}

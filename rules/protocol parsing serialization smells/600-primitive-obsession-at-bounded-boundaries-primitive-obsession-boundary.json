@@ -1,0 +1,13 @@
+{
+  "id": 600,
+  "title": "Primitive Obsession at Bounded Boundaries (PRIMITIVE_OBSESSION_BOUNDARY)",
+  "category": "Protocol Parsing Serialization Smells",
+  "damaged_code": "```rust\n// Unvalidated primitives passed directly into domain boundaries\nfn register_user(username: String, zip_code: String, birthdate: String) {\n    if zip_code.len() != 5 { panic!(\"Invalid zip\"); } // Ad-hoc validation everywhere\n    // ...\n}\n```",
+  "pattern": "Using raw primitives (like `String` or `i32`) in DTO structures and routing them deep into workflows, leaving validation to ad-hoc, duplicated conditional checks across execution layers.",
+  "why_bad": "It violates the \"Parse, Don't Validate\" principle. It shifts validation responsibility to downstream components that must hope upstream callers validated the inputs correctly. This introduces logical duplication, inconsistent invariants, and insecure edge cases.",
+  "detection": "Look for API signatures or DTO structs where semantic types (e.g., Email, Date, ZIP, URL) are typed purely as primitive arrays or strings without type-safe constructors or wrapping models.",
+  "counterexample": "```rust\n// Valid: Type-safe, self-validating boundaries\nstruct ZipCode(String);\n\nimpl ZipCode {\n    fn parse(s: String) -> Result<Self, &'static str> {\n        if s.len() == 5 && s.chars().all(|c| c.is_ascii_digit()) {\n            Ok(ZipCode(s))\n        } else {\n            Err(\"Invalid ZIP\")\n        }\n    }\n}\n```",
+  "fix": "Adopt parsing factory boundaries. Deserialize raw payloads into simple primitive-based DTOs, then parse those DTOs immediately into strict, type-safe Domain Types (such as Single-Case Unions or Value Objects) before execution.",
+  "strength": "Strong",
+  "source": "*Heather Adkins et al. - Building Secure and Reliable Systems (2020)*, Chapter 5 (Url.parse factory); *Scott Wlaschin - Domain Modeling made Functional (2017)*, Chapter 11; *Joshua Kerievsky - Refactoring to Patterns (2004)*, \"Solution Sprawl\"."
+}

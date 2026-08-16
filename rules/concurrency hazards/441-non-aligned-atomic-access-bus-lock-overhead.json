@@ -1,0 +1,13 @@
+{
+  "id": 441,
+  "title": "Non-Aligned Atomic Access (Bus Lock Overhead)",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```cpp\nstruct UnalignedData {\n    char padding;\n    std::atomic<int32_t> val; // Straddles cache-line boundary!\n} __attribute__((packed));\n```",
+  "pattern": "Declaring an atomic variable inside a packed struct such that it straddles a cache-line boundary.",
+  "why_bad": "Performing an atomic operation on an unaligned variable that straddles two cache lines requires a hardware \"bus lock\" or complex split-lock sequence. This stalls the memory bus, slowing down every CPU core in the system by orders of magnitude.",
+  "detection": "Atomic types located inside byte-aligned or packed structures where their offset is not a multiple of their size.",
+  "counterexample": "Ensuring all atomic variables are strictly aligned to their natural size boundaries.",
+  "fix": "Remove packing from around atomic types to let the compiler enforce natural alignment.\n```cpp\nstruct AlignedData {\n    char padding;\n    // Align to natural boundary\n    alignas(4) std::atomic<int32_t> val; \n};\n```",
+  "strength": "Strong",
+  "source": "Paul McKenney 15.2 (p. 331)"
+}

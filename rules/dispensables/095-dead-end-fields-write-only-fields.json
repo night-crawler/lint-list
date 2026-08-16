@@ -1,0 +1,13 @@
+{
+  "id": 95,
+  "title": "Dead-End Fields (Write-Only Fields)",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nstruct SessionManager {\n    last_login: DateTime<Utc>,\n}\nimpl SessionManager {\n    pub fn update_login(&mut self) {\n        self.last_login = Utc::now();\n    }\n}\n```",
+  "pattern": "Fields on a struct that are assigned values during initialization or execution but are never read or queried anywhere in the codebase.",
+  "why_bad": "Wastes memory, increases the struct size, and forces developers to maintain complex writes and synchronization logic for data that has no effect.",
+  "detection": "Struct fields that are targets of assignment but never appear as r-values or references in reads.",
+  "counterexample": "Fields used purely in test assertions (though even these are smell candidates; prefer behavioral tests).",
+  "fix": "Delete the field, its initialization, and all associated write/assignment code.",
+  "strength": "Strong",
+  "source": "Fowler, *Refactoring*, Chapter 3 (\"Bad Smells - Dead Code\"); Robert C. Martin, *Clean Code*, Chapter 17, G9."
+}

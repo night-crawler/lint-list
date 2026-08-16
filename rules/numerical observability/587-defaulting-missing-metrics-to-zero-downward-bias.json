@@ -1,0 +1,13 @@
+{
+  "id": 587,
+  "title": "Defaulting Missing Metrics to Zero (Downward Bias)",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\nfn average_download_speed(downloads: &[HttpDownload]) -> f64 {\n    let sum: f64 = downloads.iter().map(|d| {\n        d.speed_kbps.unwrap_or(0.0) // Default missing to 0\n    }).sum();\n    sum / downloads.len() as f64\n}\n```",
+  "pattern": "Using `unwrap_or(0)` or defaulting null/missing metric readings to `0` when computing statistical averages.",
+  "why_bad": "Defaulting missing data points to zero introduces a massive artificial downward bias in the average. If 50% of metric packets are lost, the average download speed reported will be cut in half, falsely representing a network speed issue rather than a packet-reporting loss issue.",
+  "detection": "Look for default values of `0` used on telemetry variables before computing averages or quotients.",
+  "counterexample": "`Context-dependent`. If `0` is the actual, physically verified state of the missed value, it is correct.",
+  "fix": "Filter out missing entries from both the sum and the denominator, or track missing values explicitly as an independent \"unknown\" or \"error\" metric.\n```rust\nfn average_download_speed_correct(downloads: &[HttpDownload]) -> Option<f64> {\n    let active_downloads: Vec<f64> = downloads.iter().filter_map(|d| d.speed_kbps).collect();\n    if active_downloads.is_empty() { return None; }\n    let sum: f64 = active_downloads.iter().sum();\n    Some(sum / active_downloads.len() as f64)\n}\n```",
+  "strength": "Strong` — mathematically injects downward bias proportional to data loss.",
+  "source": "Trevor Foucher & Dustin Boswell - *The Art of Readable Code* (2012), Chapter 15, p. 219."
+}

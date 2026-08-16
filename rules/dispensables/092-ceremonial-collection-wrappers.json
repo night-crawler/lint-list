@@ -1,0 +1,13 @@
+{
+  "id": 92,
+  "title": "Ceremonial Collection Wrappers",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nstruct Users {\n    items: Vec<User>,\n}\nimpl Users {\n    pub fn push(&mut self, user: User) {\n        self.items.push(user);\n    }\n}\n```",
+  "pattern": "Wrapping a standard collection in a struct that exposes nothing but pass-through wrappers around the collection's native methods.",
+  "why_bad": "Forces callers to use a highly limited, customized API for basic collection operations, requiring custom forwarding for every standard method.",
+  "detection": "A struct wrapping a collection (`Vec`, `HashMap`, etc.) with public methods that map 1-to-1 to the underlying collection's APIs.",
+  "counterexample": "Collections that actively maintain safety invariants (e.g., maintaining a sorted order or ensuring uniqueness of keys).",
+  "fix": "Expose the raw collection or make the field public, eliminating the wrapper struct.",
+  "strength": "Contextual",
+  "source": "John K. Ousterhout, *A Philosophy of Software Design* (2018), Chapter 4 (\"Modules Should Be Deep\"), pp. 25, 110."
+}

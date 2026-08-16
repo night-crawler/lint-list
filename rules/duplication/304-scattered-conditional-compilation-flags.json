@@ -1,0 +1,13 @@
+{
+  "id": 304,
+  "title": "Scattered Conditional Compilation Flags",
+  "category": "Duplication",
+  "damaged_code": "```rust\nfn initialize() {\n    #[cfg(feature = \"board_v2\")]\n    init_v2_pinout();\n    #[cfg(not(feature = \"board_v2\"))]\n    init_v1_pinout();\n}\n\nfn process_inputs() {\n    #[cfg(feature = \"board_v2\")]\n    read_v2_sensors();\n    #[cfg(not(feature = \"board_v2\"))]\n    read_v1_sensors();\n}\n```",
+  "pattern": "Scattering conditional compilation directives (like `#[cfg(...)]`) for target hardware/environments inside multiple functional methods.",
+  "why_bad": "Adding support for a new hardware variant requires hunting down and altering thousands of compile-time branch flags, which is highly error-prone.",
+  "detection": "The exact same conditional compilation flag (e.g., `#[cfg(feature = \"...\") ]`) appearing repeatedly inside functional bodies rather than block modules.",
+  "counterexample": "High-level module definitions gating platform-specific drivers (e.g., `#[cfg(target_os = \"windows\")] mod win;`).",
+  "fix": "Encapsulate the target platform dependencies under a clean Hardware Abstraction Layer (HAL) trait and select the active struct during system initialization.\n```rust\ntrait Board {\n    fn init_pinout(&self);\n    fn read_sensors(&self);\n}\n```",
+  "strength": "Strong",
+  "source": "*Clean Architecture*, Chapter 20: \"Business Rules\" — \"DRY\", p. 272."
+}

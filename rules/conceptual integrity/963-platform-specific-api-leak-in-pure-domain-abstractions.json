@@ -1,0 +1,13 @@
+{
+  "id": 963,
+  "title": "Platform-Specific API Leak in Pure Domain Abstractions",
+  "category": "Conceptual Integrity",
+  "damaged_code": "```rust\nstruct DocumentFile {\n    win32_handle: u64, // OS-specific handle leaked into domain model!\n}\n```",
+  "pattern": "Operating-system or platform-specific types (like Win32 handles or POSIX file descriptors) bleeding directly into core domain model structs.",
+  "why_bad": "It violates portability and abstraction integrity. It makes it impossible to run the application on different platforms or mock the environment for fast unit tests.",
+  "detection": "Look for platform-specific types or conditional imports (like `#[cfg(target_os = \"windows\")]`) inside domain entity structures.",
+  "counterexample": "Low-level system drivers or OS utility libraries where platform integration is the explicit purpose. Marked `Context-dependent`.",
+  "fix": "Encapsulate the OS handle behind an abstract file trait or generic stream adapter.",
+  "strength": "Strong",
+  "source": "*Kill It with Fire* by Marianne Bellotti (2021), p. 136, 523."
+}

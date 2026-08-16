@@ -1,0 +1,13 @@
+{
+  "id": 171,
+  "title": "Central Registry Bottleneck (Merge-Conflict Architecture)",
+  "category": "Change Preventers",
+  "damaged_code": "```rust\n// File: src/registry.rs\npub enum CommandType {\n    Open,\n    Save,\n    Print,\n}\n\npub fn dispatch_command(cmd: CommandType) {\n    match cmd {\n        CommandType::Open => println!(\"Opening file\"),\n        CommandType::Save => println!(\"Saving file\"),\n        CommandType::Print => println!(\"Printing file\"),\n    }\n}\n```",
+  "pattern": "A single central module, enum, or `match` statement holds explicit references to every plug-in, command handler, or service in the system to dispatch requests.",
+  "why_bad": "It creates a merge-conflict bottleneck. Adding a new feature or command forces developers to modify this central registry file. In a team environment, this leads to frequent Git merge conflicts on the registry file, slowing down development and coupling unrelated features to a single shared file.",
+  "detection": "A central `match` statement or explicit registry map that lists every concrete handler type or enum variant in the application, requiring modification for every new feature introduction.",
+  "counterexample": "A simple dispatcher where the set of commands is extremely small, static, and fundamentally guaranteed not to expand over the lifecycle of the program (e.g., standard CRUD actions).",
+  "fix": "Decouple the dispatcher using dynamic registration. Let handlers register themselves automatically at startup using a generic Registry map (e.g., `HashMap<String, Box<dyn Command>>`), or utilize compile-time link-section registrations.",
+  "strength": "Strong",
+  "source": "Mark Richards, Neal Ford, *Fundamentals of Software Architecture* (2020), Chapter 10 (\"Microkernel Architecture\"); Robert C. Martin, *Clean Architecture* (2017), Chapter 7 (\"Symptom 2: Merges\"), pp. 65-66."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 219,
+  "title": "Connascence of Position in Primitive Struct/Method Signatures",
+  "category": "Low Cohesion",
+  "damaged_code": "```rust\nstruct SeatReservation;\n\nimpl SeatReservation {\n    // Connascence of Position: Client must remember order of two string parameters\n    fn update_seat(&self, name: String, seat_location: String) {\n        /* ... */\n    }\n}\n\nfn call_reservation(res: &SeatReservation) {\n    // Swapped arguments! Semantically incorrect but compiles successfully.\n    res.update_seat(\"14D\".to_string(), \"Ford, N\".to_string());\n}\n```",
+  "pattern": "A function takes multiple consecutive parameters of the same primitive type, requiring callers to match the exact positional order.",
+  "why_bad": "It bypasses compiler type-checking. If a developer swaps the parameters (e.g., passes the seat number as the name), the program compiles successfully but executes completely invalid logic at runtime, producing silent bugs.",
+  "detection": "A function signature accepts multiple consecutive parameters of the exact same primitive type (e.g., `(String, String)` or `(u32, u32)`).",
+  "counterexample": "Positional parameters in mathematical coordinates where position is standard and intuitive (e.g., `Point::new(x, y)`).",
+  "fix": "Introduce distinct, domain-specific wrapper types (Newtypes) or use structured arguments, forcing the compiler to verify correctness.\n```rust\nstruct PassengerName(String);\nstruct SeatNumber(String);\n\nimpl SeatReservation {\n    fn update_seat(&self, name: PassengerName, seat: SeatNumber) {\n        /* ... */\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Mark Richards & Neal Ford - Fundamentals of Software Architecture, Chapter 3 (Modularity), Section \"Connascence\"*"
+}

@@ -1,0 +1,13 @@
+{
+  "id": 226,
+  "title": "Raw String Universally Unique Identifiers (UUIDs)",
+  "category": "Primitive Obsession",
+  "damaged_code": "```rust\nstruct Tenant {\n    id: String,\n}\n```",
+  "pattern": "Storing universally unique identifiers (UUIDs/GUIDs) as raw `String` types across core domain models.",
+  "why_bad": "A raw `String` allocates memory dynamically on the heap, permits syntactically invalid strings (e.g., `\"invalid-uuid\"`), slows down comparisons, and makes the Bounded Context ownership of the identifier ambiguous.",
+  "detection": "Struct fields ending in `_id` or named `id` typed as `String`.",
+  "counterexample": "Storing human-entered, manual identifiers (such as a username or a manual barcode) where arbitrary characters are expected and valid.",
+  "fix": "Wrap the identifier in a dedicated newtype that enforces binary format constraints and contextual semantic mapping.\n```rust\nstruct TenantId(pub uuid::Uuid);\n```",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design* by Vaughn Vernon (p. 188)."
+}

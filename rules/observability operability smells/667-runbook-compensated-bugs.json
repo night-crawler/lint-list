@@ -1,0 +1,13 @@
+{
+  "id": 667,
+  "title": "Runbook-Compensated Bugs",
+  "category": "Observability Operability Smells",
+  "damaged_code": "```rust\nif mail_queue.is_full() {\n    // Rely on SRE to wake up and run the flush script\n    page_on_call(\"Mail queue full - manual purge required\");\n}\n```",
+  "pattern": "Code that raises high-priority alarms to request a human operator to perform a trivial, highly predictable cleanup action that could be executed programmatically.",
+  "why_bad": "Creates severe alert fatigue, disrupts SRE focus, and introduces operational errors when automated self-healing scripts are trivial to implement [112-113].",
+  "detection": "Predictable limit-exceeded states (such as cache full or queue full) triggering alert-routing mechanisms instead of purging routines.",
+  "counterexample": "```rust\nif mail_queue.is_full() {\n    log::warn!(\"Mail queue saturated. Triggering automated stale email purge.\");\n    mail_queue.purge_stale_records();\n}\n```",
+  "fix": "Automate the remediation path (such as oldest-first queue eviction or size-capped logging limits) directly within the code.",
+  "strength": "Contextual",
+  "source": "*Kill It with Fire*, Chapter 5 [112-113]."
+}

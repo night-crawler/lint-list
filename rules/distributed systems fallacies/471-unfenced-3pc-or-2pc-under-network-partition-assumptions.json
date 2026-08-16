@@ -1,0 +1,13 @@
+{
+  "id": 471,
+  "title": "Unfenced 3PC or 2PC Under Network Partition Assumptions",
+  "category": "Distributed Systems Fallacies",
+  "damaged_code": "```rust\n// Commit or abort decisions based on timeout during network partition\nfn on_cohort_timeout(cohort_state: CohortState) {\n    match cohort_state {\n        CohortState::Prepared => {\n            // BUG: Under a network partition, we timeout waiting for coordinator.\n            // Deciding to abort/commit unilaterally here breaks distributed atomicity!\n            unilateral_commit();\n        }\n        _ => unilateral_abort(),\n    }\n}\n```",
+  "pattern": "A transaction manager or cohort implementation that makes unilateral commit or abort decisions purely based on time-based timeouts during network communication silences, without establishing a verified quorum or barrier fence.",
+  "why_bad": "Two-Phase Commit (2PC) blocks cohorts on coordinator failure to preserve safety [64, 184]. While Three-Phase Commit (3PC) attempts to remove this blocking behavior via timeouts, it relies on a synchronous timing assumption [64, 184]. Under network partitions (common in asynchronous networks), some cohorts can communicate with the coordinator while others cannot [64]. Deciding to commit or abort based on local timeouts leads to a split-brain condition where nodes on one side commit and nodes on the other abort, permanently corrupting database consistency [64, 184].",
+  "detection": "Identify error handlers or timeout handlers in distributed transaction engines (e.g., implementing 2PC, 3PC protocols) that execute hard commit commands unilaterally when a remote coordinator or participant request times out.",
+  "counterexample": "```rust\nfn on_cohort_timeout_safe() {\n    // In 2PC, cohorts in Prepared state must block and wait for coordinator recovery \n    // to preserve safety, rather than making unsafe unilateral commit decisions.\n    block_and_wait_for_coordinator();\n}\n```",
+  "fix": "Do not use raw timeout-based commitment protocols under asynchronous network models. Implement consensus-based replication or coordinate distributed commits via a persistent, replicated state log (such as Raft or Paxos) to guarantee atomic agreement [68, 183, 190].",
+  "strength": "Strong",
+  "source": "Alex Petrov, *Database Internals*, Chapter 13 (Consensus and 3PC) / passages [63, 64, 68]; Martin Kleppmann, *Designing Data-Intensive Applications*, Chapter 9 / passages [183, 184, 190]."
+}

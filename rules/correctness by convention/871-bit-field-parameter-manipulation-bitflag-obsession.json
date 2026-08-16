@@ -1,0 +1,13 @@
+{
+  "id": 871,
+  "title": "Bit-Field Parameter Manipulation (Bitflag Obsession)",
+  "category": "Correctness By Convention",
+  "damaged_code": "```rust\n// C++\nvoid register_client(int status_flags) {\n    // BUG: Senders must 'know' which bits represent which states!\n    if (status_flags & 12) { ... }\n}\n```",
+  "pattern": "Using raw integers or bit fields to convey multiple independent boolean flags as method parameters, defining the meanings solely in comments.",
+  "why_bad": "Swapping bit positions or passing incorrect values compiles cleanly but results in silent runtime state corruption. Callers must consult manual comments to know the bit flags.",
+  "detection": "A function parameter is evaluated using bitwise operations against magic numbers or non-class constants.",
+  "counterexample": "Using structured types, explicit Enums, or safe `bitflags` macros to represent parameters.",
+  "fix": "Define a type-safe Bitflags enum or struct to restrict inputs to valid compile-checked values.",
+  "strength": "Strong",
+  "source": "[Robert C. Martin series] Feathers, Michael C - WEWLC, p. 630-631 [630-631]; or Code Complete, Section 11.2 & 32.3 [803]."
+}

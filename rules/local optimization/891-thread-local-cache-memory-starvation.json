@@ -1,0 +1,13 @@
+{
+  "id": 891,
+  "title": "Thread-Local Cache Memory Starvation",
+  "category": "Local Optimization",
+  "damaged_code": "```rust\nuse std::cell::RefCell;\n\nthread_local! {\n    // Thread-private block pool cache to avoid global allocation lock\n    static LOCAL_BLOCK_POOL: RefCell<Vec<Vec<u8>>> = RefCell::new(Vec::new());\n}\n\npub fn allocate_block() -> Vec<u8> {\n    LOCAL_BLOCK_POOL.with(|pool| {\n        pool.borrow_mut().pop().unwrap_or_else(|| vec![0; 4096])\n    })\n}\n\npub fn free_block(block: Vec<u8>) {\n    LOCAL_BLOCK_POOL.with(|pool| {\n        pool.borrow_mut().push(block);\n    })\n}\n```",
+  "pattern": "To avoid global heap allocation lock contention, each thread maintains an unbounded private pool or cache of reusable memory buffers, recycling them locally inside a thread-local variable.",
+  "why_bad": "It achieves \"blazingly fast\" local allocations. However, it pessimizes the global system's memory foot-print. If a thread-pool contains many threads, and some threads spike in activity (allocating thousands of blocks) and then go idle, that memory remains trapped forever inside those threads' private pools, starving other active threads and causing premature Out-Of-Memory (OOM) crashes.",
+  "detection": "Unbounded collections (`Vec`, `VecDeque`) stored inside thread-local storage (`thread_local!`) acting as pools or caches of large objects, without any size limits, timeouts, or mechanism to yield blocks back to a global pool.",
+  "counterexample": "Thread-local allocation caches are valid when bounded by a strict capacity limit (`TARGET_POOL_SIZE`) and balanced via a global arbiter thread.",
+  "fix": "Introduce size bounds and a mechanism to drain excess buffers back to a global thread-safe allocator or pool.\n```rust\nconst MAX_LOCAL_POOL_SIZE: usize = 16;\n\npub fn free_block(block: Vec<u8>) {\n    LOCAL_BLOCK_POOL.with(|pool| {\n        let mut pool = pool.borrow_mut();\n        if pool.len() < MAX_LOCAL_POOL_SIZE {\n            pool.push(block);\n        } // Otherwise, drop the block and let the global allocator reclaim it.\n    })\n}\n```",
+  "strength": "Strong",
+  "source": "1701.00854v6 (RCU book), Chapter 6.4.3, \"Allocator-Cache\" (p. 90-91)."
+}

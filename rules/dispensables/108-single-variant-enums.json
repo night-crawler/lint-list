@@ -1,0 +1,13 @@
+{
+  "id": 108,
+  "title": "Single-Variant Enums",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nenum Response {\n    Success(String),\n}\n```",
+  "pattern": "Declaring an `enum` that only contains a single variant.",
+  "why_bad": "Enums represent choice (sum types). A single-variant enum offers no choice, meaning a simple struct or direct type wrapper is simpler.",
+  "detection": "An enum definition with exactly one variant.",
+  "counterexample": "Enums designed to be extended incrementally during active, ongoing API design phases.",
+  "fix": "Convert the enum into a standard struct or raw type.",
+  "strength": "Strong",
+  "source": "Benjamin C. Pierce, *Types and Programming Languages* (2002); Fowler, *Refactoring*, Chapter 3."
+}

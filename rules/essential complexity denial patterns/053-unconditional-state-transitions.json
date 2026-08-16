@@ -1,0 +1,13 @@
+{
+  "id": 53,
+  "title": "Unconditional State Transitions",
+  "category": "Essential Complexity Denial Patterns",
+  "damaged_code": "```rust\n// Blind state modification without checking preconditions\nfn dispense_cash(&mut self) {\n    self.cash_balance -= 100;\n}\n```",
+  "pattern": "A method that mutates a system's state or inventory blindly on call without validating current state constraints or preconditions.",
+  "why_bad": "It permits the system to enter invalid states (e.g., dispensing cash when the account is overdrawn or the machine is empty) because the code treats state machines as simple sequential actions [67:67].",
+  "detection": "State-changing functions that do not verify the current state invariants before writing to local state fields [67:67].",
+  "counterexample": "```rust\nfn dispense_cash(&mut self) -> Result<(), Error> {\n    if self.cash_balance < 100 {\n        return Err(Error::InsufficientFunds);\n    }\n    self.cash_balance -= 100;\n    Ok(())\n}\n```",
+  "fix": "Implement explicit guard assertions or type-driven state machines to enforce valid state transitions [67:67].",
+  "strength": "Strong",
+  "source": "*Type-driven Development with Idris* (Brady), Chapter 14 [67:67]."
+}

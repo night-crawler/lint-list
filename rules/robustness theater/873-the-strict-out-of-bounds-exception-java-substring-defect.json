@@ -1,0 +1,13 @@
+{
+  "id": 873,
+  "title": "The Strict Out-of-Bounds Exception (Java Substring Defect)",
+  "category": "Robustness Theater",
+  "damaged_code": "```rust\nfn get_preview(text: &str, length: usize) -> Result<&str, PreviewError> {\n    if length > text.len() {\n        // Defensively erroring if the caller asks for a slice larger than the text\n        return Err(PreviewError::OutOfBounds); \n    }\n    Ok(&text[..length])\n}\n```",
+  "pattern": "A string or collection slicing/sub-ranging API throws a checked error or returns an `Err` variant if the requested indices exceed the collection boundaries.",
+  "why_bad": "It forces the caller to write 5–10 lines of boundary-clamping code to avoid a crash or error, turning a simple one-line extraction into a source of potential bugs. Defining a partial range should naturally yield the intersection of the requested range and the actual range.",
+  "detection": "Slicing APIs returning error types on out-of-range parameters instead of clamping indices to valid bounds.",
+  "counterexample": "`Context-dependent`. In security-critical low-level memory buffers, strict bounds checks are mandatory. However, in high-level text processing and slice formatting, automatic clamping is superior.\n```rust\n// Valid high-level clamping\nfn get_preview(text: &str, length: usize) -> &str {\n    let end = std::cmp::min(length, text.len());\n    &text[..end]\n}\n```",
+  "fix": "Modify the API to clamp boundaries automatically, returning all available overlapping characters (similar to Python list slicing), defining the boundary exception out of existence.",
+  "strength": "Contextual",
+  "source": "John Ousterhout, *A Philosophy of Software Design*, Chapter 10.5 (\"Example: Java substring method\")."
+}

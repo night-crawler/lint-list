@@ -1,0 +1,13 @@
+{
+  "id": 347,
+  "title": "CRUD-Style Abstract Interface Contracts (Storage Engine Spill)",
+  "category": "Boundary Representation",
+  "damaged_code": "```rust\ntrait ResourceAccess {\n    fn insert(&self, data: &User) -> Result<(), Error>;\n    fn select(&self, id: u64) -> Option<User>;\n    fn delete(&self, id: u64) -> Result<(), Error>;\n}\n```",
+  "pattern": "Designing domain interface contracts using generic database CRUD operations rather than application-specific, atomic business actions.",
+  "why_bad": "Information leakage. The contract betrays the underlying resource as a database. If the resource changes to a file or cloud-based queue, the interface becomes useless.",
+  "detection": "Interface traits containing only `insert`, `select`, `delete`, `update` operations matching raw database verbs.",
+  "counterexample": "General-purpose libraries or raw ORM wrapper traits. Mark as `Context-dependent`.",
+  "fix": "Refactor the interface to expose atomic business verbs (e.g., `register_user`, `deactivate_account`).\n```rust\ntrait UserRepository {\n    fn register_user(&self, user: User) -> Result<(), Error>;\n    fn deactivate_account(&self, id: UserId) -> Result<(), Error>;\n}\n```",
+  "strength": "Strong",
+  "source": "*Righting Software* by Juval Löwy (Chapter 3, \"Structure\", p. 64)."
+}

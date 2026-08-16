@@ -1,0 +1,13 @@
+{
+  "id": 909,
+  "title": "Blending Context-Dependent Validation Rules via Conditional Flags",
+  "category": "Policy Mechanism",
+  "damaged_code": "```rust\nstruct User {\n    username: String,\n    email: String,\n}\n\nimpl User {\n    // Flag-based validation conditional on context\n    pub fn validate(&self, is_new: bool, is_admin_update: bool) -> Result<(), Error> {\n        if is_new && self.username.is_empty() {\n            return Err(Error::ValidationError);\n        }\n        if is_admin_update && !self.email.contains('@') {\n            return Err(Error::ValidationError);\n        }\n        Ok(())\n    }\n}\n```",
+  "pattern": "A single entity or validator bundles validation rules for multiple distinct application contexts, using control flags to determine which validation pathways to execute.",
+  "why_bad": "High accidental complexity. It makes the entity fragile and hard to maintain as new application boundaries emerge. Changing validation behavior in one context risks breaking validations in another.",
+  "detection": "Validation functions accepting boolean or enum \"mode\" selectors that guard conditional blocks.",
+  "counterexample": "General-purpose sanitization (e.g., stripping null bytes) that always runs regardless of context. Marked `Context-dependent`.",
+  "fix": "Decompose the validator into separate, single-purpose validation functions representing distinct boundaries, or validate inputs at the context boundary (e.g., using specialized DTO validation).\n```rust\nfn validate_new_user(user: &User) -> Result<(), Error> { /* ... */ }\nfn validate_admin_update(user: &User) -> Result<(), Error> { /* ... */ }\n```",
+  "strength": "Strong",
+  "source": "Andrew Hunt, David Thomas, *The Pragmatic Programmer* (2019), Topic 30, \"Transforming Programming\", p. 580."
+}

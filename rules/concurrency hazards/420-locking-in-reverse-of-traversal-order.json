@@ -1,0 +1,13 @@
+{
+  "id": 420,
+  "title": "Locking in Reverse of Traversal Order",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```rust\n// Thread A: Traversing A -> B, locking A then B\nlet g_a = node_a.lock();\nlet g_b = node_b.lock();\n\n// Thread B: Traversing B -> A, locking B then A\nlet g_b = node_b.lock();\nlet g_a = node_a.lock();\n```",
+  "pattern": "Two threads traverse a linked data structure (such as a list or tree) in opposite directions while locking nodes incrementally.",
+  "why_bad": "The physical traversal direction determines the locking order, leading to a dynamic deadlock cycle when threads traverse and lock in reverse directions.",
+  "detection": "CFG showing multi-node traversals where the lock acquisition path follows opposite node references across different execution threads.",
+  "counterexample": "Using hand-over-hand locking where all threads traverse strictly from root/head to leaf/tail.",
+  "fix": "Enforce a single, consistent traversal direction for all operations that acquire nested locks.",
+  "strength": "Strong",
+  "source": "Herlihy 9.4, Herlihy Figure 9.10"
+}

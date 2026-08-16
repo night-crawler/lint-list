@@ -1,0 +1,13 @@
+{
+  "id": 7,
+  "title": "Service-Entity Calculation Envy (Pay Calculation)",
+  "category": "Feature Envy",
+  "damaged_code": "```rust\nstruct HourlyEmployee {\n    tenths_worked: u32,\n    hourly_rate: f64,\n}\nstruct PayrollService;\nimpl PayrollService {\n    fn calculate_weekly_pay(&self, emp: &HourlyEmployee) -> f64 {\n        let straight_time = std::cmp::min(emp.tenths_worked, 400);\n        let over_time = emp.tenths_worked.saturating_sub(straight_time);\n        (straight_time as f64 * emp.hourly_rate) + (over_time as f64 * emp.hourly_rate * 1.5)\n    }\n}\n```",
+  "pattern": "A service class method takes an entity as an argument and performs arithmetic calculations using only the entity's properties without modifying or using any service state.",
+  "why_bad": "It exposes the internal fields of the entity to external services, creating high coupling. If the formula for calculating an hourly employee's pay changes, we must change the service rather than the entity itself.",
+  "detection": "Methods in stateless services that act purely on a single struct's fields using getter methods or direct public field access.",
+  "counterexample": "`Context-dependent`. If the calculation requires extensive service-level dependencies (like database connections or global configuration states).",
+  "fix": "Move the calculation behavior to the entity.\n```rust\nimpl HourlyEmployee {\n    fn calculate_pay(&self) -> f64 {\n        let straight_time = std::cmp::min(self.tenths_worked, 400);\n        let over_time = self.tenths_worked.saturating_sub(straight_time);\n        (straight_time as f64 * self.hourly_rate) + (over_time as f64 * self.hourly_rate * 1.5)\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 17 (G14 \"Feature Envy\")."
+}

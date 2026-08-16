@@ -1,0 +1,13 @@
+{
+  "id": 679,
+  "title": "Non-Additive Compile-Time Features (Mutually Exclusive Features)",
+  "category": "Configuration Complexity",
+  "damaged_code": "```toml\n# Cargo.toml of dependency 'crypt_lib'\n[features]\n# Non-additive feature definition: enabling both causes compilation failure\nuse_openssl = []\nuse_rustls = []\n```",
+  "pattern": "Configuring build or compilation flags in a package manager that are non-additive, remove functionality, or override existing type signatures when enabled.",
+  "why_bad": "If dependency C features are mutually exclusive, a downstream crate that depends on both crate A (requiring feature `use_openssl`) and crate B (requiring feature `use_rustls`) will fail to resolve dependencies and fail compilation. It breaks the unified cargo compile model.",
+  "detection": "Cargo features or build configurations that trigger compilation errors if toggled simultaneously, or conditional compilation targets that modify public function signatures.",
+  "counterexample": "```rust\n// Features strictly ADD modules or extensions, preserving shared signatures\n#[cfg(feature = \"use_openssl\")]\npub mod openssl;\n```",
+  "fix": "Refactor package flags to be strictly additive; preserve all type definitions and signatures across features, implementing stubs or runtime toggles instead.",
+  "strength": "Strong",
+  "source": "Jon Gjengset - *Rust For Rustaceans_ Idiomatic Programming for Experienced Developers* (2021, No Starch Press).pdf, Chapter 6."
+}

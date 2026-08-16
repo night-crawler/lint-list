@@ -1,0 +1,13 @@
+{
+  "id": 312,
+  "title": "Over-Extraction of Trivial or Complexly-Coupled Code Snippets",
+  "category": "Dry Abuse",
+  "damaged_code": "```rust\nfn process_payment(amount: f64, tax_rate: f64, discount: f64, balance: &mut f64, fees: &mut f64) {\n    // 2-line snippet extracted to 'avoid duplication'\n    *balance -= amount * (1.0 - discount);\n    *fees += amount * tax_rate;\n}\n```",
+  "pattern": "Factoring out tiny (1-2 lines) or highly environment-coupled code blocks into a separate helper function, resulting in a method signature with an excessive count of parameters.",
+  "why_bad": "It increases complexity and cognitive load. The signature of the extracted method is more complex than the original inline duplicate code, forcing future readers to track complex state passing.",
+  "detection": "An extracted helper method having a high count of arguments (especially mutable references) relative to its total line count.",
+  "counterexample": "Pure functions that perform mathematically heavy, named formulas with no environmental side-effects.",
+  "fix": "Inline the trivial snippet back into the caller or encapsulate the coupled variables into a dedicated parameter object first.\n```rust\nfn process_payment(amount: f64, tax_rate: f64, discount: f64, balance: &mut f64, fees: &mut f64) {\n    *balance -= amount * (1.0 - discount);\n    *fees += amount * tax_rate;\n}\n```",
+  "strength": "Strong",
+  "source": "*A Philosophy of Software Design*, Chapter 9.3: \"Bring together to eliminate duplication\", p. 62, 186."
+}

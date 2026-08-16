@@ -1,0 +1,13 @@
+{
+  "id": 427,
+  "title": "Inconsistent Reads (Read Skew)",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```rust\n// Inconsistent read across multiple variables\nlet balance_a = account_a.balance; // Reads $100\n// Concurrent Thread transfers $50 from A to B\nlet balance_b = account_b.balance; // Reads $150 (instead of $100)\n// Total balance incorrectly reported as $250\n```",
+  "pattern": "Reading different elements of a shared state structure sequentially without holding a common lock or using a single atomic transaction.",
+  "why_bad": "The state reads are temporally uncoordinated, resulting in a read skew where the individual read values represent inconsistent snapshots of the system.",
+  "detection": "Sequential non-synchronized reads on dependent data members where writes to those members are synchronized.",
+  "counterexample": "`Context-dependent`: If the system does not require strict transactional consistency, skew may be acceptable.",
+  "fix": "Acquire an exclusive lock or read-lock spanning all dependent reads to establish a single serialization point.\n```rust\nlet _guard = accounts_lock.read().unwrap();\nlet balance_a = account_a.balance;\nlet balance_b = account_b.balance;\n```",
+  "strength": "Contextual",
+  "source": "Martin Fowler (PEEAA) Ch 15, Alex Petrov Ch 5"
+}

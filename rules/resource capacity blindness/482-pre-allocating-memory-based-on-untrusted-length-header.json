@@ -1,0 +1,13 @@
+{
+  "id": 482,
+  "title": "Pre-allocating Memory Based on Untrusted Length Header",
+  "category": "Resource Capacity Blindness",
+  "damaged_code": "```rust\nfn read_packet(stream: &mut std::net::TcpStream) -> Vec<u8> {\n    let mut len_buf = [0u8; 4];\n    use std::io::Read;\n    stream.read_exact(&mut len_buf).unwrap();\n    let length = u32::from_be_bytes(len_buf) as usize;\n    \n    // Dangerous pre-allocation using untrusted network packet length\n    let mut data = Vec::with_capacity(length); \n    data\n}\n```",
+  "pattern": "Calling allocation functions that reserve capacity (e.g., `Vec::with_capacity`, `String::with_capacity`, `HashSet::with_capacity`) using a numeric variable parsed directly from untrusted input (such as network packet headers or deserialization streams) without first verifying that it is within safe bounds.",
+  "why_bad": "A malicious or malformed packet can specify a massive length header (e.g., 2GB). Pre-allocating memory based on this untrusted value will trigger an immediate, massive allocation attempt, crashing the process instantly via a panic or OOM abort even if the client never sends a single byte [59].",
+  "detection": "Identify allocations that take variables parsed from stream/file deserialization or network packet bytes as capacity inputs without sanity check limits.",
+  "counterexample": "```rust\nconst MAX_PACKET_SIZE: usize = 10 * 1024 * 1024; // 10MB Limit\n\nfn read_packet(stream: &mut std::net::TcpStream) -> Vec<u8> {\n    let mut len_buf = [0u8; 4];\n    use std::io::Read;\n    stream.read_exact(&mut len_buf).unwrap();\n    let length = u32::from_be_bytes(len_buf) as usize;\n    \n    // Guarding allocation size\n    if length > MAX_PACKET_SIZE {\n        panic!(\"Packet size exceeds maximum limit\");\n    }\n    Vec::with_capacity(length)\n}\n```",
+  "fix": "Validate length fields against a reasonable application-specific maximum threshold before invoking allocation functions [59].",
+  "strength": "Strong",
+  "source": "Brendan Gregg, *Systems Performance*, Chapter 7 (Memory) / passage [59]; Alex Petrov, *Database Internals*, Chapter 8 / passage [50]."
+}

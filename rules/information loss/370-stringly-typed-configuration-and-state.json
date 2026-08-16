@@ -1,0 +1,13 @@
+{
+  "id": 370,
+  "title": "Stringly-Typed Configuration and State",
+  "category": "Information Loss",
+  "damaged_code": "```rust\nstruct SystemPermission {\n    state: String, // Expects \"REQUESTED\", \"APPROVED\", \"DENIED\"\n}\n```",
+  "pattern": "Using a `String` primitive to represent an internal closed set of states, categories, or options.",
+  "why_bad": "It is prone to silent spelling errors (e.g., passing `\"REQEUSTED\"` instead of `\"REQUESTED\"`) which will compile without issue but fail silently or trigger incorrect paths at runtime.",
+  "detection": "Matching struct fields named `state`, `status`, `role`, or `type` that are typed as raw strings.",
+  "counterexample": "Usernames or open text inputs that cannot be represented by a closed set of variants:\n```rust\nstruct UserProfile {\n    display_name: String,\n}\n```",
+  "fix": "Represent the states using a compile-time checked `enum`.\n```rust\nenum PermissionState {\n    Requested,\n    Approved,\n    Denied,\n}\n\nstruct SystemPermission {\n    state: PermissionState,\n}\n```",
+  "strength": "Strong",
+  "source": "*Refactoring to Patterns* by Joshua Kerievsky (p. 165)."
+}

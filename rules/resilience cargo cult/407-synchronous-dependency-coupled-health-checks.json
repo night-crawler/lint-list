@@ -1,0 +1,13 @@
+{
+  "id": 407,
+  "title": "Synchronous Dependency-Coupled Health Checks",
+  "category": "Resilience Cargo Cult",
+  "damaged_code": "```rust\nfn handle_health_check(&self) -> HttpResponse {\n    match self.db.query(\"SELECT 1\") { // Synchronous DB query in health check\n        Ok(_) => HttpResponse::Ok(),\n        Err(_) => HttpResponse::InternalServerError(),\n    }\n}\n```",
+  "pattern": "A load-balancer health check endpoint (`/health`) that synchronously queries database systems or other deep backend dependencies.",
+  "why_bad": "If the database undergoes a temporary load spike, health checks of healthy application nodes begin failing. The load balancer prematurely marks those application nodes as dead and removes them from rotation, concentrating all incoming traffic onto the remaining nodes, instantly crushing them and causing a cascading total collapse [171, 172].",
+  "detection": "Look for `/health` or status endpoints executing database queries or external network requests synchronously as part of their health valuation.",
+  "counterexample": "```rust\nfn handle_health_check(&self) -> HttpResponse {\n    if self.is_shutting_down() {\n        HttpResponse::ServiceUnavailable()\n    } else {\n        HttpResponse::Ok()\n    }\n}\n```",
+  "fix": "Separate node-local health checks (process liveness/readiness) from dependency checks. If dependencies fail, let the application run in degraded mode or handle it via circuit breakers, rather than letting the load balancer kill the nodes.",
+  "strength": "Strong",
+  "source": "Michael T. Nygard, *Release It!*, page 61, 233 / passage [171, 172]."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 44,
+  "title": "Non-Atomic Read-Modify-Write (Plain Increments)",
+  "category": "Essential Complexity Denial Patterns",
+  "damaged_code": "```rust\n// Plain variable increments across threads\nstatic mut REQ_COUNT: u64 = 0;\nunsafe { REQ_COUNT += 1; }\n```",
+  "pattern": "An in-place mutation (like incrementing, decrementing, or flag flipping) performed on shared mutable state from multiple threads without synchronization.",
+  "why_bad": "The operation `x += 1` is not atomic; it consists of three CPU steps: read, modify, and write. Multiple threads executing these steps concurrently will interleave, resulting in lost updates and race conditions [24:210].",
+  "detection": "Writing to static mut variables or shared raw pointers using mathematical assignment operators outside of atomic operations [24:210].",
+  "counterexample": "```rust\nuse std::sync::atomic::{AtomicU64, Ordering};\nstatic REQ_COUNT: AtomicU64 = AtomicU64::new(0);\nREQ_COUNT.fetch_add(1, Ordering::Relaxed);\n```",
+  "fix": "Use atomic types with appropriate ordering invariants (`fetch_add`, `fetch_sub`) to perform lock-free state modifications safely [24:210].",
+  "strength": "Strong",
+  "source": "*Clean Code* (Martin), Chapter 13 [24:210]; *Code Complete* (McConnell), Chapter 8 [28:211]."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 144,
+  "title": "Deref Abuse for Code Reuse (Inheritance Tax)",
+  "category": "Abstraction Failure",
+  "damaged_code": "```rust\nstruct UserUtility;\nimpl UserUtility {\n    pub fn format_name(&self) -> String { \"\".to_string() }\n}\n\nstruct UserService {\n    utility: UserUtility,\n}\n\n// Abuse of Deref to reuse code\nimpl std::ops::Deref for UserService {\n    type Target = UserUtility;\n    fn deref(&self) -> &Self::Target {\n        &self.utility\n    }\n}\n```",
+  "pattern": "Abusing Rust's `Deref` trait on a custom struct solely to inherit or reuse helper methods from an inner struct, exposing the entire target API to public callers.",
+  "why_bad": "It violates the contract of `Deref` (which is intended strictly for smart pointers). It leaks the inner utility API to the public interface of the outer struct, creating a confusing hybrid and breaking clean abstraction barriers.",
+  "detection": "An implementation of `Deref` where the outer type is not a conceptual smart pointer (like `Rc`, `Box`, `Arc`) or wrapper, but rather a standard domain/business struct.",
+  "counterexample": "Conceptual smart pointers or container types where transparent forwarding is mathematically logical.",
+  "fix": "Use explicit delegation or pass the inner helper struct as an argument instead of abusing automatic dereferencing.",
+  "strength": "Strong",
+  "source": "Andrew Hunt & David Thomas, *The Pragmatic Programmer* (2019), Topic 34 (\"Inheritance Tax\" / delegation alternatives); Steve McConnell, *Code Complete* (2004), Chapter 6."
+}

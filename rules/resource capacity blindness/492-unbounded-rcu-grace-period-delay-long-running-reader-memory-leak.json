@@ -1,0 +1,13 @@
+{
+  "id": 492,
+  "title": "Unbounded RCU Grace Period Delay (Long-Running Reader Memory Leak)",
+  "category": "Resource Capacity Blindness",
+  "damaged_code": "```rust\nfn process_with_rcu() {\n    unsafe {\n        rcu_read_lock();\n        // Prolonged execution of heavy synchronous calculations inside RCU reader lock\n        perform_heavy_data_calculation();\n        rcu_read_unlock();\n    }\n}\n```",
+  "pattern": "Acquiring an RCU read-side lock (`rcu_read_lock()` or equivalent) and performing blocking, long-running, or unbounded synchronous computations before invoking unlock.",
+  "why_bad": "In RCU-based garbage reclamation, old memory segments cannot be freed until all active read-side critical sections complete (the grace period) [20, 268]. A long-running or stalled reader thread delays the RCU grace period globally [20]. This prevents updaters from reclaiming retired data nodes, resulting in massive memory growth and eventually causing OOM exhaustion [20].",
+  "detection": "Identify blocks enclosed in RCU read-side locks that perform complex parsing, synchronous nested loops, or blocking system/network calls.",
+  "counterexample": "```rust\nfn process_with_rcu() {\n    unsafe {\n        rcu_read_lock();\n        // Fast, bounded traversal of the data structure\n        let node_data = get_data_from_structure();\n        rcu_read_unlock();\n        // Perform heavy calculations outside RCU reader lock\n        perform_heavy_data_calculation(node_data);\n    }\n}\n```",
+  "fix": "Keep RCU read-side critical sections as brief and lightweight as possible; execute heavy data processing outside the lock boundaries, or utilize segmented SRCU regions [20].",
+  "strength": "Strong",
+  "source": "Paul E. McKenney, *Is Parallel Programming Hard?*, Chapter 9.5 (RCU) / passages [20, 268]."
+}

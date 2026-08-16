@@ -1,0 +1,13 @@
+{
+  "id": 953,
+  "title": "Duplicate Concepts Across Subsystems (Model Bleeding)",
+  "category": "Conceptual Integrity",
+  "damaged_code": "```rust\n// In billing package:\nstruct BillingCustomer {\n    id: u64,\n    name: String, // Duplicated attribute\n}\n// In shipping package:\nstruct ShippingCustomer {\n    id: u64,\n    name: String, // Duplicated attribute\n}\n```",
+  "pattern": "Replicating identical mutable domain concepts and attributes across different packages/contexts without an explicit synchronization or translation mechanism.",
+  "why_bad": "It leads to model divergence. Over time, name formats or validation rules change in one package but not the other, causing the system to slide into data inconsistency and silent state corruption.",
+  "detection": "Scan for duplicate struct definitions and field structures across different modules that lack explicit translation mappings (like mapping functions or domain events).",
+  "counterexample": "Intentionally duplicated immutable data values serving as cached snapshot fields (e.g., storing the invoice address as a snapshot of the current address). Marked `Context-dependent`.",
+  "fix": "Establish a single source of truth for the mutable customer concept, and propagate updates using domain events.",
+  "strength": "Strong",
+  "source": "*Domain-Driven Design* by Eric Evans (2003), p. 456."
+}

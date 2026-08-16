@@ -1,0 +1,13 @@
+{
+  "id": 378,
+  "title": "Encoding Trust Suffixes in Names instead of Types",
+  "category": "Information Loss",
+  "damaged_code": "```rust\nfn process_url(untrusted_url: String) {\n    let validated_url = sanitize(&untrusted_url);\n    fetch_page(&validated_url);\n}\n```",
+  "pattern": "Encoding security or sanitization state via variable name prefixes/suffixes (e.g. `untrusted_url`, `safe_body`) rather than the type system.",
+  "why_bad": "The compile-time safety check is erased, leaving security entirely up to developer memory. A developer can accidentally pass `untrusted_url` instead of `validated_url` to a sensitive sink, causing injection vulnerabilities undetected by the compiler.",
+  "detection": "Variable names containing suffixes like `untrusted`, `safe`, `dirty`, `clean` where all variables share the identical raw type (`String`, `&str`).",
+  "counterexample": "Variables with descriptive names representing domain semantic differences without security state transitions:\n```rust\nlet home_address: String = ...;\nlet work_address: String = ...;\n```",
+  "fix": "Represent the transition via strongly typed wrappers that make it impossible to bypass sanitization.\n```rust\nstruct UntrustedUrl(String);\nstruct SafeUrl(String);\n\nfn sanitize(input: UntrustedUrl) -> SafeUrl { ... }\nfn fetch_page(url: SafeUrl) { ... }\n```",
+  "strength": "Strong",
+  "source": "*The Art of Readable Code* by Trevor Foucher & Dustin Boswell (Chapter 11, p. 107); *Building Secure and Reliable Systems* (Chapter 12, p. 124)."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 651,
+  "title": "Ignore-and-Rot (Ignored Failing Tests)",
+  "category": "Test Smells",
+  "damaged_code": "```rust\n// Ignored test left disabled in source without issue tracker references or explanations\n#[test]\n#[ignore] \nfn test_broken_networking_code() {\n    let client = Client::connect(\"127.0.0.1:80\").unwrap();\n    assert!(client.is_connected());\n}\n```",
+  "pattern": "Test cases marked with disable annotations (`#[ignore]` in Rust, `@Ignore` in Java, or commented out) without linked bug tracking IDs or explanations.",
+  "why_bad": "Failing tests that are ignored are easily forgotten. Left in the codebase, they rot as APIs shift, reducing developer discipline and eventually leading to the abandonment of the test suite [69, 269].",
+  "detection": "The presence of `#[ignore]` attributes in the test suite without comments referencing active bug tickets or dates.",
+  "counterexample": "Temporarily ignoring a test with a clear comment linking to a tracking issue: `#[ignore] // TODO(issue-1204): Fix flaky socket buffer on CI`.",
+  "fix": "Fix the test immediately, or if the underlying feature is permanently obsolete, delete the test and its code completely [69, 225].",
+  "strength": "Strong",
+  "source": "*   *The Pragmatic Programmer*, \"Software Entropy / Spew of ignored tests\" (p. 269) [269, 572]\n*   *Clean Code*, \"Ignore / Rotting tests\" (p. 123) [63, 69]"
+}

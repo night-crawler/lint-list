@@ -1,0 +1,13 @@
+{
+  "id": 730,
+  "title": "Short-Circuit Logical Assignment Overload (The One-Line Conditional)",
+  "category": "Cleverness Obscurity",
+  "damaged_code": "```rust\n// Rust\nlet bucket = find_bucket(key);\nif bucket.is_some() && !bucket.unwrap().is_occupied() {\n    assert!(bucket.unwrap().occupy());\n}\n```",
+  "pattern": "Combining optional unpacking, state assertion, and action execution into a single, compound short-circuiting logical expression.",
+  "why_bad": "It creates a \"mental speed bump.\" Combining side-effects with boolean assertions on a single line makes tracing through the code extremely difficult and obscures the exact point of failure during debugging.",
+  "detection": "A single conditional block containing sequential, dependent logical operators (`&&` or `||`) where the left-hand expression is a prerequisite (e.g., `is_some()`) for the right-hand side's unwrapping or mutation.",
+  "counterexample": "Simple, safe pointer validations or null checks like `if ptr.is_null() || unsafe { (*ptr).is_expired() }`. `Context-dependent`.",
+  "fix": "Decompose the logical chain into clear, nested pattern matching or explicit guard clauses.\n```rust\nif let Some(bucket) = find_bucket(key) {\n    if !bucket.is_occupied() {\n        bucket.occupy();\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*The Art of Readable Code*, Chapter 7, \"Beware of 'clever' nuggets of code\" (p. 86-87)."
+}

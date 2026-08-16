@@ -1,0 +1,13 @@
+{
+  "id": 120,
+  "title": "Unnecessary Thread-Safe Wrapping (The Over-Guarded Field)",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nstruct Metrics {\n    count: Arc<Mutex<i32>>,\n}\n```",
+  "pattern": "Wrapping types in thread-safe containers (`Arc<Mutex<T>>`) when they are only ever accessed or mutated from a single thread.",
+  "why_bad": "Forces costly mutex locking operations, atomic count increments, and potential deadlocks on single-threaded data.",
+  "detection": "A mutex-wrapped type whose lock methods are only invoked within a single thread context.",
+  "counterexample": "Genuinely shared data accessed concurrently across distinct threads.",
+  "fix": "Remove `Arc<Mutex<T>>` wrapping and use standard raw access (or `Rc<RefCell<T>>` if local interior mutability is required).",
+  "strength": "Contextual",
+  "source": "Jon Gjengset, *Rust For Rustaceans* (2021); Herlihy, Maurice, *The Art of Multiprocessor Programming*."
+}

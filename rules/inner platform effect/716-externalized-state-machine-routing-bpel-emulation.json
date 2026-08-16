@@ -1,0 +1,13 @@
+{
+  "id": 716,
+  "title": "Externalized State-Machine Routing (BPEL Emulation)",
+  "category": "Inner Platform Effect",
+  "damaged_code": "```\n// Defining workflow transitions in external text files and parsing them at runtime\nstruct Transition {\n    current_state: String,\n    event: String,\n    next_state: String,\n}\n\nfn handle_event(transitions: &[Transition], state: &mut String, event: &str) {\n    if let Some(t) = transitions.iter().find(|t| t.current_state == *state && t.event == event) {\n        *state = t.next_state.clone();\n    }\n}\n```",
+  "pattern": "Moving core application control flow and state transitions out of the language's native structures into an uncompiled external configuration file (like a CSV or text file).",
+  "why_bad": "It divorces the application's control flow from compile-time verification, breaks calling graph analysis, and makes debugging almost impossible. A simple typo in a state configuration file causes a runtime crash or silent logic bypass.",
+  "detection": "A parser at startup that ingests transition mappings, state transitions, or workflow steps from text files (YAML, JSON, CSV) to orchestrate core function calls.",
+  "counterexample": "`Context-dependent`. Complex distributed business orchestrations (like long-running sagas with human-in-the-loop steps) may require externalized metadata for durability.",
+  "fix": "Leverage the host language's type system (like Rust's algebraic data types) to enforce valid transitions during compilation.\n\n```\n// Compiled, invariant-safe state transitions enforced by Rust's type-checker\npub enum OrderState {\n    Created,\n    Paid(PaymentDetails),\n    Shipped,\n}\n\nimpl OrderState {\n    pub fn pay(self, details: PaymentDetails) -> Result<Self, &'static str> {\n        match self {\n            OrderState::Created => Ok(OrderState::Paid(details)),\n            _ => Err(\"Invalid state transition\"),\n        }\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "[Robert C. Martin Series] Robert C. Martin - _Clean Architecture_ A Craftsman’s Guide to Software Structure and Design_ (2017, Prentice Hall).pdf, Chapter 34 \"Craft Dispatch System\"."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 84,
+  "title": "Out-of-Sync / Lie Comments",
+  "category": "Dispensables",
+  "damaged_code": "```rust\n// Calculates fee with a flat 10% rate\nfn calc_fee(amount: f64) -> f64 {\n    amount * 0.05\n}\n```",
+  "pattern": "Descriptive comments whose assertions directly contradict the operations performed in the underlying code.",
+  "why_bad": "Actively deceives the reader, introducing bugs during maintenance because developers trust the comment instead of carefully auditing the expression.",
+  "detection": "The literal constants, logic branches, or formulas described in the comment conflict with the syntax tree of the code.",
+  "counterexample": "Context-dependent",
+  "fix": "Correct the comment to match the code, or delete the comment entirely.",
+  "strength": "Strong",
+  "source": "Fowler, *Refactoring*, Chapter 3 (\"Bad Smells - Comments\"); Robert C. Martin, *Clean Code*, Chapter 4, p. 53."
+}

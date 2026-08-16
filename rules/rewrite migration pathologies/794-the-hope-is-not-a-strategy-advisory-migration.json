@@ -1,0 +1,13 @@
+{
+  "id": 794,
+  "title": "The \"Hope is Not a Strategy\" Advisory Migration",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```rust\n// A successor API is launched, old one is deprecated with hope users migrate\n#[deprecated(note = \"Please use `v2::execute` when you have time\")]\npub fn execute() {\n    // Left active indefinitely with no decommissioning date\n}\n```",
+  "pattern": "Releasing a successor service or API and marking the predecessor as deprecated, but setting no decommissioning deadline or automated migration path.",
+  "why_bad": "Users will default to the familiar obsolete code. Without a hard deadline, teams prioritize features over migrations, forcing the organization to maintain \"dual-system purgatory\" indefinitely and doubling operational costs [292, 721, 723].",
+  "detection": "A deprecated function or service with no corresponding documentation specifying a concrete turndown date, or lacking scheduled \"scream tests\" (temporary planned outages) to find unknown dependencies [297, 727].",
+  "counterexample": "Valid for public-facing SDKs where backward compatibility is promised indefinitely to retain user goodwill [738]. Mark as `Context-dependent`.",
+  "fix": "Transform the deprecation into a compulsory model: announce a strict decommissioning date, schedule planned outages to expose silent dependencies, and actively run automated migrations [297, 724, 725].",
+  "strength": "Strong",
+  "source": "Software Engineering at Google, Chapter 15, \"Types of Deprecation - Advisory Deprecation\" [292, 297, 721, 723, 727]"
+}

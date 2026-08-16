@@ -1,0 +1,13 @@
+{
+  "id": 62,
+  "title": "Omni-Models (Entity-Transport Coupling)",
+  "category": "Bloaters",
+  "damaged_code": "```rust\n#[derive(Serialize, Deserialize, Queryable, Insertable)]\n#[serde(rename_all = \"camelCase\")]\n#[diesel(table_name = users)]\npub struct User {\n    #[serde(skip_serializing_if = \"Option::is_none\")]\n    pub id: Option<i32>,\n    pub email: String,\n    pub password_hash: String, // Leaks to client if serializing directly!\n    pub created_at: chrono::NaiveDateTime,\n}\n```",
+  "pattern": "Using a single massive struct decorated with database-specific ORM attributes, API serialization tags, and validation rules to represent database storage, business logic, and API network contracts simultaneously.",
+  "why_bad": "Tightly couples the database schema, API schema, and domain rules. A minor database optimization (like renaming a column) forces a breaking change in the public JSON API. Sensitive fields (like password hashes or internal state variables) can easily leak to external clients if serialization is not manually bypassed.",
+  "detection": "Look for a single struct decorated with both database ORM attributes (e.g., `#[diesel(...)]`, `#[sqlx(...)]`) and API serialization attributes (e.g., `#[derive(Serialize, Deserialize)]`).",
+  "counterexample": "Small CRUD-only applications or internal microservices where database schemas and API contracts are guaranteed to be 100% identical and stable.",
+  "fix": "Decouple the layers. Create separate, dedicated structs for the database representation (`DbUser`), the API wire format (`UserDto`), and the core domain logic (`User`), with explicit mapping conversions.",
+  "strength": "Strong",
+  "source": "*Martin Fowler - Patterns of Enterprise Application Architecture (2002)*, \"Data Transfer Object\"; *Robert C. Martin - Clean Architecture (2017)*, Chapter 22, \"Hexagonal Architecture\"."
+}

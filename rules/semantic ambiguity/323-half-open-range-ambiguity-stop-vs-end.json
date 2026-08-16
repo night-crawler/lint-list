@@ -1,0 +1,13 @@
+{
+  "id": 323,
+  "title": "Half-Open Range Ambiguity (`stop` vs `end`)",
+  "category": "Semantic Ambiguity",
+  "damaged_code": "```rust\nstruct EventRange {\n    begin: u64,\n    stop: u64, // Semantically ambiguous\n}\n```",
+  "pattern": "An inclusive/exclusive (half-open) range representation where the exclusive upper limit is named `stop` instead of `end`, or the inclusive lower limit is named `start` instead of `begin`.",
+  "why_bad": "English does not have a succinct word for \"just past the last value.\" Using non-idiomatic terms like `stop` for half-open ranges obscures the exclusive nature of the upper boundary. Using `begin`/`end` is the industry-standard idiom for inclusive/exclusive slices.",
+  "detection": "Match structs or functions defining ranges with `begin` and `stop` or `start` and `end` inconsistently.",
+  "counterexample": "Using standard, idiomatic pairs for half-open intervals:\n```rust\nstruct EventRange {\n    begin: u64,\n    end: u64, // end is conventionally exclusive here\n}\n```",
+  "fix": "Rename the upper boundary to `end` and the lower boundary to `begin` to conform to the established inclusive/exclusive standard.\n```rust\nstruct EventRange {\n    begin: u64,\n    end: u64,\n}\n```",
+  "strength": "Contextual",
+  "source": "*The Art of Readable Code* by Dustin Boswell and Trevor Foucher (Chapter 3, pp. 26-27)."
+}

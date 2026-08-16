@@ -1,0 +1,13 @@
+{
+  "id": 224,
+  "title": "Raw Integer Time Durations",
+  "category": "Primitive Obsession",
+  "damaged_code": "```rust\nfn sleep_for(ms: u64) { ... }\n```",
+  "pattern": "Passing time durations as raw integer primitives representing seconds, milliseconds, or clock cycles.",
+  "why_bad": "The scale of the value is opaque to the compiler. Developers must rely on name conventions (e.g., `ms` suffix), which easily rot, causing timing misalignment if a caller passes seconds instead of milliseconds.",
+  "detection": "Function signatures taking integer primitives (`u64`, `u32`) where parameter names indicate a time duration scale (`ms`, `secs`, `duration`).",
+  "counterexample": "Low-level micro-controller code or drivers executing hardware-level busy loops using raw instruction cycles.",
+  "fix": "Use strongly-typed duration representations.\n```rust\nuse std::time::Duration;\n\nfn sleep_for(duration: Duration) { ... }\n```",
+  "strength": "Strong",
+  "source": "*Understanding Software Dynamics* by Richard L. Sites (p. 129)."
+}

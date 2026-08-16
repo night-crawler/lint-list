@@ -1,0 +1,13 @@
+{
+  "id": 201,
+  "title": "Stamp Coupling (Interservice Over-fetching)",
+  "category": "Couplers",
+  "damaged_code": "```rust\n// Interservice RPC call requesting full profile\nfn fetch_profile(&self) -> CustomerProfile {\n    // Service returns 500kb JSON containing 45 profile attributes\n    self.http_client.get(\"/profile\").unwrap()\n}\nfn render_username(&self) {\n    let profile = self.fetch_profile();\n    // Only needs name\n    println!(\"{}\", profile.username);\n}\n```",
+  "pattern": "An interservice RPC, network call, or system call requests a massive compound data contract structure when the recipient only reads a tiny subset of the returned properties.",
+  "why_bad": "It wastes massive network bandwidth and CPU cycles serializing/deserializing unused fields. It also couples the downstream service to changes in unused attributes of the upstream contract.",
+  "detection": "RPC call invocations where the deserialized response type contains properties that are never used in the caller project.",
+  "counterexample": "Standard database integrations where reading full rows is optimized by index lookups and does not traverse network boundaries.",
+  "fix": "Provide highly targeted, narrow contract endpoints, or implement query parameters (like GraphQL or field selectors) to request only the required data.\n```rust\nfn fetch_username(&self) -> String {\n    self.http_client.get(\"/profile?fields=username\").unwrap()\n}\n```",
+  "strength": "Strong",
+  "source": "Mark Richards & Neal Ford, *Fundamentals of Software Architecture* (2020), Chapter 9 (\"Stamp Coupling\")."
+}

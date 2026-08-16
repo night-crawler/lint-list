@@ -1,0 +1,13 @@
+{
+  "id": 631,
+  "title": "Failure to Drop Elevated Privileges Post-Startup",
+  "category": "Security Boundary Failures",
+  "damaged_code": "```rust\nfn main() {\n    // Bind to privileged port 80 as root\n    let listener = std::net::TcpListener::bind(\"0.0.0.0:80\").unwrap();\n    // Continue running request handler loop as root indefinitely\n    handle_client_requests(listener);\n}\n```",
+  "pattern": "Starting an application with elevated operating system privileges (such as Unix `root`) to perform initial bootstrap operations (like binding to port 80), but failing to permanently drop those privileges before handling untrusted requests.",
+  "why_bad": "If an application continues to run as root, any subsequent code execution or buffer overflow vulnerability in request handlers immediately grants the attacker full root access to the entire server container.",
+  "detection": "The application startup code binding sockets or reading master files as root but lacking execution steps that invoke system calls (`setuid`, `setgid`) to drop status.",
+  "counterexample": "```rust\nfn main() {\n    let listener = std::net::TcpListener::bind(\"0.0.0.0:80\").unwrap();\n    // Drop elevated privileges to 'nobody' user context\n    privilege_separation::drop_to_user(\"nobody\").unwrap();\n    handle_client_requests(listener);\n}\n```",
+  "fix": "Employ privilege separation: execute the initial startup bindings as root, then invoke standard system calls to permanently downgrade process privilege level to an unprivileged user before processing data.",
+  "strength": "Strong",
+  "source": "`Michael T. Nygard - Release It! (2007)`, Ch 12, p. 272-273; `Heather Adkins et al. (2020)`, Ch 5, p. 78."
+}

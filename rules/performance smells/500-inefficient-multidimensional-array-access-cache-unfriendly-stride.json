@@ -1,0 +1,13 @@
+{
+  "id": 500,
+  "title": "Inefficient Multidimensional Array Access (Cache-Unfriendly Stride)",
+  "category": "Performance Smells",
+  "damaged_code": "```cpp\n// C++ (Row-major layout)\nfor (int col = 0; col < cols; col++) {\n    for (int row = 0; row < rows; row++) {\n        sum += table[row][col]; // Accesses memory by column\n    }\n}\n```",
+  "pattern": "Traversing a multidimensional array where the innermost loop advances the slow-moving index (columns in row-major languages, or rows in column-major languages).",
+  "why_bad": "It breaks spatial locality, causing the CPU to miss the cache on nearly every access as it fetches entire cache lines but reads only single elements across huge strides.",
+  "detection": "Nested loops where the array subscripts are indexed in an order opposite to the language's physical memory layout (e.g., C/C++/Java/Rust column-first loops).",
+  "counterexample": "The matrix is extremely small and fits entirely in L1 cache. `Contextual`.",
+  "fix": "Re-order the nested loop headers so that the innermost loop iterates across contiguous memory (row-by-row in row-major).",
+  "strength": "Strong",
+  "source": "*Code Complete*, Chapter 26, \"Looping\" (p. 187) and *Understanding Software Dynamics*, Chapter 3, \"Measuring Cache Line Size\" (p. 39 / p. 220)."
+}

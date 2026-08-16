@@ -1,0 +1,13 @@
+{
+  "id": 574,
+  "title": "Double Communication Channel Race (Non-linearizable Write Race)",
+  "category": "Data Query Modeling Smells",
+  "damaged_code": "```rust\n// Server stores an image and immediately puts a message on the queue\nstore_image(&image_data).await?;\nmessage_queue.send(ImageResizedMessage { image_id }).await?;\n```",
+  "pattern": "Writing to one communication channel (e.g., a non-replicated database or filesystem) and immediately signaling a second service via another channel (e.g., a message queue) without linearizability guarantees.",
+  "why_bad": "Race conditions. Since replication or write persistence is asynchronous, the background resizer service might receive the message and query the storage before the image write has actually finished or replicated, causing \"file not found\" or stale read errors [179, 180, 481, 482].",
+  "detection": "Sequential write operations to separate storage/messaging systems where the second system processes a notification reference to the first.",
+  "counterexample": "Fully linearizable databases where reading your own writes is guaranteed across all nodes.",
+  "fix": "Use a single linearizable database or coordinate via a transactional outbox pattern to keep writes in sync.",
+  "strength": "Strong",
+  "source": "*Designing Data-Intensive Applications (Kleppmann), p. 322 [179, 180, 481, 482]*"
+}

@@ -1,0 +1,13 @@
+{
+  "id": 509,
+  "title": "Monotonic Distributed Range Keys (Hotspotting Smell)",
+  "category": "Performance Smells",
+  "damaged_code": "```sql\nCREATE TABLE device_metrics (\n    timestamp TIMESTAMP, -- Monotonically increasing key\n    device_id VARCHAR,\n    PRIMARY KEY (timestamp)\n);\n```",
+  "pattern": "Using monotonically increasing values (e.g., auto-increment sequences, serials, or timestamps) as the primary/range key in a partitioned distributed database.",
+  "why_bad": "Forces all concurrent write requests to land on a single partition block (the current end of the range), completely defeating horizontal write scaling and creating severe node bottlenecks.",
+  "detection": "Distributed schemas where partition keys are derived from sequential sequence generators or system time.",
+  "counterexample": "Databases running purely on single-node instances without horizontal partitioning. `Contextual`.",
+  "fix": "Prepend a hash prefix or use hashed UUIDs as keys to evenly distribute write operations across partitions.",
+  "strength": "Strong",
+  "source": "*Designing Data-Intensive Applications*, Chapter 5, References (p. 163 /)."
+}

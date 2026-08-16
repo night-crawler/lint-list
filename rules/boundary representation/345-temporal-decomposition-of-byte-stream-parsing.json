@@ -1,0 +1,13 @@
+{
+  "id": 345,
+  "title": "Temporal Decomposition of Byte Stream Parsing",
+  "category": "Boundary Representation",
+  "damaged_code": "```rust\nstruct RequestReader;\nimpl RequestReader {\n    fn read_request_body(stream: &mut TcpStream) -> String { ... }\n}\nstruct RequestParser;\nimpl RequestParser {\n    fn parse_request(body: String) -> Request { ... }\n}\n```",
+  "pattern": "Splitting network reading and parsing into separate, sequentially invoked structures where both must understand the underlying wire format invariants.",
+  "why_bad": "Information leakage. To read the correct body length, the reader must parse protocol headers (e.g., `Content-Length`), resulting in duplicated protocol knowledge across multiple modules.",
+  "detection": "Distinct structures processing the same input stream in sequence, where both contain code dealing with underlying wire protocol details (e.g., matching HTTP headers in multiple files).",
+  "counterexample": "A clean layer boundary where Layer 1 parses raw byte packets and passes complete frames, while Layer 2 processes high-level messages.",
+  "fix": "Combine reading and parsing mechanisms into a single, cohesive deep module that hides the wire protocol details behind a simple interface.\n```rust\nstruct HttpIngester;\nimpl HttpIngester {\n    pub fn read_and_parse(stream: &mut TcpStream) -> Result<Request, Error> { ... }\n}\n```",
+  "strength": "Strong",
+  "source": "*A Philosophy of Software Design* by John K. Ousterhout (Chapter 5, \"Information Hiding (and Leakage)\", p. 32)."
+}

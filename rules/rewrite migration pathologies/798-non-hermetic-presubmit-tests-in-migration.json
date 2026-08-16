@@ -1,0 +1,13 @@
+{
+  "id": 798,
+  "title": "Non-Hermetic Presubmit Tests in Migration",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```rust\n// A test in the presubmit pipeline of a large-scale migration\n#[tokio::test]\nasync fn test_integration_live() {\n    let client = LiveDbClient::connect(\"http://live-migration-target.local\").await.unwrap();\n    assert!(client.get_users().await.is_ok()); // Flaky network dependency!\n}\n```",
+  "pattern": "Running tests in the presubmit/CI pull request pipeline that depend on external, non-hermetic live databases, network endpoints, or external third-party services.",
+  "why_bad": "These tests are inherently flaky and slow. They fail due to network blips or uncoordinated external state changes, causing developers to ignore test failures entirely. Bugs slip into production, and migration progress grinds to a halt [440, 751].",
+  "detection": "Test files executed during CI/CD pipelines that perform network socket calls or connect to non-localhost URLs.",
+  "counterexample": "Valid for post-submit, staging, or disaster recovery drills where live environment validation is explicitly intended [123, 297, 751].",
+  "fix": "Stub or mock all external systems and database engines (e.g., using localized docker containers or in-memory null adapters) to ensure presubmit tests are fully hermetic [614, 751].",
+  "strength": "Strong",
+  "source": "Software Engineering at Google, Chapter 22 & 24 [330, 440, 751]"
+}

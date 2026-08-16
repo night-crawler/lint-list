@@ -1,0 +1,13 @@
+{
+  "id": 15,
+  "title": "Heavy-Entity Over-Interfacing Envy",
+  "category": "Feature Envy",
+  "damaged_code": "```rust\nstruct Employee {\n    rate: f64,\n    has_special_skill: bool,\n    ssn: String,\n    address: String,\n    // ... many unrelated fields\n}\nstruct Timesheet;\nimpl Timesheet {\n    fn charge(&self, emp: &Employee, days: u32) -> f64 {\n        let base = emp.rate * days as f64;\n        if emp.has_special_skill {\n            base * 1.05\n        } else {\n            base\n        }\n    }\n}\n```",
+  "pattern": "A method requires a reference to a heavy, highly-detailed struct (`Employee`) even though it only reads a tiny, specific subset of its variables (`rate` and `has_special_skill`).",
+  "why_bad": "It violates interface segregation. The `Timesheet` is unnecessarily coupled to the entire `Employee` record (including sensitive details like `ssn` and `address`), making it hard to reuse or test with other billable entities.",
+  "detection": "A method taking a large struct as an argument but only invoking a very small percentage of its getters/fields.",
+  "counterexample": "`Context-dependent`. If the method acts as a pass-through coordinator or persistence mapper.",
+  "fix": "Define a narrow trait containing only the required properties and make the method accept that trait.\n```rust\ntrait Billable {\n    fn rate(&self) -> f64;\n    fn has_special_skill(&self) -> bool;\n}\nimpl Timesheet {\n    fn charge(&self, emp: &impl Billable, days: u32) -> f64 {\n        let base = emp.rate() * days as f64;\n        if emp.has_special_skill() { base * 1.05 } else { base }\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Refactoring* (1999), Chapter 11 (page 362)."
+}

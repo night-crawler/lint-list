@@ -1,0 +1,13 @@
+{
+  "id": 693,
+  "title": "Unpinned Third-Party Dependencies",
+  "category": "Configuration Complexity",
+  "damaged_code": "```toml\n# Cargo.toml\n[dependencies]\n# Unpinned dependency pulls breaking build reproducibility\ntokio = \"1\" \n```",
+  "pattern": "Declaring external crate dependencies using wide, unpinned version ranges or omitting exact semantic locks.",
+  "why_bad": "Ensures that build behavior is non-deterministic over time. A compile run today might work, while another tomorrow will fail or compile insecure code because an upstream library published a broken version.",
+  "detection": "A project that lacks a version lockfile (e.g., `Cargo.lock` in Rust, `package-lock.json` in Node) checked into its repository, or using `*` version markers.",
+  "counterexample": "```toml\n[dependencies]\ntokio = \"=1.28.0\" # Lock explicitly, backed by Cargo.lock\n```",
+  "fix": "Pin exact minor and patch versions under version control; commit the package manager's generated lockfile to guarantee consistent, reproducible build runs.",
+  "strength": "Strong",
+  "source": "Titus Winters, Tom Manshreck, Hyrum Wright - *Software Engineering at Google_ Lessons Learned from Programming Over Time* (2020, O'Reilly Media).pdf, Chapter 16 / Chapter 21."
+}

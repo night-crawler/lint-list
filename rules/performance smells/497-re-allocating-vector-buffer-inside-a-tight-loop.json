@@ -1,0 +1,13 @@
+{
+  "id": 497,
+  "title": "Re-allocating Vector/Buffer Inside a Tight Loop",
+  "category": "Performance Smells",
+  "damaged_code": "```rust\nfor i in 0..1000 {\n    let mut temp_vec = Vec::new(); // Allocated on every iteration\n    temp_vec.push(i);\n    process(&temp_vec);\n}\n```",
+  "pattern": "Creating and growing a vector, buffer, or collection inside the body of a repetitive loop.",
+  "why_bad": "It triggers costly malloc/free operations and potential heap reallocations on every iteration, introducing significant execution overhead compared to reusing existing capacity.",
+  "detection": "Collection construction (`Vec::new()`, `String::new()`, `vec![]`) located directly inside a `for`, `while`, or loop construct where the collection is discarded at the end of the iteration.",
+  "counterexample": "The vector must escape the loop or is moved/transferred to another thread. `Context-dependent`.",
+  "fix": "Allocate a single vector with capacity outside the loop, clearing its elements at the start of each iteration using `.clear()`.",
+  "strength": "Strong",
+  "source": "*Rust For Rustaceans*, Chapter 7, \"Compiler Optimizations\" (p. 439-441 / p. 438)."
+}

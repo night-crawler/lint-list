@@ -1,0 +1,13 @@
+{
+  "id": 156,
+  "title": "Leaky Database Transactions (Infrastructure Pollution)",
+  "category": "Abstraction Failure",
+  "damaged_code": "```rust\nstruct UserDomainService {\n    db_conn: rusqlite::Connection,\n}\n\nimpl UserDomainService {\n    pub fn process_upgrade(&self, user_id: u64) {\n        // Direct transactional control inside domain logic\n        self.db_conn.execute(\"BEGIN TRANSACTION\", []).unwrap();\n        // ...\n        self.db_conn.execute(\"COMMIT\", []).unwrap();\n    }\n}\n```",
+  "pattern": "Core business or domain logic classes directly initiate, commit, or rollback database transactions, coupling transaction boundaries to database connections.",
+  "why_bad": "It tightly couples the business rules to specific database persistence technologies and infrastructure. If you migrate from a SQL database to a microservice API or NoSQL store, the domain logic cannot be reused.",
+  "detection": "Methods in core domain services importing, referencing, or calling database-specific transaction primitives (like SQL transaction queries).",
+  "counterexample": "Pure infrastructure implementation layers (like repositories or database adapters) where managing transactions is their explicit responsibility.",
+  "fix": "Manage transaction boundaries at the application service or middleware layer, keeping the core domain logic entirely database-agnostic.",
+  "strength": "Strong",
+  "source": "Vaughn Vernon, *Implementing Domain-Driven Design* (2013), Chapter 4 (\"Architecture\" / Transaction bounds)."
+}

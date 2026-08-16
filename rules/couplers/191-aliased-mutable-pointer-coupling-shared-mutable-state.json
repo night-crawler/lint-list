@@ -1,0 +1,13 @@
+{
+  "id": 191,
+  "title": "Aliased Mutable Pointer Coupling (Shared Mutable State)",
+  "category": "Couplers",
+  "damaged_code": "```rust\nuse std::sync::Arc;\nuse std::sync::Mutex;\n\nstruct SharedData { value: i32 }\nstruct Worker {\n    // Both modules hold a clone of the exact same mutable reference\n    data: Arc<Mutex<SharedData>>,\n}\n```",
+  "pattern": "Two distinct application modules or threads hold a shared, cloneable reference to mutable heap state, mutating it concurrently.",
+  "why_bad": "It couples the components across time. If the relative timing of mutations changes, the application experiences non-deterministic race conditions. Understanding the logic requires tracing the entire history of both components.",
+  "detection": "The propagation of cloned `Arc<Mutex<T>>` or `Rc<RefCell<T>>` structures to multiple independent structs that run distinct workflows.",
+  "counterexample": "Explicit lock-free concurrent data structures or synchronized channels designed specifically for concurrent message passing.",
+  "fix": "Structure the code to use pure message passing with immutable data transfers, transferring ownership of the data entirely.\n```rust\nstruct Worker {\n    input_channel: Receiver<i32>,\n}\n```",
+  "strength": "Strong",
+  "source": "Eric Elliott, *Composing Software* (2019) (\"Mutable State Dependencies\"); Martin Kleppmann, *Designing Data-Intensive Applications* (2017), Chapter 9 (\"Ordering Guarantees\")."
+}

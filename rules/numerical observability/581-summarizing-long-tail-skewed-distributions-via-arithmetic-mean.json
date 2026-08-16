@@ -1,0 +1,13 @@
+{
+  "id": 581,
+  "title": "Summarizing Long-Tail (Skewed) Distributions via Arithmetic Mean",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\nfn report_summary(latencies: &[f64]) {\n    let mean: f64 = latencies.iter().sum::<f64>() / latencies.len() as f64;\n    let variance: f64 = latencies.iter().map(|x| (x - mean).powi(2)).sum::<f64>() / latencies.len() as f64;\n    let std_dev = variance.sqrt();\n    println!(\"Average: {:.2}ms, StdDev: {:.2}\", mean, std_dev);\n}\n```",
+  "pattern": "Summarizing asymmetric, long-tail data (like system latency) using only the arithmetic mean and standard deviation.",
+  "why_bad": "The arithmetic mean and standard deviation assume a symmetrical Gaussian (normal) distribution. System latency is almost always a highly skewed, long-tail distribution. The mean is heavily distorted upwards by outliers (not reflecting \"typical\" performance), and the standard deviation yields mathematically absurd bounds (e.g., implying negative latency at 2 standard deviations below the mean).",
+  "detection": "Look for `std_dev` or `variance` being computed on latency or execution time metrics.",
+  "counterexample": "`Context-dependent`. If the underlying workload is completely deterministic and symmetric, normal distribution statistics can apply.",
+  "fix": "Use rank-based summaries like the median (50th percentile) to describe typical behavior and high percentiles (p95, p99) to capture tail outliers.\n```rust\nfn report_summary_correct(mut latencies: Vec<f64>) {\n    latencies.sort_by(|a, b| a.partial_cmp(b).unwrap());\n    let median = latencies[latencies.len() / 2];\n    let p99 = latencies[(latencies.len() as f64 * 0.99) as usize];\n    println!(\"Median: {:.2}ms, p99: {:.2}ms\", median, p99);\n}\n```",
+  "strength": "Strong` — long-tail latency behaves as a non-normal distribution.",
+  "source": "Richard L. Sites - *Understanding Software Dynamics* (2021), Chapter 9.4, p. 145/146."
+}

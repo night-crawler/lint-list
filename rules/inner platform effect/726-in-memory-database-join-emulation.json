@@ -1,0 +1,13 @@
+{
+  "id": 726,
+  "title": "In-Memory Database Join Emulation",
+  "category": "Inner Platform Effect",
+  "damaged_code": "```\n// Re-implementing joins on unstructured document queries manually\nstruct Post {\n    id: u64,\n    author_id: u64,\n    title: String,\n}\n\nstruct Author {\n    id: u64,\n    name: String,\n}\n\nfn get_posts_with_authors(posts: &[Post], authors: &[Author]) -> Vec<(Post, Author)> {\n    let mut results = Vec::new();\n    for post in posts {\n        // O(n * m) nested loop simulation of relational join\n        if let Some(author) = authors.iter().find(|a| a.id == post.author_id) {\n            results.push((post.clone(), author.clone()));\n        }\n    }\n    results\n}\n```",
+  "pattern": "Performing manual nested loop iterations over in-memory collections to resolve many-to-many relationship matches.",
+  "why_bad": "It scales horribly (\\(O(n \\cdot m)\\)). It wastes RAM, causes high memory latency, and bypasses database index caching.",
+  "detection": "Nested iteration loops on collections that perform reference matching based on ID variables.",
+  "counterexample": "`None`. Performing relational joins in user memory is always a performance hazard.",
+  "fix": "Perform joins directly inside the database system.\n\n```\n// Query that leverages database-side indexes and joins\nlet posts_with_authors = sqlx::query!(\n    \"SELECT p.*, a.name FROM posts p JOIN authors a ON p.author_id = a.id\"\n)\n.fetch_all(&mut pool)\n.await?;\n```",
+  "strength": "Strong",
+  "source": "Martin Kleppmann - _Designing Data-Intensive Applications_ The Big Ideas Behind Reliable, Scalable, and Maintainable Systems_ (2017, O’Reilly Media).pdf, Chapter 2 \"Relational Model vs. Document Model\"."
+}

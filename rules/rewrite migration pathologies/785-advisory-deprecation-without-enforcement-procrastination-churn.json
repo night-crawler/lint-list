@@ -1,0 +1,13 @@
+{
+  "id": 785,
+  "title": "Advisory Deprecation without Enforcement (Procrastination Churn)",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```rust\n#[deprecated(since = \"1.2.0\", note = \"Please use `new_secure_hash` instead\")]\npub fn legacy_hash(data: &[u8]) -> u64 {\n    // Left active indefinitely with no removal deadline or lint blocks\n    hash_bytes(data)\n}\n```",
+  "pattern": "Deprecating an API or internal service by applying compiler annotations or warning logs, but allocating no resources, tooling, or enforcement policies to actually migrate callers.",
+  "why_bad": "Warnings without deadlines or enforcement accumulate indefinitely, leading to \"alert fatigue\" where developers ignore warnings entirely. Old code remains active and must be maintained forever, dragging down system evolution [721, 723, 728].",
+  "detection": "Codebases containing long-standing deprecated tags (e.g. `#[deprecated]` older than a major version) with no build-time or commit-time blocks to prevent new invocations.",
+  "counterexample": "Valid for public open-source libraries with stable ABI guarantees (e.g., standard libraries) where code must be preserved forever [738]. Mark as `Context-dependent`.",
+  "fix": "Move deprecation to a compulsory model with concrete deadlines, backsliding linters (to reject new imports), and actively staffed automated migrations [724, 733, 734].",
+  "strength": "Strong",
+  "source": "Software Engineering at Google, Chapter 15, \"Types of Deprecation - Advisory Deprecation\" [721, 723, 728]"
+}

@@ -1,0 +1,13 @@
+{
+  "id": 513,
+  "title": "Unbuffered Tiny Writes (High-Frequency Syscall Overhead)",
+  "category": "Performance Smells",
+  "damaged_code": "```rust\nuse std::io::Write;\nfor i in 0..1000000 {\n    file.write_all(b\"x\")?; // High-frequency 1-byte system calls\n}\n```",
+  "pattern": "Performing repeated small-byte (e.g., 1-byte up to small block sizes) write operations directly to a physical file descriptor or network socket.",
+  "why_bad": "Incurs massive kernel system call overhead (switching CPU execution privilege modes) and triggers physical write amplification and disk fragmentation.",
+  "detection": "Low-level write system calls (`write()`, `syswrite()`) located inside high-frequency loops without intervening memory buffering.",
+  "counterexample": "The write must be synchronous for real-time IPC or reliability guarantees. `Context-dependent`.",
+  "fix": "Wrap the target file/socket in a buffered stream wrapper (e.g., `BufWriter` in Rust or C `setbuffer()`).",
+  "strength": "Strong",
+  "source": "*Systems Performance*, Chapter 5 & 8 (p. 71 / p. 76 / p. 397) and *Understanding Software Dynamics*, Chapter 10 (p. 226)."
+}

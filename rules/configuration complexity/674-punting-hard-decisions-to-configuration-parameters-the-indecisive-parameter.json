@@ -1,0 +1,13 @@
+{
+  "id": 674,
+  "title": "Punting Hard Decisions to Configuration Parameters (The Indecisive Parameter)",
+  "category": "Configuration Complexity",
+  "damaged_code": "```rust\nstruct NetworkClient {\n    // Timeout set arbitrarily by callers because the class refuses to decide\n    retry_interval_ms: u64,\n}\n```",
+  "pattern": "Exporting internal heuristic and execution parameters (such as caching sizes, retry timeouts, or thread counts) directly to application operators/users instead of resolving them internally.",
+  "why_bad": "Punts low-level design responsibility upwards to operators and administrators who are ill-equipped to select the correct value. It increases cognitive load, produces incomplete solutions, and creates configuration values that easily go out of date.",
+  "detection": "The public API or initialization struct exposes low-level temporal, capacity, or performance metrics directly to external callers.",
+  "counterexample": "```rust\nstruct NetworkClient {\n    // Automatically estimates the optimal timeout dynamically based on measured RTT\n    rtt_estimator: RttEstimator,\n}\n```",
+  "fix": "Calculate standard retry intervals dynamically by measuring real runtime response rates and using a multiplier, pulling complexity downward into the system.",
+  "strength": "Strong",
+  "source": "Ousterhout, John K - *A Philosophy of Software Design* (2018_2019, Yaknyam Press).pdf, Section 8.2."
+}

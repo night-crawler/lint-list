@@ -1,0 +1,13 @@
+{
+  "id": 784,
+  "title": "Synchronous Error-Rollback Service Chaining",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```rust\n// Inside Service A\nasync fn process_order(b: &ServiceB, c: &ServiceC) -> Result<(), Error> {\n    b.reserve_inventory().await?;\n    if let Err(e) = c.charge_card().await {\n        b.release_inventory().await?; // A must intimately handle B's rollback logic\n        return Err(e);\n    }\n    Ok(())\n}\n```",
+  "pattern": "Sync service call chaining where upstream services are responsible for managing, catching, and executing rollback states of downstream services upon failure.",
+  "why_bad": "Upstream services are tightly coupled to the internal states and logic of downstream services. If the downstream interface or transactional model changes, the entire upstream chain breaks, causing service bloat and preventing independent evolution [59, 60].",
+  "detection": "An orchestration function performing multiple sequential synchronous remote calls, where catch/error blocks explicitly trigger compensating undo operations on previously invoked systems.",
+  "counterexample": "`Context-dependent`. Permissible in low-scale systems with database-level distributed transactions (2PC), though this limits overall scalability [363, 244].",
+  "fix": "Decouple coordination using asynchronous messaging, event-driven orchestration (Sagas), or a centralized workflow manager [244, 712].",
+  "strength": "Strong",
+  "source": "Righting Software, Chapter 2, \"Decomposition - Services Bloating and Coupling\" [59, 60]"
+}

@@ -1,0 +1,13 @@
+{
+  "id": 164,
+  "title": "Clean Architecture Cosplay (Postgres Repository Port Overkill)",
+  "category": "Indirection Astronautics",
+  "damaged_code": "```rust\npub trait OrderRepository {\n    fn save(&self, order: &Order);\n}\n\npub struct PostgresOrderRepository;\n\nimpl OrderRepository for PostgresOrderRepository {\n    fn save(&self, order: &Order) {\n        // Complex SQL logic\n    }\n}\n```",
+  "pattern": "Defining strict \"ports\" (traits) and \"adapters\" (implementations) for database technologies or libraries under the speculative assumption that the database or library might change.",
+  "why_bad": "*   **Dubious Generality:** In practical enterprise code, the primary database technology (e.g., PostgreSQL) is highly stable and almost never changed. The overhead of translating and compiling layers of abstract \"ports\" outweighs any speculative future transition savings.\n*   **Lost Database Optimization:** Abstracting the database database-agnostically behind generic repository traits prevents developers from leveraging database-specific features (like Postgres JSONB queries, pipeline modes, or custom indexes).",
+  "detection": "The presence of outbound infrastructure traits (e.g., `*Repository`) that have exactly one production database adapter implementation.",
+  "counterexample": "**Inbound Ports:** Traits/interfaces defined to handle multiple incoming transport protocols (e.g., executing the same command via HTTP, gRPC, and RabbitMQ) are valid.",
+  "fix": "Reference the concrete database client or query builder directly from the application layer, using compile-time features for optimization.\n```rust\npub struct OrderRepository {\n    db_pool: sqlx::PgPool,\n}\n\nimpl OrderRepository {\n    pub async fn save(&self, order: &Order) -> Result<(), sqlx::Error> {\n        // Leverages full power of sqlx and postgres directly\n        sqlx::query!(\"INSERT INTO orders ...\", order.id).execute(&self.db_pool).await?;\n        Ok(())\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Vernon, *Implementing Domain-Driven Design*, Chapter 4 \"Architecture\" & Löwy, *Righting Software*, Chapter 3 \"Closed Architecture\"."
+}

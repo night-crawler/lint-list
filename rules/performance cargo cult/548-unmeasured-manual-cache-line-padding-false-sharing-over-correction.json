@@ -1,0 +1,13 @@
+{
+  "id": 548,
+  "title": "Unmeasured Manual Cache-Line Padding (False Sharing Over-Correction)",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\n#[repr(align(64))] // Padding every field to avoid false sharing\nstruct ThreadLocalData {\n    id: u32,\n}\n```",
+  "pattern": "Annotating every small, independent struct or field with cache alignment directives (`#[repr(align(64))]` or C++ `alignas(64)`) to prevent hypothetical false sharing.",
+  "why_bad": "Over-aligning structures increases the memory footprint, leading to cache pollution and reducing the number of structures that can fit in the CPU's cache. If structures are not accessed concurrently by different threads, manual alignment is purely detrimental [6, 223].",
+  "detection": "Excessive use of `align(64)` or `align(128)` attributes on structures or fields that are not accessed concurrently across multiple CPU threads.",
+  "counterexample": "Data structures heavily written to by separate threads concurrently where false sharing has been profiled and confirmed. `Contextual`.",
+  "fix": "Remove the manual alignment attributes and allow the compiler and OS to optimize data layout naturally.",
+  "strength": "Strong",
+  "source": "*1701.00854v6.pdf*, Chapter 3, Section 3.3 (p. 6); *Herlihy, Maurice*, Chapter 17 (p. 223)."
+}

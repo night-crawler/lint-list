@@ -1,0 +1,13 @@
+{
+  "id": 595,
+  "title": "Struct-as-Wire-Format / Memory Layout Serialization (STRUCT_LAYOUT_SERIALIZATION)",
+  "category": "Protocol Parsing Serialization Smells",
+  "damaged_code": "```rust\n#[repr(Rust)] // non-deterministic layout\nstruct NetworkHeader {\n    version: u8,\n    flags: u16,\n    packet_id: u32,\n}\n\nfn deserialize_packet(bytes: &[u8]) -> &NetworkHeader {\n    // UB and architecture coupling: Casting raw memory directly to a struct\n    unsafe { &*(bytes.as_ptr() as *const NetworkHeader) }\n}\n```",
+  "pattern": "Serializing or deserializing data by transmuting or casting a raw byte buffer directly into/from a memory structure without decoding individual fields.",
+  "why_bad": "Memory layout of `repr(Rust)` is completely non-deterministic and can change across compiler versions. Even under `repr(C)`, compiler-inserted padding is architecture-dependent. It couples the wire format to CPU byte alignment, pointer size, and endianness (Big-endian vs. Little-endian), resulting in severe portability bugs, memory corruption, and undefined behavior.",
+  "detection": "Look for direct casts from a slice of bytes (`*const u8`) to a reference/pointer of a struct type, or usage of `mem::transmute` across boundary layers (network, disk, or FFI).",
+  "counterexample": "```rust\n// Valid: Explicit field-by-field decoding with endianness-aware parsing\nstruct NetworkHeader {\n    version: u8,\n    flags: u16,\n    packet_id: u32,\n}\n\nfn deserialize_packet(bytes: &[u8]) -> Option<NetworkHeader> {\n    if bytes.len() < 7 { return None; }\n    Some(NetworkHeader {\n        version: bytes[0],\n        flags: u16::from_be_bytes([bytes[1], bytes[2]]),\n        packet_id: u32::from_be_bytes([bytes[3], bytes[4], bytes[5], bytes[6]]),\n    })\n}\n```",
+  "fix": "Decode fields explicitly from bytes using byte-order-aware routines (e.g., `from_be_bytes()`) or adopt a schema-driven serialization framework (e.g., Protocol Buffers, serde).",
+  "strength": "Strong",
+  "source": "*Jon Gjengset - Rust For Rustaceans (2021)*, Chapter 3; *Alex Petrov - Database Internals (2019)*, Chapter 3 (Footnote 2); *Benjamin C. Pierce - Types and Programming Languages (2002)*, Chapter 1."
+}

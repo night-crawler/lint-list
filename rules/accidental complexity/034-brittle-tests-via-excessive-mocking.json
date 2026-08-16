@@ -1,0 +1,13 @@
+{
+  "id": 34,
+  "title": "Brittle Tests via Excessive Mocking",
+  "category": "Accidental Complexity",
+  "damaged_code": "```rust\nmock.expect_read_db()\n    .times(1)\n    .with(eq(\"user_123\"))\n    .returning(|| Ok(User { id: 123 }));\n```",
+  "pattern": "Unit tests that heavily rely on mocking frameworks to specify internal behavior, assert exact call orders, or match exact arguments of internal collaborators.",
+  "why_bad": "It couples tests directly to implementation details. If the internal code is refactored (while preserving behavior), the tests fail because the mocked method names, order, or arguments no longer match. This discourages refactoring and makes tests a major maintenance burden.",
+  "detection": "Test suites where the majority of tests assert call counts, call sequences, or mock internal module boundaries rather than verifying behavior via public APIs.",
+  "counterexample": "Mocking non-deterministic, slow, or expensive physical boundaries (e.g., third-party billing APIs or email servers).",
+  "fix": "Prefer state-based testing over interaction-based testing. Use real dependencies or high-fidelity fakes instead of mocks where possible, testing through public APIs.",
+  "strength": "Contextual",
+  "source": "Titus Winters et al., *Software Engineering at Google* (2020), Chapters 11 & 13; Sandi Metz, *Practical Object-Oriented Design in Ruby* (2019), Chapter 9."
+}

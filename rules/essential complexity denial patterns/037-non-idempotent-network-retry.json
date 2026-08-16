@@ -1,0 +1,13 @@
+{
+  "id": 37,
+  "title": "Non-Idempotent Network Retry",
+  "category": "Essential Complexity Denial Patterns",
+  "damaged_code": "```rust\n// Retrying a state-mutating operation without a request-deduplication key\nloop {\n    if let Ok(_) = client.post(\"/payment\").json(&charge_req).send().await {\n        break;\n    }\n}\n```",
+  "pattern": "A mutating state request (POST/PUT/PATCH) retried across the network without a unique transaction/idempotency key passed to the server.",
+  "why_bad": "If the initial request succeeded but the response (ACK) got lost due to a network glitch, retrying the bare request causes the server to perform the action multiple times (e.g., charging a customer twice) [23:171].",
+  "detection": "Outbound write requests wrapped in a retry block that do not generate, carry, or propagate a unique UUID or token across retries [39:53].",
+  "counterexample": "```rust\nlet idempotency_key = Uuid::new_v4().to_string();\nloop {\n    if let Ok(_) = client.post(\"/payment\")\n        .header(\"Idempotency-Key\", &idempotency_key)\n        .json(&charge_req)\n        .send().await {\n            break;\n    }\n}\n```",
+  "fix": "Generate a persistent request identifier (Idempotency Key) on the client, propagate it on every retry, and verify it on the server using a deduplication cache [39:53].",
+  "strength": "Strong",
+  "source": "*Database Internals* (Petrov), Chapter 8 [39:53]; *Designing Data-Intensive Applications* (Kleppmann), Chapter 4 & 7 [23:171]."
+}

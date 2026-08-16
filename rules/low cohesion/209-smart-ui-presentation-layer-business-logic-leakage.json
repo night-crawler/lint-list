@@ -1,0 +1,13 @@
+{
+  "id": 209,
+  "title": "Smart UI: Presentation Layer Business Logic Leakage",
+  "category": "Low Cohesion",
+  "damaged_code": "```rust\n// A mock UI rendering component that directly executes domain calculations\nstruct UserInterfaceRenderer;\n\nimpl UserInterfaceRenderer {\n    fn draw_product_card(&self, price: f64, is_over_limit: bool) {\n        // Red color represents business warning: hardcoded rules in UI\n        let color = if price > 1000.0 && is_over_limit {\n            \"red\"\n        } else {\n            \"black\"\n        };\n        println!(\"<span color='{}'>{}</span>\", color, price);\n    }\n}\n```",
+  "pattern": "Business decision rules (e.g., classifying a transaction as high-risk or determining color-coded thresholds) are hardcoded directly within rendering components or UI presentation files.",
+  "why_bad": "It disperses business logic into the view layer. If the business changes the definition of \"over limit alert\" threshold, developers must locate and modify UI layout code, preventing domain logic reuse across other API endpoints or batch processing tasks.",
+  "detection": "View, rendering, or HTML-formatting modules contain conditional logical operators evaluating numerical bounds, dates, or business criteria.",
+  "counterexample": "Simple formatting logic such as alternating row background colors for visual aesthetics.",
+  "fix": "Move the calculation logic into a domain model, exposing a simple boolean query or abstract state representation that the UI simply renders.\n```rust\nstruct Product {\n    price: f64,\n}\n\nimpl Product {\n    fn requires_limit_warning(&self, is_over_limit: bool) -> bool {\n        self.price > 1000.0 && is_over_limit\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Eric Evans - Domain-Driven Design, Chapter 4 (or Chapter 1) / Martin Fowler - Patterns of Enterprise Application Architecture, Chapter 2 (Presentation Layer)*"
+}

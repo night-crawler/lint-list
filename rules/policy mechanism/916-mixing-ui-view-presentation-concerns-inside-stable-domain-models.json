@@ -1,0 +1,13 @@
+{
+  "id": 916,
+  "title": "Mixing UI View Presentation Concerns inside Stable Domain Models",
+  "category": "Policy Mechanism",
+  "damaged_code": "```rust\nstruct Order {\n    id: u64,\n    items: Vec<LineItem>,\n}\n\nimpl Order {\n    // UI specific formatting mixed into stable domain model\n    pub fn print_html_summary(&self) -> String {\n        format!(\"<div class='order'><h3>Order #{}</h3></div>\", self.id)\n    }\n}\n```",
+  "pattern": "Core domain entities include methods or fields dedicated specifically to formatting, localization, or UI representation (such as returning HTML, CSS colors, or view-specific structures).",
+  "why_bad": "Cosmetic changes to the UI force redeployment of the core domain layer. The domain model, which should remain stable and agnostic to how it is displayed (web, terminal, mobile, PDF), becomes fragile.",
+  "detection": "Domain entities importing or referencing UI rendering, serialization, or formatting crates, or returning localized text fragments.",
+  "counterexample": "Simple standard string formatting (`Display` / `Debug` traits) for debugging purposes is valid.",
+  "fix": "Use a separate Presenter, View Model, or DTO to transform raw domain data into UI-specific representations, keeping the domain entity focused purely on business rules.\n```rust\nstruct OrderSummaryView;\n\nimpl OrderSummaryView {\n    pub fn render(order: &Order) -> String {\n        format!(\"<div class='order'><h3>Order #{}</h3></div>\", order.id)\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Architecture* (2017), Chapter 11, \"Systems\", p. 269, 302."
+}

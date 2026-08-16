@@ -1,0 +1,13 @@
+{
+  "id": 343,
+  "title": "Persistence-Driven Identity Exposure in Public Constructors",
+  "category": "Boundary Representation",
+  "damaged_code": "```rust\nimpl Customer {\n    pub fn new(id: u64, name: String) -> Self { // Client must supply auto-increment ID\n        Customer { id, name }\n    }\n}\n```",
+  "pattern": "Forcing client-side creation or domain initialization routines to supply a surrogate, database-generated primary key (e.g., auto-increment `u64`) for new instances.",
+  "why_bad": "It breaks core invariants. A newly created customer does not have a database identity yet. Requiring clients to supply a dummy value (e.g., `0` or `u64::MAX`) represents an invalid state and pollutes the domain with persistence mechanisms.",
+  "detection": "Match public constructors (`pub fn new`) on entity structures requiring a surrogate primary key integer type (`u64`, `i64`, etc.) before any database record exists.",
+  "counterexample": "Reconstituting entities from stored database rows via private mapping constructors or repository interfaces.\n```rust\nimpl Customer {\n    fn reconstitute(id: u64, name: String) -> Self { Customer { id, name } }\n}\n```",
+  "fix": "Generate UUIDs in the domain layer, use optional ID wraps, or keep database identity keys private/hidden from public constructors.\n```rust\nimpl Customer {\n    pub fn new(name: String) -> Self {\n        Customer { id: None, name }\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design* by Vaughn Vernon (Chapter 5, p. 203); *Domain-Driven Design* by Eric Evans (p. 25)."
+}

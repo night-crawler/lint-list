@@ -1,0 +1,13 @@
+{
+  "id": 334,
+  "title": "Overloaded `None`/`null` for Multiple Meanings",
+  "category": "Semantic Ambiguity",
+  "damaged_code": "```rust\nstruct Discussion {\n    availability: Option<DiscussionDescriptor>, // None = either disabled, not requested, or not ready\n}\n```",
+  "pattern": "Using `None` or `null` to represent multiple, semantically distinct unavailability scenarios.",
+  "why_bad": "Overloading `None` to mean \"feature not enabled\", \"feature not requested\", and \"feature requested but not ready\" introduces severe semantic ambiguity. Callers cannot write precise logic based on why the value is missing, leading to silent bugs.",
+  "detection": "An `Option<T>` field whose documentation lists multiple distinct reasons or business states associated with the `None` case.",
+  "counterexample": "A standard type representation with explicit state:\n```rust\nenum DiscussionState {\n    NotEnabled,\n    NotRequested,\n    Requested,\n    Ready(DiscussionDescriptor),\n}\n```",
+  "fix": "Define an explicit enum (Standard Type) to model all the possible unavailability scenarios clearly.\n```rust\nenum DiscussionAvailability {\n    AddOnNotEnabled,\n    NotRequested,\n    Requested,\n    Ready(DiscussionDescriptor),\n}\n\nstruct Discussion {\n    availability: DiscussionAvailability,\n}\n```",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design* by Vaughn Vernon (Chapter 6, p. 217); *Patterns of Enterprise Application Architecture* by Martin Fowler (p. 312)."
+}

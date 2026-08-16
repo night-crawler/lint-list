@@ -1,0 +1,13 @@
+{
+  "id": 21,
+  "title": "Pass-Through Variable",
+  "category": "Accidental Complexity",
+  "damaged_code": "```rust\nfn init_system(cert_path: &str, port: u16) {\n    setup_network(cert_path, port);\n}\n\nfn setup_network(cert_path: &str, port: u16) {\n    bind_socket(cert_path, port);\n}\n\nfn bind_socket(cert_path: &str, _port: u16) {\n    let _cert = std::fs::read(cert_path);\n}\n```",
+  "pattern": "A variable that is passed down through a long chain of intermediate functions or methods that have no use for the variable themselves, only forwarding it to a low-level call.",
+  "why_bad": "It clutters signatures and couples intermediate layers to low-level parameters that they should not care about. It makes the system highly resistant to change: adding a new low-level configuration parameter requires modifying every interface along the entire path.",
+  "detection": "An argument in a function signature that is passed directly to another function call without being read, validated, or transformed locally, occurring recursively across multiple nested call frames.",
+  "counterexample": "`Context-dependent`. Generic wrappers or context-passing structures in frameworks where general-purpose parameters must traverse standard handlers.",
+  "fix": "Group the parameter into an existing shared context/configuration object, or introduce a dependency injection container, or refactor the top-level code to call the low-level utility directly, bypassing intermediate layers.",
+  "strength": "Strong",
+  "source": "John K. Ousterhout, *A Philosophy of Software Design* (2018), Chapter 7 (\"Different Layer, Different Abstraction - Pass-Through Variables\"), pp. 46, 314–315."
+}

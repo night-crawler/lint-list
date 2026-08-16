@@ -1,0 +1,13 @@
+{
+  "id": 662,
+  "title": "The Unstructured \"Spew\" Smell",
+  "category": "Observability Operability Smells",
+  "damaged_code": "```rust\nlog::info!(\"RPC req started user={} path={}\", user.id, path);\n// elsewhere in the same service\nlog::info!(\"Starting RPC for user_id {} on endpoint {}\", user.id, endpoint);\n```",
+  "pattern": "Ad-hoc, inconsistent formatting of text log messages describing identical operations across different modules.",
+  "why_bad": "Unstructured, inconsistent spew defeats the pattern-matching capability of log aggregators, makes regex-based scraping highly brittle, and slows down triaging during active incidents [208, 654, 695].",
+  "detection": "Different string format structures used across logging macros mapping to equivalent runtime event types.",
+  "counterexample": "```rust\n// Structured key-value logging\ntracing::info!(user_id = %user.id, path = %path, \"RPC request started\");\n```",
+  "fix": "Standardize on structured key-value log attributes using consistent fields across the codebase.",
+  "strength": "Strong",
+  "source": "*The Pragmatic Programmer*, page 208 [208, 654]; *Release It!*, page 283-286 [286, 695]."
+}

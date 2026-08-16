@@ -1,0 +1,13 @@
+{
+  "id": 768,
+  "title": "Dual-State Parallel Fields (Half-Migrated State Tracking)",
+  "category": "Maintenance Fossils",
+  "damaged_code": "```rust\npub struct SystemPermission {\n    state: String,                  // Type-unsafe string representation (old)\n    permission_state: PermissionState, // Strong type representation (new)\n}\n\nimpl SystemPermission {\n    pub fn claimed(&mut self) {\n        if self.state == \"REQUESTED\" {\n            self.state = \"CLAIMED\".to_string();\n            self.permission_state = PermissionState::Claimed;\n        }\n    }\n}\n```",
+  "pattern": "Maintaining both a raw, type-unsafe primitive representation of a state/field and its strongly-typed counterpart side-by-side inside the same object, with setters syncing them to avoid updating old callers.",
+  "why_bad": "Violation of the Single Source of Truth invariant. Storing the same state in two different formats inside the same struct inevitably leads to synchronization bugs when one field is updated but the other is missed. It bypasses type-safety and forces code to compile with redundant, error-prone data structures.",
+  "detection": "The linter must observe:\n1. Two struct fields tracking the same concept in different formats (e.g., `String` and `Enum`).\n2. Mutator functions maintaining double writes to ensure synchrony between them.",
+  "counterexample": "```rust\n// Valid: Type-safe state pattern representing exclusive states\npub struct SystemPermission {\n    permission_state: PermissionState,\n}\n```",
+  "fix": "Completely eliminate the type-unsafe raw field, and migrate all getters and setters to use the strongly-typed Enum.\n```rust\npub struct SystemPermission {\n    permission_state: PermissionState,\n}\n\nimpl SystemPermission {\n    pub fn claimed(&mut self) {\n        if self.permission_state == PermissionState::Requested {\n            self.permission_state = PermissionState::Claimed;\n        }\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "- Joshua Kerievsky, *Refactoring to Patterns* (2004) [60, 61]"
+}

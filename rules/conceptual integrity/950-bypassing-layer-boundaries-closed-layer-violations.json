@@ -1,0 +1,13 @@
+{
+  "id": 950,
+  "title": "Bypassing Layer Boundaries (Closed Layer Violations)",
+  "category": "Conceptual Integrity",
+  "damaged_code": "```rust\nstruct OrderView {\n    db_connection: SqlConnection,\n}\nimpl OrderView {\n    fn render(&self) {\n        // UI layer directly executing database queries, bypassing Domain layer\n        let rows = self.db_connection.execute(\"SELECT * FROM orders\");\n        ...\n    }\n}\n```",
+  "pattern": "A high-level layer (like UI or Presentation) bypasses the immediate business logic layer to directly query or modify low-level infrastructure/database resources.",
+  "why_bad": "It breaks the architectural closed-layer contract, resulting in extremely tight coupling. Any change to the database schema or data mapping rules will instantly break the UI layer, preventing independent modifications.",
+  "detection": "Static analysis checks that flag imports of database/persistence packages inside user interface or presentation modules.",
+  "counterexample": "Simple, read-only CQRS read-models designed explicitly to bypass complex domain logic for high-performance rendering. Marked `Context-dependent`.",
+  "fix": "Force the UI component to request data through a dedicated Service or Query layer facade.",
+  "strength": "Strong",
+  "source": "*Fundamentals of Software Architecture* by Mark Richards and Neal Ford (2020), p. 140, 163."
+}

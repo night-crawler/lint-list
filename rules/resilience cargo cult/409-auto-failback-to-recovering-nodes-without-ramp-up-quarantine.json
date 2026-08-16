@@ -1,0 +1,13 @@
+{
+  "id": 409,
+  "title": "Auto-Failback to Recovering Nodes without Ramp-Up/Quarantine",
+  "category": "Resilience Cargo Cult",
+  "damaged_code": "```rust\nif node.ping().is_ok() {\n    node.status = NodeStatus::Active; // Automatically joins active cluster immediately\n}\n```",
+  "pattern": "Immediately routing full operational traffic back to a node as soon as it recovers or reconnects, without a gradual warm-up period, rate-limiting, or manual verification.",
+  "why_bad": "The recovering node is immediately hit with its full share of operational load, plus any accumulated work, cached data hydration demands, or missing state replication. This causes it to fail again instantly, resulting in cyclical \"flapping\" or \"flapping\" outages [58, 59].",
+  "detection": "Detect auto-recovery logic that transitions a node from a failed/offline status directly to a fully active status without using a canary status, rate-limited step, or manual check flag.",
+  "counterexample": "```rust\nif node.ping().is_ok() && node.status == NodeStatus::Offline {\n    node.status = NodeStatus::WarmUp(0.1); // Gradually scale traffic up\n}\n```",
+  "fix": "Provide quarantine modes, canaries, or automatic rate-limited ramp-ups for recovering nodes, and ensure automatic failback can be disabled to stabilize cascading failures.",
+  "strength": "Strong",
+  "source": "Heather Adkins et al., *Building Secure and Reliable Systems*, page 172-173 / passage [58, 59]."
+}

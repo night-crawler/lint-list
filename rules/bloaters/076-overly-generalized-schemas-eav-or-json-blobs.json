@@ -1,0 +1,13 @@
+{
+  "id": 76,
+  "title": "Overly Generalized Schemas (EAV or JSON Blobs)",
+  "category": "Bloaters",
+  "damaged_code": "```rust\nstruct UserProfile {\n    id: u64,\n    // Shunning typed fields for a catch-all JSON blob\n    properties: serde_json::Value,\n}\n```",
+  "pattern": "Bypassing strongly typed fields on domain structs or database tables by storing all attributes in a single, generic JSON blob or an Entity-Attribute-Value (EAV) schema to \"stay flexible.\"",
+  "why_bad": "Shuns compile-time type-safety, pushes validation into fragile, duplicated runtime parsing logic, and severely degrades query performance and index efficiency.",
+  "detection": "Look for structs where core domain fields are represented by a generic JSON value (`serde_json::Value`) or a flat list of string-keyed maps, rather than typed fields.",
+  "counterexample": "`Context-dependent`. Document storage backends, analytics dashboards, or search indexes where raw, arbitrary dynamic schema storage is the primary architectural goal.",
+  "fix": "Use proper, strongly typed database tables and strongly typed structs for known, invariant domain fields.",
+  "strength": "Strong",
+  "source": "*Martin Fowler - Patterns of Enterprise Application Architecture (2002)*, \"Serialized LOB\"; *Steve McConnell - Code Complete (2004)*, Chapter 13."
+}

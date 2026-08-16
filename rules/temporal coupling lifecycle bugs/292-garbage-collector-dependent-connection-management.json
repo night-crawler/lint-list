@@ -1,0 +1,13 @@
+{
+  "id": 292,
+  "title": "Garbage-Collector Dependent Connection Management",
+  "category": "Temporal Coupling Lifecycle Bugs",
+  "damaged_code": "```java\n// Java-like\nclass ConnectionPool {\n    void runQuery() {\n        Connection conn = pool.getConnection(); // Unreferenced but not explicitly closed!\n        conn.execute(\"SELECT 1\");\n        // Relies on garbage collector's finalize() to close connection\n    }\n}\n```",
+  "pattern": "Relying on object garbage collection or finalization to close high-value system resources like database connections or sockets.",
+  "why_bad": "Garbage collection is non-deterministic. Unreferenced connections can sit open in memory for minutes or hours before the collector reclaims them, exhausting the server's connection pool or file descriptors.",
+  "detection": "Instantiating closeable resources (files, sockets, database connections) without explicit closure calls or placement within scoped resource management constructs.",
+  "counterexample": "In-memory objects that have no backing external system resources and rely safely on automated garbage collection.",
+  "fix": "Bind connection lifecycle to explicit scopes using `try-with-resources` blocks (or standard Rust scoping and deterministic destructors).",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Patterns of Enterprise Application Architecture* / passage [655, 656]."
+}

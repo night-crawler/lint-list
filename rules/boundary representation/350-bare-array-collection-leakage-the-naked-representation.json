@@ -1,0 +1,13 @@
+{
+  "id": 350,
+  "title": "Bare Array/Collection Leakage (The Naked Representation)",
+  "category": "Boundary Representation",
+  "damaged_code": "```rust\nstruct Team {\n    pub members: Vec<String>, // Exposes raw collection directly\n}\n```",
+  "pattern": "Exposing a raw in-memory collection (such as `Vec<T>` or `HashMap<K, V>`) as a public field on a domain struct.",
+  "why_bad": "It leaks representation details. Any client can bypass business rules (e.g., adding duplicate members or a blank member name) because the collection's structure is unencapsulated.",
+  "detection": "Public fields typed as raw container structures (`Vec`, `HashMap`, `HashSet`, `BTreeMap`) on domain aggregate roots.",
+  "counterexample": "Plain data structures (DTOs) with no domain rules or invariants. Mark as `Context-dependent`.",
+  "fix": "Keep collections private. Expose custom, validated insertion methods or read-only iterators.\n```rust\npub struct Team { members: Vec<String> }\nimpl Team {\n    pub fn add_member(&mut self, name: String) -> Result<(), Error> {\n        if name.is_empty() { return Err(Error); }\n        self.members.push(name);\n        Ok(())\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Practical Object-Oriented Design* by Sandi Metz (Listing 2.12, \"Obscuring References\"); *A Philosophy of Software Design* (p. 107)."
+}

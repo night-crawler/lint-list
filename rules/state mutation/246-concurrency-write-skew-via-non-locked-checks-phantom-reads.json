@@ -1,0 +1,13 @@
+{
+  "id": 246,
+  "title": "Concurrency Write-Skew via Non-Locked Checks (Phantom Reads)",
+  "category": "State Mutation",
+  "damaged_code": "```rust\nfn book_meeting_room(db: &Db, room_id: u32, time_slot: TimeSlot) -> Result<(), String> {\n    // Step 1: Check absence of booking (phantom query)\n    let existing_bookings = db.query(\"SELECT * FROM bookings WHERE room_id = ? AND slot = ?\", (room_id, time_slot));\n    if existing_bookings.is_empty() {\n        // Step 2: Book the room\n        db.execute(\"INSERT INTO bookings (room_id, slot) VALUES (?, ?)\", (room_id, time_slot));\n        Ok(())\n    } else {\n        Err(\"Room already booked!\".into())\n    }\n}\n```",
+  "pattern": "An application queries a state database for the absence of records satisfying a condition, and then inserts a record based on that condition in a separate write statement, without acquiring locks on the predicate space.",
+  "why_bad": "Classic \"Write Skew\" or \"Phantom Read\" anomaly. Concurrently executing threads can both perform Step 1, observe zero existing bookings, and proceed to execute Step 2 simultaneously. This results in double-booking the same room, violating core business invariants.",
+  "detection": "Identify sequences where a query checks for the absence of rows matching a condition, followed by an insert that satisfies that condition, executed under weak transaction isolation levels (such as Read Committed) without explicit row-locking or serializable transactions.",
+  "counterexample": "Using serializable transaction isolation, or explicitly locking predicate targets:\n```rust\n// Handled at the database transaction level or with a centralized mutex lock\n```",
+  "fix": "Use serializable database isolation levels, or materialize conflict locks (e.g. locking the parent `Room` record for update before checking/writing the booking).\n```rust\ndb.execute(\"SELECT * FROM rooms WHERE id = ? FOR UPDATE\", (room_id,));\n```",
+  "strength": "Strong",
+  "source": "*Designing Data-Intensive Applications* by Martin Kleppmann (Chapter 7, \"Weak isolation levels\", \"Phantoms and write skew\")."
+}

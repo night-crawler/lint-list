@@ -1,0 +1,13 @@
+{
+  "id": 761,
+  "title": "Excessive Module Nesting (Single-File Modules)",
+  "category": "Ceremony Boilerplate",
+  "damaged_code": "```rust\n// File layout:\n// src/services/user/validators/length.rs\npub fn validate_length(name: &str) -> bool { name.len() > 3 }\n```",
+  "pattern": "Creating highly fragmented directory structures and individual module files that contain only a single, trivial function or struct.",
+  "why_bad": "It results in 'directory explosion' and severe file-navigation friction. Developers spend more time switching files, navigating paths, and writing boilerplate `pub mod` declarations than reading or writing actual business logic.",
+  "detection": "A module file containing fewer than 15 lines of active code (excluding imports and boilerplates), nested inside multiple layers of single-file subdirectories.",
+  "counterexample": "Modules that isolate heavy, highly specialized algorithms (like custom crypto engines or parsing state machines) that must remain strictly isolated.",
+  "fix": "```rust\n// Combine related helpers into a single file.\n// src/services/user/validators.rs\npub fn validate_length(name: &str) -> bool { name.len() > 3 }\npub fn validate_characters(name: &str) -> bool { name.chars().all(|c| c.is_alphabetic()) }\n```",
+  "strength": "Strong",
+  "source": "Titus Winters, Tom Manshreck, Hyrum Wright, *Software Engineering at Google* (2020), Chapter 2 (\"Software Engineering Over Time\"); John K. Ousterhout, *A Philosophy of Software Design* (2018), Chapter 4."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 878,
+  "title": "Pre-Check and Double-Check (TOCTOU and Redundancy)",
+  "category": "Robustness Theater",
+  "damaged_code": "```rust\nuse std::fs::File;\nuse std::path::Path;\n\nfn read_config(path_str: &str) -> Result<String, ConfigError> {\n    let path = Path::new(path_str);\n    // Redundant pre-check\n    if !path.exists() {\n        return Err(ConfigError::NotFound);\n    }\n    \n    // Double check: File::open still returns a Result that we must handle!\n    let mut file = File::open(path).map_err(|_| ConfigError::NotFound)?;\n    Ok(read_to_string(file))\n}\n```",
+  "pattern": "An explicit condition check (like checking if a file or directory exists) is performed immediately before executing an operation that naturally returns a failure variant if the check fails.",
+  "why_bad": "It introduces a Time-of-Check to Time-of-Use (TOCTOU) race condition—the file could be deleted between the existence check and the open call. Additionally, it writes redundant error-handling blocks because the standard library function already performs and returns this check safely.",
+  "detection": "The invocation of a path existence check or handle-validity check immediately preceding an I/O operation on that same target path/handle.",
+  "counterexample": "```rust\n// Correct: Single, safe execution\nfn read_config(path_str: &str) -> Result<String, ConfigError> {\n    let file = File::open(path_str).map_err(|_| ConfigError::NotFound)?;\n    Ok(read_to_string(file))\n}\n```",
+  "fix": "Eliminate the pre-check. Execute the operation directly and handle the resulting `Result` or error variant, ensuring atomic safety.",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete*, Section 8.1 (\"Protecting Your Program from Invalid Inputs\") / Section 8.3 (\"Error-Handling Techniques\")."
+}

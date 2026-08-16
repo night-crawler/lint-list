@@ -1,0 +1,13 @@
+{
+  "id": 742,
+  "title": "Macro Overuse for Trivial Getter Generation (Obscuring Code Navigation)",
+  "category": "Cleverness Obscurity",
+  "damaged_code": "```rust\n// Rust\nmacro_rules! make_getter {\n    ($name:ident, $field:ident) => {\n        pub fn $name(&self) -> &str { &self.$field }\n    }\n}\nmake_getter!(name, name_field);\n```",
+  "pattern": "Writing custom preprocessor macros to eliminate trivial boilerplate code like simple accessors or field setters.",
+  "why_bad": "It makes code navigation and IDE \"Go to Definition\" completely impossible. Compiler warning messages inside macro expansions are notoriously difficult to understand, rendering code review highly challenging.",
+  "detection": "Use of custom declarative or procedural macros to declare individual public methods on domain structures.",
+  "counterexample": "Standard widely-accepted macro crates (like `serde` or standard library `#[derive(Clone)]`) where the generated code obeys structural standards.",
+  "fix": "Write explicit, legible methods. The visual clarity of concrete code always trumps macro-based lines-of-code reductions.\n```rust\nimpl Person {\n    pub fn name(&self) -> &str {\n        &self.name_field\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Rust for Rustaceans*, Chapter 8 (Macros) / *The Pragmatic Programmer*, Topic Kaizen."
+}

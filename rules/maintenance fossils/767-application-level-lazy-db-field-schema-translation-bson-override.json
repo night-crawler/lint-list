@@ -1,0 +1,13 @@
+{
+  "id": 767,
+  "title": "Application-Level Lazy DB Field Schema Translation (BSON Override)",
+  "category": "Maintenance Fossils",
+  "damaged_code": "```rust\n// Deserializer fallback override to avoid running database migrations\npub fn deserialize_product(bson: &Document) -> Product {\n    let summary = bson.get_str(\"summary\")\n        .or_else(|_| bson.get_str(\"description\")) // Fallback override\n        .unwrap();\n    Product { summary: summary.to_string() }\n}\n```",
+  "pattern": "Application-level mapping logic that implements manual field-name fallbacks (e.g., falling back to `\"description\"` if `\"summary\"` is missing) to support multiple historic database schemas concurrently, rather than performing a schema migration.",
+  "why_bad": "Implicit design debt. By performing translation on-the-fly, the database schema remains in an inconsistent state indefinitely. The application code is forced to carry historical semantic baggage forever, and database administrators cannot clean up obsolete fields because code dependencies are untraceable.",
+  "detection": "The linter must observe:\n1. Deserialization/ORM mapping code attempting to retrieve a value from a database record under multiple field name aliases.\n2. The fallback field name represents an obsolete schema element.",
+  "counterexample": "`Context-dependent`\n```rust\n// Valid: Structured Protobuf-style migration with explicit backward-compatible tag IDs\n#[derive(serde::Deserialize)]\npub struct ProjectClosed {\n    #[serde(alias = \"Closed\")]\n    closed_utc: DateTime<Utc>,\n}\n```",
+  "fix": "Perform a database-wide schema migration script to normalize the old database documents, and remove the fallback logic from the deserializer.\n```rust\npub fn deserialize_product(bson: &Document) -> Product {\n    let summary = bson.get_str(\"summary\").unwrap();\n    Product { summary: summary.to_string() }\n}\n```",
+  "strength": "Contextual",
+  "source": "- Vaughn Vernon, *Implementing Domain-Driven Design* (2013) [387, 388]"
+}

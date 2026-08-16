@@ -1,0 +1,13 @@
+{
+  "id": 756,
+  "title": "Manual From/Into Implementing Identity Conversions",
+  "category": "Ceremony Boilerplate",
+  "damaged_code": "```rust\nstruct UserId(u64);\nimpl From<u64> for UserId {\n    fn from(val: u64) -> Self {\n        UserId(val)\n    }\n}\n```",
+  "pattern": "Manually implementing conversion traits (like `From` or `Into`) for simple structural structs or newtypes, instead of using automated macros or lightweight functions.",
+  "why_bad": "It clutters the file with manual boilerplate mappings that do not perform any validation or structural changes. In modern environments, these are highly repetitive and can be auto-generated or simplified.",
+  "detection": "A manual implementation of `From` or `Into` that only assigns a raw value of a primitive to a newtype single-field struct.",
+  "counterexample": "Complex conversions between distinct multi-field domain entities that validate invariants or parse raw external types.",
+  "fix": "```rust\n// Derive helper traits or use a lightweight tuple construction.\nstruct UserId(pub u64);\n```",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust for Rustaceans* (2021), Chapter 1 (\"Foundations - Ergonomics\"), pp. 15-18."
+}

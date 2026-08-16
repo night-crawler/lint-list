@@ -1,0 +1,12 @@
+{
+  "id": 395,
+  "title": "Infinite Non-Transient Retry Loop (Thread Hammering)",
+  "category": "Error Handling Pathologies",
+  "damaged_code": "```rust\nloop {\n    match connect_to_database(\"invalid_password\") {\n        Ok(conn) => break conn,\n        Err(_) => continue, // Retries permanent failure immediately\n    }\n}\n```",
+  "pattern": "A retry loop that retries an operation immediately and indefinitely upon failure, without checking if the failure is transient or permanent, and without backing off.",
+  "why_bad": "Thread lockup and self-denial of service. Hammering a database or remote API with a bad credential or malformed payload consumes 100% CPU, locks up the calling thread, and logs massive traces that fill disks and overwhelm servers. [7, Chapter 7, \"Stubborn Link\"]",
+  "detection": "A recursive or looping construct that retries a fallible operation on every `Err` without an exponential backoff timer, error classification (transient vs. permanent), or a maximum retry count.",
+  "fix": "Only retry on transient errors (like timeouts), use capped exponential backoff, and set a strict maximum retry count.\n```rust\nlet mut retries = 0;\nloop {\n    match connect_to_database(\"password\") {\n        Ok(conn) => break Ok(conn),\n        Err(e) if e.is_transient() && retries < 5 => {\n            sleep(exponential_delay(retries));\n            retries += 1;\n        }\n        Err(e) => break Err(e),\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Alex Petrov - Database Internals*, Chapter 7 (Stubborn Link Retries) [7]"
+}

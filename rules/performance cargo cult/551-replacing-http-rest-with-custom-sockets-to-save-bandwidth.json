@@ -1,0 +1,13 @@
+{
+  "id": 551,
+  "title": "Replacing HTTP/REST with Custom Sockets to Save Bandwidth",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\n// Custom raw TCP stream parsing protocol designed to replace a simple JSON REST endpoint\n```",
+  "pattern": "Writing a custom TCP socket protocol and binary parser to replace simple HTTP or gRPC APIs to \"save protocol overhead.\"",
+  "why_bad": "Custom protocols take months to design, are highly prone to security bugs, and cannot utilize standard proxies, load balancers, or caching servers. The bandwidth savings for typical low-traffic APIs are completely negligible [211, 495].",
+  "detection": "A custom socket layer, manually parsing raw byte streams (`TcpStream`) for application queries when HTTP, gRPC, or standard frameworks are applicable.",
+  "counterexample": "Extremely high-frequency real-time gaming protocols or low-latency telemetry data. `Context-dependent`.",
+  "fix": "Use standard HTTP or gRPC frameworks with standard serialization formats.",
+  "strength": "Strong",
+  "source": "*Building Secure and Reliable Systems*, Chapter 10 (p. 211); *Systems Performance*, Chapter 10, Section 10.5 (p. 495)."
+}

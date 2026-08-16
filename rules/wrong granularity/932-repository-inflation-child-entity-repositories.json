@@ -1,0 +1,13 @@
+{
+  "id": 932,
+  "title": "Repository Inflation (Child-Entity Repositories)",
+  "category": "Wrong Granularity",
+  "damaged_code": "```rust\ntrait OrderLineRepository {\n    fn save(&self, line: &OrderLine);\n    fn find_by_id(&self, id: u64) -> Option<OrderLine>;\n}\n```",
+  "pattern": "Creating database repositories for child entities inside an aggregate, allowing direct database access to elements inside the aggregate boundary.",
+  "why_bad": "Breaches the encapsulation of the Aggregate. By bypassing the Aggregate Root (`Order`), client code can modify child elements (`OrderLine`) directly without the root validating the overall aggregate invariants (e.g., verifying that the total order amount does not exceed a limit).",
+  "detection": "Traits or Structs acting as Repositories for entities that are not Aggregate Roots.",
+  "counterexample": "Highly specialized performance optimizations where loading the entire root to change a single child is an unacceptable bottleneck.",
+  "fix": "Only provide Repositories for Aggregate Roots. All child modifications must proceed by loading, mutating, and saving the Aggregate Root.\n```rust\ntrait OrderRepository {\n    fn save(&self, order: &Order);\n    fn find_by_id(&self, id: u64) -> Option<Order>;\n}\n```",
+  "strength": "Strong",
+  "source": "*Eric Evans - Domain-Driven Design (2003)*, Chapter 6, \"Repositories\" (Provide repositories only for aggregates, p. 151); *Vaughn Vernon - Implementing Domain-Driven Design (2013)*, Chapter 12, \"Repositories\"."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 917,
+  "title": "Placing Abstract Interfaces and Concrete Implementations in the Same Package",
+  "category": "Policy Mechanism",
+  "damaged_code": "```\n// file: orders.rs (Single compilation unit / package boundary)\npub trait OrderRepository {\n    fn find(&self, id: u64) -> Option<Order>;\n}\n\npub struct SqlOrderRepository {\n    db_connection: DbConnection,\n}\n\nimpl OrderRepository for SqlOrderRepository {\n    fn find(&self, id: u64) -> Option<Order> { /* ... */ }\n}\n```",
+  "pattern": "An abstract boundary interface and its concrete, technology-specific implementations reside within the same compilation unit or package boundary.",
+  "why_bad": "Fails to enforce a strict architecture boundary. Developers can easily bypass the interface and instantiate or directly depend on the concrete repository, coupling the client code to infrastructure details.",
+  "detection": "Trait/interface definitions and their concrete implementations (such as database-backed structs) located within the same package or module.",
+  "counterexample": "Very small libraries where no separate architectural layers exist. Marked as `Contextual`.",
+  "fix": "Move the interface to an inner core package, and place technology-specific implementations in a separate, outer package that depends on the core interface package.\n```rust\n// In crate `domain_core`:\npub trait OrderRepository { /* ... */ }\n\n// In crate `infrastructure_db` (depends on `domain_core`):\npub struct SqlOrderRepository { /* ... */ }\n```",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Patterns of Enterprise Application Architecture* (2002), \"Separated Interface\", p. 311, 466."
+}

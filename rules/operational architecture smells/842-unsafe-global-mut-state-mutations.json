@@ -1,0 +1,13 @@
+{
+  "id": 842,
+  "title": "Unsafe Global Mut State Mutations",
+  "category": "Operational Architecture Smells",
+  "damaged_code": "```rust\nstatic mut STATUS: u32 = 0;\nfn set_shutting_down() {\n    unsafe { STATUS = 1; } // Race condition!\n}\n```",
+  "pattern": "Mutating global variables without synchronization or atomic ordering under multi-threaded server environments.",
+  "why_bad": "Unsafe memory access, undefined behavior, and compiler optimizations that fuse stores or reorder execution paths, leading to infinite loops or incorrect program flow.",
+  "detection": "Search for `unsafe` blocks writing to static variables (`static mut`) in multi-threaded application paths.",
+  "counterexample": "Mutating local variables inside single-threaded loops.",
+  "fix": "Use proper atomic types or mutexes.\n```rust\nstatic STATUS: AtomicU32 = AtomicU32::new(0);\nfn set_shutting_down() {\n    STATUS.store(1, Ordering::SeqCst);\n}\n```",
+  "strength": "Strong",
+  "source": "*1701.00854v6.pdf*, Listing 4.19; *Rust For Rustaceans*, Chapter 9."
+}

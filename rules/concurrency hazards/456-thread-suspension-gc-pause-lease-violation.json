@@ -1,0 +1,13 @@
+{
+  "id": 456,
+  "title": "Thread Suspension / GC Pause Lease Violation",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```java\n// Thread checks lease validity\nif (lease.isValid()) {\n    // JVM triggers a 15-second Stop-The-World GC Pause here!\n    // Lease expires, and another node is promoted to leader.\n    // JVM resumes, and this node performs unsafe leader action!\n    write_to_database(); \n}\n```",
+  "pattern": "Assuming that checking lease validity is sufficient to authorize a subsequent action, ignoring potential thread pauses from garbage collection or VM suspension.",
+  "why_bad": "Arbitrary pauses (up to minutes) can occur at *any* point in execution. If a pause occurs immediately after checking a lease, the lease may expire during the pause, but the thread will continue its unsafe action once resumed, leading to data corruption.",
+  "detection": "Validating a lease or leader state in software and then performing an external side-effect (like database writes) without fencing tokens or database verification.",
+  "counterexample": "Using fencing tokens (like generation counters) at the database layer to reject writes from stale leaders.",
+  "fix": "Utilize database-level fencing tokens to validate writes.\n```sql\nUPDATE database SET value = x WHERE leader_generation = current_generation;\n```",
+  "strength": "Contextual",
+  "source": "Martin Kleppmann (DDIA) Ch 8 (p. 287)"
+}

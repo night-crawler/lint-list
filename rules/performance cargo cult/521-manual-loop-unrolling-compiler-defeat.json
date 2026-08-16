@@ -1,0 +1,13 @@
+{
+  "id": 521,
+  "title": "Manual Loop Unrolling (Compiler Defeat)",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\nlet mut sum = 0;\nlet array = [1, 2, 3, 4, 5, 6, 7, 8];\n// Manually unrolled loop to \"save loop overhead\"\nsum += array[0];\nsum += array[1];\nsum += array[2];\nsum += array[3];\nsum += array[4];\nsum += array[5];\nsum += array[6];\nsum += array[7];\n```",
+  "pattern": "Manually expanding a loop's iterations into consecutive sequential statements to avoid the overhead of branch evaluation or index incrementing.",
+  "why_bad": "It defeats compiler loop optimizations, increases the binary instruction size (resulting in L1 instruction cache misses), and prevents the compiler from performing architecture-specific vectorization. Straightforward loops are easier for optimizing compilers to optimize [338, 347, 348].",
+  "detection": "Look for a series of consecutive statements that perform identical operations on sequential array indices or loop variables, where a simple `for` loop or iterator could be used.",
+  "counterexample": "In extremely low-level hard real-time graphics rendering or embedded microcode where manual assembly unrolling has been profiled and proven necessary on a specific CPU. `Context-dependent`.",
+  "fix": "```rust\nlet sum: i32 = array.iter().sum();\n```",
+  "strength": "Strong",
+  "source": "*Understanding Software Dynamics*, Chapter 2, Section 2.5 (p. 23); *Code Complete*, Chapter 25.3 (p. 338, 347, 348)."
+}

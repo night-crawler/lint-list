@@ -1,0 +1,13 @@
+{
+  "id": 522,
+  "title": "Unmeasured Spinlock Polling (Active Spinning)",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\nuse std::sync::atomic::{AtomicBool, Ordering};\nstruct SpinLock {\n    locked: AtomicBool,\n}\nimpl SpinLock {\n    fn lock(&self) {\n        // Active spinning consumes 100% CPU on a core\n        while self.locked.compare_exchange_weak(false, true, Ordering::Acquire, Ordering::Relaxed).is_err() {}\n    }\n}\n```",
+  "pattern": "An active `while {}` loop polling an atomic variable without yielding execution, parking the thread, or executing a spin-wait pause instruction.",
+  "why_bad": "Active spinning burns 100% CPU on a core, wasting electrical power and starving other threads that might be holding the lock or attempting to execute, leading to massive tail latency spikes [3, 4, 410].",
+  "detection": "A tight `while` loop that continuously performs an atomic read or write on a shared memory location without calling `std::thread::yield_now()`, `std::hint::spin_loop()`, or parking.",
+  "counterexample": "```rust\nwhile self.locked.compare_exchange_weak(false, true, Ordering::Acquire, Ordering::Relaxed).is_err() {\n    std::hint::spin_loop(); // Hints CPU that we are spinning\n}\n```",
+  "fix": "Use a standard platform Mutex (`std::sync::Mutex`) which utilizes adaptive spinning and thread parking to avoid CPU starvation.",
+  "strength": "Strong",
+  "source": "*Understanding Software Dynamics*, Chapter 22, Section 22.3 (p. 410); *1701.00854v6.pdf*, Chapter 3, Section 3.2 (p. 3, 4)."
+}

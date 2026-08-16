@@ -1,0 +1,13 @@
+{
+  "id": 738,
+  "title": "Temporary Shared Instance State (Temporal Coupling Pipeline)",
+  "category": "Cleverness Obscurity",
+  "damaged_code": "```rust\n// Rust\nstruct SuffixCalculator {\n    prefix_len: usize,\n}\nimpl SuffixCalculator {\n    fn find_prefix(&mut self, a: &str, b: &str) {\n        self.prefix_len = calculate_common_prefix(a, b);\n    }\n    fn find_suffix(&mut self, a: &str, b: &str) {\n        let suffix = calculate_suffix(a, b, self.prefix_len); // Relies on prefix_len!\n    }\n}\n```",
+  "pattern": "Storing temporary computation results in struct fields purely to pass variables between sequential method calls, requiring an implicit chronological calling order.",
+  "why_bad": "Extremely fragile. Future maintainers can easily invoke `find_suffix` before `find_prefix` or invoke them concurrently, leading to silent calculation errors or stale state reuse with no compiler warnings.",
+  "detection": "A method reads a struct field that is exclusively populated by another sibling method in the same struct, with no compiler-enforced sequence.",
+  "counterexample": "Actual state-machine structs where the state transitions are compiler-enforced using the Type-State pattern.",
+  "fix": "Pass the intermediate state directly as function arguments and return types.\n```rust\nstruct SuffixCalculator;\nimpl SuffixCalculator {\n    fn find_prefix(&self, a: &str, b: &str) -> usize {\n        calculate_common_prefix(a, b)\n    }\n    fn find_suffix(&self, a: &str, b: &str, prefix_len: usize) {\n        let suffix = calculate_suffix(a, b, prefix_len);\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Clean Code*, Chapter 15, \"Temporal Coupling\" (p. 259) / *Code Complete*, Chapter 5."
+}

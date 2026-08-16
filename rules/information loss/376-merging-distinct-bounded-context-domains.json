@@ -1,0 +1,13 @@
+{
+  "id": 376,
+  "title": "Merging Distinct Bounded Context Domains",
+  "category": "Information Loss",
+  "damaged_code": "```rust\nstruct UnifiedUser {\n    // Cargo Shipping Fields\n    vessel_voyage_id: String,\n    load_location: String,\n    // E-Commerce Fields\n    billing_address: String,\n    payment_method: String,\n}\n```",
+  "pattern": "Coalescing semantic terms from different bounded contexts into a single \"universal\" or \"god\" struct.",
+  "why_bad": "It destroys linguistic and boundary context, causing \"conceptual splinters.\" Code becomes tightly coupled, changes to e-commerce logic risk breaking shipping logic, and optional fields multiply because most fields are irrelevant to any single context.",
+  "detection": "Large structs containing fields that are clearly scoped to distinct business domains (e.g. shipping logistics vs. retail billing) under a single team.",
+  "counterexample": "Separate model definitions integrated at boundary mapping interfaces:\n```rust\nstruct BookingContext { cargo: Cargo }\nstruct BillingContext { payment: Payment }\n```",
+  "fix": "Split the model into distinct, context-specific structs and map between them explicitly at boundary layers.\n```rust\nstruct CargoShipment {\n    voyage_id: String,\n    load_location: String,\n}\n\nstruct CustomerPayment {\n    billing_address: String,\n    payment_method: String,\n}\n```",
+  "strength": "Strong",
+  "source": "*Domain-Driven Design* by Eric Evans (Chapter 14, p. 96)."
+}

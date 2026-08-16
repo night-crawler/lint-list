@@ -1,0 +1,13 @@
+{
+  "id": 848,
+  "title": "Tiny LSM Memtable Sizing",
+  "category": "Operational Architecture Smells",
+  "damaged_code": "```rust\n// Configuring LSM engine memtable size to 64KB\n```",
+  "pattern": "Setting memory flush buffers/memtables in LSM storage engines to excessively small sizes.",
+  "why_bad": "Causes the engine to flush tiny, uncompressed files to mass storage continuously. This triggers severe disk write amplification, triggers constant background compactions, saturates disk bandwidth, and can exhaust system dentry/inode limits.",
+  "detection": "LSM configuration parameters (`memtable_size_in_mb`) set to sub-megabyte or extremely small values relative to incoming write rates.",
+  "counterexample": "Low-throughput embedded systems where disk I/O and RAM are strictly bound and writes are rare.",
+  "fix": "Size memtables appropriately (typically 32MB to 128MB) to buffer a reasonable number of writes before flushing.",
+  "strength": "Strong",
+  "source": "*Database Internals*, \"LSM Trees,\" p. 132-135; *Building Secure and Reliable Systems*, p. 334."
+}

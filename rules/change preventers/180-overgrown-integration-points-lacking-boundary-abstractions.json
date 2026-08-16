@@ -1,0 +1,13 @@
+{
+  "id": 180,
+  "title": "Overgrown Integration Points (Lacking Boundary Abstractions)",
+  "category": "Change Preventers",
+  "damaged_code": "```rust\n// HTTP Controller containing direct, raw SQL query logic\npub fn checkout_handler(payload: web::Json<CheckoutPayload>) -> HttpResponse {\n    let mut conn = db::get_connection();\n    // Raw SQL database logic inside transport adapter boundary\n    conn.execute(\"INSERT INTO orders VALUES ($1, $2)\", &[&payload.id, &payload.amount]).unwrap();\n    HttpResponse::Ok().finish()\n}\n```",
+  "pattern": "Transport-specific adapters (such as HTTP controllers, event listeners, or message queue subscribers) contain extensive raw business validation, database updates, or data transformations directly in their bodies.",
+  "why_bad": "It blocks change and porting. If you need to switch from HTTP to gRPC, or run a test offline, you are forced to duplicate or mock the database connection state, making changes highly costly and risky.",
+  "detection": "HTTP routing handler functions or queue listeners that contain SQL query strings, database client instantiations, or multi-field business calculations.",
+  "counterexample": "Extremely simple CRUD microservices where the entire application consists of fewer than 2-3 endpoints and serves no long-term business rules.",
+  "fix": "Separate transport from business rules. Move database queries and logic to an interactor, and let the controller simply parse inputs and delegate to it.",
+  "strength": "Strong",
+  "source": "Marianne Bellotti, *Kill It with Fire* (2021), Chapter 4 (\"Overgrowth\"), pp. 64-66; Martin Fowler, *Patterns of Enterprise Application Architecture* (2002), \"Separate Domain from Presentation.\""
+}

@@ -1,0 +1,13 @@
+{
+  "id": 806,
+  "title": "The \"Whack-A-Mole\" Concurrency Rewrite",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```rust\n// Weakening synchronization blindly to fix a performance bottleneck\n// without analyzing spatial guarantees\nunsafe fn fetch_data_unlocked(ptr: *const Data) -> &'static Data {\n    &*ptr // Raw dereference without lock or RCU synchronization\n}\n```",
+  "pattern": "Attempting to resolve a performance bottleneck in a concurrent legacy system by weakening synchronization guarantees (e.g., replacing mutexes with raw pointers or RCU) without verifying and implementing the necessary spatial and temporal safety constraints in the code.",
+  "why_bad": "It replaces a clear performance bottleneck with an endless succession of subtle, non-reproducible concurrency bugs, data races, and memory corruption issues that are extremely difficult to diagnose [5].",
+  "detection": "Removing locks or synchronization wrappers from shared-memory variables without introducing corresponding atomic memory barriers, RCU read-critical sections, or hazard pointer guards [3].",
+  "counterexample": "Valid if the data is strictly immutable and initialized before thread spawning.",
+  "fix": "Prioritize lock safety; only transition to weaker synchronization models (like RCU) if the spatial and temporal invariants (e.g., newly allocated memory for modifications, synchronized updaters) are strictly enforced and verified by tests [447].",
+  "strength": "Strong",
+  "source": "1701.00854v6.pdf, \"concurrency bugs\" [3, 5, 447]"
+}

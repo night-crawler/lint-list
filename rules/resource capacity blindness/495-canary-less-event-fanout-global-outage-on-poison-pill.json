@@ -1,0 +1,13 @@
+{
+  "id": 495,
+  "title": "Canary-less Event Fanout / Global Outage on Poison Pill",
+  "category": "Resource Capacity Blindness",
+  "damaged_code": "```rust\nfn dispatch_heavy_migration_globally(servers: Vec<Server>) {\n    for server in servers {\n        // Fan out a dangerous payload to all production hosts concurrently\n        tokio::spawn(async move { server.execute_migration().await });\n    }\n}\n```",
+  "pattern": "An event or operation dispatcher that concurrently pushes a newly modified, risky, or heavy command payload (such as schema updates, complex migrations, or heavy parsing requests) to all production server nodes in parallel without a sequential testing gate.",
+  "why_bad": "If the payload contains a code bug, unexpected edge case, or heavy memory load, dispatching it globally will trigger concurrent crashes or memory exhaustion across all server nodes simultaneously [159]. This causes an instant, complete global outage [159]. Resilient systems must employ a sequential \"canary\" request first to verify host stability before broad deployment [159].",
+  "detection": "A concurrency mapping function fanning out untested operations across a production collection without a sequential canary execution step.",
+  "counterexample": "```rust\nasync fn dispatch_heavy_migration_globally(servers: Vec<Server>) -> Result<(), Error> {\n    if let Some(canary) = servers.first() {\n        // Sequential gate: Test single canary host first\n        canary.execute_migration().await?; \n    }\n    // Proceed globally only if canary succeeds\n    for server in servers.iter().skip(1) {\n        tokio::spawn(async move { server.execute_migration().await });\n    }\n    Ok(())\n}\n```",
+  "fix": "Enforce a sequential canary gate: dispatch the operation to a single node first, wait for a success response, and only proceed to scale out globally upon verification [159].",
+  "strength": "Strong",
+  "source": "Richard L. Sites, *Understanding Software Dynamics*, Chapter 6 / passage [159]."
+}

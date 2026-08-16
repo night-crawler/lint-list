@@ -1,0 +1,13 @@
+{
+  "id": 249,
+  "title": "Handshake State Merging (State Machine Contention)",
+  "category": "State Mutation",
+  "damaged_code": "```rust\nenum HandshakeState {\n    REQ_ACK, // Merged Request and Acknowledgment state\n    READY,\n    IDLE,\n}\n```",
+  "pattern": "A state machine enum merges two logically distinct phases of a handshake (such as request and acknowledgment) into a single combined state.",
+  "why_bad": "Under concurrency, if a single merged state represents both the request and acknowledgment, the state can be accessed or written to by both the signal handler/interrupt and the fastpath thread simultaneously. This causes race conditions and state corruption that a four-state machine cleanly avoids.",
+  "detection": "An enum representing handshake protocols combines consecutive transit states into a single variant.",
+  "counterexample": "Modeling the transition phases as distinct, separate states:\n```rust\nenum FineHandshakeState {\n    REQUEST,\n    ACKNOWLEDGE,\n    READY,\n    IDLE,\n}\n```",
+  "fix": "Separate the merged state into distinct enum variants to ensure clear, single-threaded ownership during transitions.\n```rust\n// Splitting REQ_ACK to REQ and ACK variants.\n```",
+  "strength": "Strong",
+  "source": "*1701.00854v6.pdf* by Paul McKenney (Section E.5, \"Counting\", \"Quick Quiz 5.49\")."
+}

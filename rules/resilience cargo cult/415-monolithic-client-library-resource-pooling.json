@@ -1,0 +1,13 @@
+{
+  "id": 415,
+  "title": "Monolithic Client Library Resource Pooling",
+  "category": "Resilience Cargo Cult",
+  "damaged_code": "```rust\nlet legacy_client = LegacyVendorClient::new(); // internally blocks threads forever\n```",
+  "pattern": "Adopting vendor-provided third-party client libraries that perform their own internal, non-configurable resource or thread pooling.",
+  "why_bad": "These libraries frequently block client threads forever when connections or resources are exhausted, preventing the parent application from setting timeouts, failing fast, or managing its own thread capacity [178, 179].",
+  "detection": "Identify third-party libraries interacting with networks or external databases that lack configurable timeout parameters or connection-checkout limits, or wrap call sites in block-forever semantics.",
+  "counterexample": "None (avoid the library or wrap its executions strictly inside an external worker thread pool that can be discarded).",
+  "fix": "Avoid using client libraries that do not allow full configuration of timeouts and connection-checkout behaviors. If they must be used, wrap calls in a separate thread pool that the parent application can abort or discard on timeout.",
+  "strength": "Contextual",
+  "source": "Michael T. Nygard, *Release It!*, page 81 / passage [178, 179]."
+}

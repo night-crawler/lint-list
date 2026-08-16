@@ -1,0 +1,13 @@
+{
+  "id": 367,
+  "title": "Representing Parsed Formats as Raw Strings",
+  "category": "Information Loss",
+  "damaged_code": "```rust\nstruct UserSession {\n    email_address: String,\n}\n```",
+  "pattern": "Representing structured, domain-constrained data formats (e.g., emails, URLs, IP addresses) as raw string primitives throughout internal layers.",
+  "why_bad": "It destroys the invariants guaranteed by parsing. Downstream consumers must either perform defensive re-validation, risk parsing invalid inputs, or blindly trust that upstream components validated the data correctly.",
+  "detection": "Match struct fields or function parameters with names like `email`, `url`, `ip`, `phone` typed as `String` or `&str`.",
+  "counterexample": "Raw textual data with no structural invariants, such as comments or descriptions:\n```rust\nstruct UserSession {\n    profile_bio: String,\n}\n```",
+  "fix": "Parse the raw input into a structured, validated newtype as early as possible.\n```rust\nstruct EmailAddress(String);\n\nimpl EmailAddress {\n    fn parse(s: String) -> Result<Self, &'static str> {\n        if s.contains('@') { Ok(EmailAddress(s)) } else { Err(\"Invalid email\") }\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Building Secure and Reliable Systems* by Heather Adkins et al. (Chapter 6, p. 115-116)."
+}

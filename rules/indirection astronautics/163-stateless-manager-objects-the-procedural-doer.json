@@ -1,0 +1,13 @@
+{
+  "id": 163,
+  "title": "Stateless \"Manager\" Objects (The Procedural Doer)",
+  "category": "Indirection Astronautics",
+  "damaged_code": "```rust\npub struct AccountTransferManager;\n\nimpl AccountTransferManager {\n    // Stateless manager executing procedural logic on dumb data\n    pub fn transfer(&self, from: &mut Account, to: &mut Account, amount: f64) {\n        if from.balance >= amount {\n            from.balance -= amount;\n            to.balance += amount;\n        }\n    }\n}\n```",
+  "pattern": "Creating behaviorless, stateless structs ending with names like `Manager`, `Processor`, or `Helper` to execute operations that should be cohesive methods on domain entities or value objects.",
+  "why_bad": "*   **Anemic Encapsulation:** Forces domain entities to expose all their fields as public, destroying encapsulation and allowing invalid states to be set from anywhere.\n*   **Procedural Design:** Morphs object-oriented or functional code bases into procedural transaction scripts masquerading as objects.",
+  "detection": "Stateless structs (zero fields or containing only repository handles) with names ending in `Manager` or `Processor` that mutate the fields of other mutable structs.",
+  "counterexample": "**Distributed Orchestration Services:** High-level coordinator services that manage transactions across multiple independent databases or external APIs are valid, as they cannot be hosted on a single entity.",
+  "fix": "Move the mutating behavior directly onto the entity that owns the data, preserving encapsulation invariants.\n```rust\nimpl Account {\n    pub fn transfer_to(&mut self, target: &mut Account, amount: f64) -> Result<(), InsufficientFunds> {\n        if self.balance < amount {\n            return Err(InsufficientFunds);\n        }\n        self.balance -= amount;\n        target.balance += amount;\n        Ok(())\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Evans, *Domain-Driven Design*, Chapter 5 \"Services\" & Martin, *Clean Code*, Chapter 6 \"Objects and Data Structures\"."
+}

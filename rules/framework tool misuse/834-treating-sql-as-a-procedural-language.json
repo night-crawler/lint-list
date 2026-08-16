@@ -1,0 +1,13 @@
+{
+  "id": 834,
+  "title": "Treating SQL as a Procedural Language",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Issuing individual queries in a loop to perform procedural updates\nfor id in user_ids {\n    sqlx::query(\"UPDATE users SET status = 'Inactive' WHERE id = $1\")\n        .bind(id)\n        .execute(&pool).await?;\n}\n```",
+  "pattern": "Performing multiple sequential database queries to iteratively update records row-by-row instead of using set-based SQL operations.",
+  "why_bad": "It causes extremely high network latency. The database performs individual transactional writes and index updates per row instead of batching them in a single query.",
+  "detection": "SQL update/insert queries executing inside procedural loops over loaded primary keys.",
+  "counterexample": "Executing targeted updates in an asynchronous queue handler where batching is impossible.",
+  "fix": "Rewrite the query as a single, set-based operation (e.g. `UPDATE users SET status = 'Inactive' WHERE id IN (...)`).",
+  "strength": "Strong",
+  "source": "*Release It! (Nygard), Chapter 10, p. 180 [252]*"
+}

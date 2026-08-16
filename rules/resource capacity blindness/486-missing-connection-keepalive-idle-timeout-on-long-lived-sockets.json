@@ -1,0 +1,13 @@
+{
+  "id": 486,
+  "title": "Missing Connection Keepalive / Idle Timeout on Long-lived Sockets",
+  "category": "Resource Capacity Blindness",
+  "damaged_code": "```rust\nuse std::net::TcpStream;\n\nfn init_connection() {\n    let stream = TcpStream::connect(\"192.168.1.100:3306\").unwrap();\n    // long-lived connection with no keepalive or idle timeout configured\n}\n```",
+  "pattern": "Reusing or holding persistent connection handles (such as database or network streams) in a pool or struct without configuring TCP keepalives (`set_nodelay`, `set_keepalive`) or an idle connection eviction timeout.",
+  "why_bad": "Stateful network devices, such as firewalls and routers, maintain finite connection state tables [595]. If a socket sits idle for a long duration, the firewall silently evicts it from its tables [595]. Because TCP does not notify endpoints of this eviction, subsequent attempts to read/write from the socket will block indefinitely as the TCP stack endlessly retries packet transmissions against a silent firewall, hanging the calling thread [595, 597].",
+  "detection": "Identify socket or pool configurations that do not set TCP keepalives or idle timeout connection recycling.",
+  "counterexample": "```rust\nuse std::net::TcpStream;\nuse socket2::{Socket, TcpKeepalive};\nuse std::time::Duration;\n\nfn init_connection() {\n    let stream = TcpStream::connect(\"192.168.1.100:3306\").unwrap();\n    let socket = Socket::from(stream);\n    let keepalive = TcpKeepalive::new()\n        .with_time(Duration::from_secs(300))\n        .with_interval(Duration::from_secs(10));\n    socket.set_tcp_keepalive(&keepalive).unwrap();\n}\n```",
+  "fix": "Enable TCP keepalive options on sockets, and configure connection pools to recycle/validate idle connections that exceed firewalls' inactivity limits [597, 232].",
+  "strength": "Contextual",
+  "source": "Michael T. Nygard, *Release It!*, Chapter 2 & Chapter 10 (Pool Connections) / passages [595, 597, 232]."
+}

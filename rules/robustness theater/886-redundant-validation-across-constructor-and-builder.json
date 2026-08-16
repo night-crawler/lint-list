@@ -1,0 +1,13 @@
+{
+  "id": 886,
+  "title": "Redundant Validation across Constructor and Builder",
+  "category": "Robustness Theater",
+  "damaged_code": "```rust\nimpl UserBuilder {\n    pub fn build(self) -> Result<User, Error> {\n        if self.name.is_empty() { return Err(Error::EmptyName); } // Check 1\n        User::new(self.name)\n    }\n}\n\nimpl User {\n    pub fn new(name: String) -> Result<Self, Error> {\n        if name.is_empty() { return Err(Error::EmptyName); } // Redundant Check 2\n        Ok(User { name })\n    }\n}\n```",
+  "pattern": "Repeating identical constraint validation logic in both a Builder/Factory wrapper and the core private or public constructor of the instantiated object.",
+  "why_bad": "It splits and duplicates invariant knowledge across the construction pipeline, making changes to invariants highly error-prone (as developers might modify the builder but forget the constructor).",
+  "detection": "The identical validation condition (e.g., `is_empty()` checks) executed sequentially inside both a builder class method and the target class's constructor.",
+  "counterexample": "```rust\n// Correct: Validate strictly in the constructor; builder merely routes or passes\nimpl UserBuilder {\n    pub fn build(self) -> Result<User, Error> {\n        User::new(self.name) // Construction invariant handled entirely inside User\n    }\n}\n```",
+  "fix": "Centralize parameter validation inside the target object's constructor. The builder should act as a simple compiler-checked aggregator, not a duplicate validator.",
+  "strength": "Strong",
+  "source": "Vaughn Vernon, *Implementing Domain-Driven Design*, Chapter 5 (\"Validation: Entities & Assertions\")."
+}

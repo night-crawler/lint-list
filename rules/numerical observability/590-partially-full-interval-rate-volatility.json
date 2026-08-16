@@ -1,0 +1,13 @@
+{
+  "id": 590,
+  "title": "Partially-Full Interval Rate Volatility",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\nfn calculate_rate_partially_full(count: u64, elapsed_secs: f64) -> f64 {\n    // If 1 request arrives in the first 6 seconds, upscale to 1 minute:\n    // (1 / 6) * 60 = 10 req/min\n    (count as f64 / elapsed_secs) * 60.0 \n}\n```",
+  "pattern": "Upscaling rate calculations inside an incomplete measurement window based on the elapsed time of a partial interval.",
+  "why_bad": "During the first few seconds of a window, upscaling causes extreme metric volatility. A single transaction at second 1 registers as \"60 requests per minute,\" triggering false alarms on rate threshold dashboards before quickly collapsing to normal rates.",
+  "detection": "Look for rate calculations multiplying partial counts by `total_window_time / partial_elapsed_time`.",
+  "counterexample": "`Context-dependent`. If traffic is guaranteed to be completely uniform, upscaling is accurate, but real traffic is bursty.",
+  "fix": "Combine the current partial interval count with a proportional fraction of the previous full interval's count to produce an unbiased and stable rate estimate.\n```rust\nfn calculate_rate_correct(prev_full_count: u64, partial_count: u64, partial_elapsed: f64) -> f64 {\n    // Standard stable rate combination:\n    (prev_full_count as f64 + partial_count as f64) / (1.0 + partial_elapsed)\n}\n```",
+  "strength": "Strong` — guarantees severe noise and metric spikes during initial window phases.",
+  "source": "Richard L. Sites - *Understanding Software Dynamics* (2021), Chapter 9.8, p. 152-154."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 682,
+  "title": "Untested Configuration Pushes in Pipelines",
+  "category": "Configuration Complexity",
+  "damaged_code": "```yaml\n# CI configuration does not check YAML properties\ntest_and_deploy:\n  script:\n    - cargo test\n    - deploy_yaml config.yaml # typos or syntax errors bypass testing\n```",
+  "pattern": "Merging configuration changes directly to repositories or deploying them to production environments without automated testing in CI.",
+  "why_bad": "Configuration changes are a major cause of production outages. Skipping automated checks or testing configurations in isolation introduces catastrophic syntax or logical errors.",
+  "detection": "A repository CI/CD pipeline that tests code compilation but contains no validation tests, schemas, or dry-run assertions for configurations.",
+  "counterexample": "```yaml\ntest_configs:\n  script:\n    - validate_yaml_schema config.yaml\n    - test_dry_run_startup --config config.yaml\n```",
+  "fix": "Treat configuration files as code; require the same code reviews, syntax validations, and dry-run startup tests under CI before deployment.",
+  "strength": "Context-dependent",
+  "source": "Titus Winters, Tom Manshreck, Hyrum Wright - *Software Engineering at Google_ Lessons Learned from Programming Over Time* (2020, O'Reilly Media).pdf, Chapter 16; Heather Adkins et al., - *Building Secure and Reliable Systems* (2020, O'Reilly Media).pdf, Chapter 13."
+}

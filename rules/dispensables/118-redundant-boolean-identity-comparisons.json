@@ -1,0 +1,13 @@
+{
+  "id": 118,
+  "title": "Redundant Boolean Identity Comparisons",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nif flag == true {}\n```",
+  "pattern": "Comparing a boolean variable directly to `true` or `false` using equality operators.",
+  "why_bad": "It is logically redundant. Booleans are already truth values; comparing them to boolean constants adds visual noise with zero semantic value.",
+  "detection": "Expressions comparing a boolean type to `true` or `false` literals.",
+  "counterexample": "Context-dependent",
+  "fix": "Remove the comparison and use the boolean variable directly (`if flag` or `if !flag`).",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 17 (\"Unusual Control Structures\"); Robert C. Martin, *Clean Code*, Chapter 17."
+}

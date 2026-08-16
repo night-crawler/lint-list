@@ -1,0 +1,13 @@
+{
+  "id": 499,
+  "title": "STL Clear Memory Leak (Non-Shrinking Capacity)",
+  "category": "Performance Smells",
+  "damaged_code": "```cpp\nstd::vector<float> data;\n// Fill data...\ndata.clear(); // Capacity remains unchanged!\n```",
+  "pattern": "Calling `clear()` on a standard library vector/collection to release memory.",
+  "why_bad": "`std::vector::clear()` resets the size but keeps the allocated heap capacity, leaving unused memory bound to the object and starving the system allocator.",
+  "detection": "Invocation of `clear()` on a large vector whose lifetime extends far past the clearance point, without subsequent reallocation.",
+  "counterexample": "The vector will be refilled immediately with a similar volume of data. `Context-dependent`.",
+  "fix": "Swap the vector with a default-constructed empty temporary: `std::vector<float>().swap(data)`.",
+  "strength": "Strong",
+  "source": "*The Art of Readable Code*, Chapter 5, \"Advertising Likely Pitfalls\" (p. 52 / 573)."
+}

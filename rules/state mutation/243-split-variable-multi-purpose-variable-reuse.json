@@ -1,0 +1,13 @@
+{
+  "id": 243,
+  "title": "Split Variable / Multi-Purpose Variable Reuse",
+  "category": "State Mutation",
+  "damaged_code": "```rust\nfn calculate_physics(mass: f64, primary_force: f64, secondary_force: f64, delay: f64) {\n    let mut acc = primary_force / mass; // Initial acceleration\n    println!(\"Primary acceleration: {}\", acc);\n    \n    // Reassigned to hold a completely different, unrelated physical calculation\n    acc = (primary_force + secondary_force) / mass; \n    println!(\"Secondary acceleration: {}\", acc);\n}\n```",
+  "pattern": "A mutable variable is reused to hold multiple independent values with different semantic meanings at different points in a function.",
+  "why_bad": "Reusing variables makes their names misleading and creates artificial coupling between unrelated steps in a routine. If a developer refactors the first calculation, they may accidentally read the modified variable downstream, introducing severe logic regression.",
+  "detection": "A mutable variable is assigned, read, and then reassigned a mathematically distinct computation, rather than being accumulated into (such as summing values in a loop).",
+  "counterexample": "Loop indices or variables used strictly to accumulate values:\n```rust\nlet mut total_revenue = 0;\nfor item in transactions {\n    total_revenue += item.amount;\n}\n```",
+  "fix": "Split the reassigned variable into distinct, immutable variables, each reflecting its specific purpose.\n```rust\nfn calculate_physics_split(mass: f64, primary_force: f64, secondary_force: f64, delay: f64) {\n    let primary_acc = primary_force / mass;\n    println!(\"Primary acceleration: {}\", primary_acc);\n    \n    let combined_acc = (primary_force + secondary_force) / mass;\n    println!(\"Secondary acceleration: {}\", combined_acc);\n}\n```",
+  "strength": "Strong",
+  "source": "*Refactoring* by Martin Fowler (p. 184, \"Split Temporary Variable\")."
+}

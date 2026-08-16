@@ -1,0 +1,13 @@
+{
+  "id": 624,
+  "title": "XXE-Prone XML Parsing",
+  "category": "Security Boundary Failures",
+  "damaged_code": "```rust\n// Pseudo-code or C++ XML parser with external entities enabled\nfn parse_xml_payload(xml_data: &str) {\n    let mut parser = xml::Parser::new();\n    parser.enable_external_entities(true); // Vulnerable to XXE\n    parser.parse(xml_data);\n}\n```",
+  "pattern": "Parsing XML documents using a parser configuration that permits resolving XML External Entities (XXE) and external DTD declarations.",
+  "why_bad": "Enables Local File Inclusion (LFI) and SSRF. Attackers can submit XML files containing custom entity declarations pointing to local system directories (like `/etc/passwd`), forcing the parser to load and exfiltrate host file contents.",
+  "detection": "Configuration calls setting `enable_external_entities` or similar XML parser parameter variables to `true` prior to parsing external payloads.",
+  "counterexample": "```rust\nfn parse_xml_payload(xml_data: &str) {\n    let mut parser = xml::Parser::new();\n    parser.enable_external_entities(false); // XXE Disabled\n    parser.parse(xml_data);\n}\n```",
+  "fix": "Configure all XML parsing libraries to explicitly disable XXE resolution and external DTD definitions before processing untrusted data.",
+  "strength": "Strong",
+  "source": "`Heather Adkins et al. - Building Secure and Reliable Systems (2020)`, Ch 12, p. 252."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 882,
+  "title": "The Status-Guard Double Check",
+  "category": "Robustness Theater",
+  "damaged_code": "```rust\nclass Order {\n    fn update_delivery_address(&mut self, addr: Address) {\n        // Redundant status check on top of caller checks\n        if self.state != OrderState::Draft {\n            panic!(\"Cannot modify finalized order!\");\n        }\n        self.delivery_address = addr;\n    }\n}\n\n// Caller code repeats the exact same verification check:\nif order.state == OrderState::Draft {\n    order.update_delivery_address(new_addr);\n}\n```",
+  "pattern": "An object method repeats strict state-guard validations (e.g., checking if an order is editable) that the calling code is already forced to check before making the invocation.",
+  "why_bad": "It introduces double-maintenance. If the rules for editability change (e.g., allow edits in a new `PendingApproval` state), both the method guard and all caller check conditionals must be updated, violating DRY and risking inconsistencies.",
+  "detection": "The replication of state-eligibility conditional checks immediately before and inside a mutator method.",
+  "counterexample": "`Context-dependent`. If database consistency relies on absolute validation, duplication might be tolerated, but programmatic status-guards are usually architectural bloat.",
+  "fix": "Eliminate the duplicate check. Either delegate checking exclusively to the object method and handle its return error, or assert the state internally to keep the method simple.",
+  "strength": "Contextual",
+  "source": "Martin Fowler, *Patterns of Enterprise Application Architecture* (PEAA), \"Is the status-based guard worth the trouble?\"."
+}

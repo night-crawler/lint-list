@@ -1,0 +1,13 @@
+{
+  "id": 566,
+  "title": "Database as a Work Queue",
+  "category": "Data Query Modeling Smells",
+  "damaged_code": "```rust\n// Repeatedly polling and locking a table to use it as a task queue\nlet task = sqlx::query(\n    \"SELECT * FROM tasks WHERE status = 'PENDING' LIMIT 1 FOR UPDATE SKIP LOCKED\"\n).fetch_optional(&pool).await?;\n```",
+  "pattern": "Using a relational database table to store task/job states and repeatedly polling and updating row statuses to distribute work among application instances.",
+  "why_bad": "Relational databases are not designed for queueing. High-frequency updates and row locking (`FOR UPDATE`) cause extreme lock contention, deadlocks, and index bloat. As the table grows, query performance drops off a cliff, leading to thread blocking and cascading failures [273, 274, 565, 566].",
+  "detection": "Frequent queries executed with `FOR UPDATE` combined with status columns (e.g., `PENDING`, `DONE`) being constantly updated in tight loops.",
+  "counterexample": "ACID transactional updates where row locking is transient and not used to distribute long-running background jobs.",
+  "fix": "Move queueing semantics to dedicated message brokers (e.g., RabbitMQ, Kafka) designed for asynchronous, low-latency, non-blocking message passing [530, 562].",
+  "strength": "Strong",
+  "source": "*Pragmatic Programmers - Release It! (Nygard), p. 177-178 [273, 274, 565, 566]*  \n*Implementing Domain-Driven Design (Vernon), p. 312 [530]*"
+}

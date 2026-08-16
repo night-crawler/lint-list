@@ -1,0 +1,13 @@
+{
+  "id": 717,
+  "title": "In-Memory Database Emulation (Row/Join Emulation)",
+  "category": "Inner Platform Effect",
+  "damaged_code": "```\n// Re-implementing relational storage and nested-loop joins manually in application memory\nstruct Row {\n    id: u64,\n    data: HashMap<String, String>,\n}\n\nstruct MemoryDatabase {\n    tables: HashMap<String, Vec<Row>>,\n}\n\nimpl MemoryDatabase {\n    fn manual_join(&self, left_table: &str, right_table: &str, join_col: &str) -> Vec<Row> {\n        let mut results = Vec::new();\n        if let (Some(left), Some(right)) = (self.tables.get(left_table), self.tables.get(right_table)) {\n            for l_row in left {\n                for r_row in right {\n                    // Manual, slow, un-indexed quadratic nested-loop join\n                    if l_row.data.get(join_col) == r_row.data.get(join_col) {\n                        results.push(l_row.clone());\n                    }\n                }\n            }\n        }\n        results\n    }\n}\n```",
+  "pattern": "Implementing ad-hoc tabular data layouts, manual transactional rollbacks, indexing, or nested-loop joins in application memory.",
+  "why_bad": "Re-creates a fragile, buggy, and non-durable database engine inside the application. It incurs quadratic performance penalties (\\(O(n^2)\\)) on memory joins, bypasses standard database optimizers, and introduces severe memory overhead.",
+  "detection": "The presence of nested arrays or maps representing relational schema matrices, paired with manual lookup loops that simulate relational joins.",
+  "counterexample": "**Unit Testing Mocks:** Short-lived, read-only structures used to mock external datastores inside test files are valid, as long as they do not duplicate relational join operations.",
+  "fix": "Delegate relational filtering, index traversal, and joining directly to SQL or a production-ready database engine.\n\n```\n// Delegation of data queries and joins to the underlying database engine\nlet query = \"SELECT * FROM users u JOIN roles r ON u.role_id = r.id WHERE u.active = true\";\nlet results = connection.execute(query)?;\n```",
+  "strength": "Strong",
+  "source": "Martin Kleppmann - _Designing Data-Intensive Applications_ The Big Ideas Behind Reliable, Scalable, and Maintainable Systems_ (2017, O’Reilly Media).pdf, Chapter 2 \"Relational Model vs. Document Model\"; [Robert C. Martin Series] Robert C. Martin - _Clean Architecture_ A Craftsman’s Guide to Software Structure and Design_ (2017, Prentice Hall).pdf, Chapter 17 \"InMemoryPage\"."
+}

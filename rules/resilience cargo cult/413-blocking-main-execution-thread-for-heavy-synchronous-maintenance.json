@@ -1,0 +1,13 @@
+{
+  "id": 413,
+  "title": "Blocking Main Execution Thread for Heavy Synchronous Maintenance",
+  "category": "Resilience Cargo Cult",
+  "damaged_code": "```rust\nfn handle_mail_arrival(&self, msg: Message) {\n    self.search_index.merge_and_index_sync(msg); // Blocks main event thread!\n    send_ack_to_client();\n}\n```",
+  "pattern": "Running heavy data-indexing, file-syncing, or cache-rebuilding operations synchronously on the main request-handling or network-event loop thread.",
+  "why_bad": "The entire network-event loop freezes during the maintenance operation. This blocks all incoming network requests and triggers timeouts across upstream systems, turning a localized maintenance task into a cascading service outage [431].",
+  "detection": "Look for computationally heavy or synchronous I/O operations (such as `.merge_run()`, database syncing, or cache rebuilds) invoked on active request-handling or event loop threads.",
+  "counterexample": "```rust\nfn handle_mail_arrival(&self, msg: Message) {\n    let index = self.search_index.clone();\n    tokio::spawn(async move {\n        index.merge_and_index_async(msg).await; \n    });\n    send_ack_to_client();\n}\n```",
+  "fix": "Offload expensive or background maintenance tasks to separate thread pools or asynchronous tasks, keeping the main request-handling threads highly responsive.",
+  "strength": "Strong",
+  "source": "Richard L. Sites, *Understanding Software Dynamics*, page 191 / passage [431]."
+}

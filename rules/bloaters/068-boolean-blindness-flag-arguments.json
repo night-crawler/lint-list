@@ -1,0 +1,13 @@
+{
+  "id": 68,
+  "title": "Boolean Blindness (Flag Arguments)",
+  "category": "Bloaters",
+  "damaged_code": "```rust\nfn configure_server(\n    host: &str,\n    is_production: bool,\n    enable_ssl: bool,\n    cache_responses: bool,\n) {\n    todo!()\n}\n\nfn main() {\n    // What do these booleans mean?\n    configure_server(\"localhost\", true, false, true);\n}\n```",
+  "pattern": "A function signature accepting multiple raw boolean parameters to toggle different execution paths or behaviors.",
+  "why_bad": "Call sites are completely unreadable and highly error-prone. A developer reading `configure_server(\"localhost\", true, false, true)` has no idea what each flag controls without jumping to the function definition, and can easily swap boolean arguments with zero compiler warnings.",
+  "detection": "Look for functions that accept 2 or more boolean arguments, particularly when they are passed as raw literals at the call sites.",
+  "counterexample": "`Context-dependent`. Standard library methods or internal private helpers where only a single boolean flag is passed, although explicit enums are still safer.",
+  "fix": "Replace the boolean parameters with descriptive, single-variant or multi-variant `enum`s.",
+  "strength": "Strong",
+  "source": "*Martin Fowler - Refactoring (1999)*, Chapter 10, \"Replace Parameter with Explicit Methods\"; *Steve McConnell - Code Complete (2004)*, Chapter 7; *Scott Wlaschin - Domain Modeling Made Functional (2017)*."
+}

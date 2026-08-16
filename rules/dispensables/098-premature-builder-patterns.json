@@ -1,0 +1,13 @@
+{
+  "id": 98,
+  "title": "Premature Builder Patterns",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nstruct UserBuilder { name: String }\nimpl UserBuilder {\n    fn build(self) -> User { User { name: self.name } }\n}\n```",
+  "pattern": "Implementing a verbose builder pattern for a tiny struct with only 1 or 2 mandatory fields.",
+  "why_bad": "Forces developers to maintain an entire auxiliary struct, state accumulation methods, and complex builders when a direct constructor is infinitely simpler.",
+  "detection": "Builder pattern implemented for structs containing very few fields (e.g., less than 3) that are always required.",
+  "counterexample": "Structs with 5+ optional fields where construction requires a safe, step-by-step configuration.",
+  "fix": "Remove the builder struct and provide a direct `new` constructor.",
+  "strength": "Contextual",
+  "source": "Joshua Kerievsky, *Refactoring to Patterns* (2004)."
+}

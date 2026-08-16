@@ -1,0 +1,13 @@
+{
+  "id": 480,
+  "title": "Infinite Request Retry Queue (Queue Accumulation)",
+  "category": "Resource Capacity Blindness",
+  "damaged_code": "```rust\nstruct RetryQueue {\n    // Endless accumulation of failed requests waiting to be retried\n    pending: Vec<Vec<u8>>,\n}\n\nimpl RetryQueue {\n    fn push_failed(&mut self, request: Vec<u8>) {\n        self.pending.push(request);\n    }\n}\n```",
+  "pattern": "Storing failed requests or background jobs in an unbounded queue/collection for later retrying, without enforcing an upper bound on queue size or dropping old/stale requests.",
+  "why_bad": "When an downstream dependency suffers a prolonged outage, a retry queue that has no maximum size will grow indefinitely [133, 134]. This results in massive memory footprint growth and eventually causes OOM panics [133, 216]. Furthermore, upon recovery, the server must process hours of stale backlog (often email or messages that are no longer wanted), causing cascading failures and prolonged recovery times [133, 134].",
+  "detection": "Identify queues or vectors designated for retrying failed operations that lack a capped maximum capacity or an aging/TTL eviction mechanism.",
+  "counterexample": "```rust\nuse std::collections::VecDeque;\n\nstruct RetryQueue {\n    pending: VecDeque<Vec<u8>>,\n    max_capacity: usize,\n}\n\nimpl RetryQueue {\n    fn push_failed(&mut self, request: Vec<u8>) {\n        if self.pending.len() >= self.max_capacity {\n            self.pending.pop_front(); // Evict oldest\n        }\n        self.pending.push_back(request);\n    }\n}\n```",
+  "fix": "Enforce a strict maximum capacity on the retry queue, dropping or rejecting requests (e.g., LIFO/FIFO eviction) once the queue is full [134, 216].",
+  "strength": "Contextual",
+  "source": "Marianne Bellotti, *Kill It with Fire*, Chapter 9 / passages [133, 134]; Michael T. Nygard, *Release It!*, Chapter 10 (Steady State) / passage [216]."
+}

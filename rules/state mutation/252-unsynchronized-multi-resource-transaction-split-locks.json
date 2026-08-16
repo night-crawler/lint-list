@@ -1,0 +1,13 @@
+{
+  "id": 252,
+  "title": "Unsynchronized Multi-Resource Transaction (Split Locks)",
+  "category": "State Mutation",
+  "damaged_code": "```rust\nstruct DinerStock {\n    pie_count: Mutex<usize>,\n    ice_cream_count: Mutex<usize>,\n}\n\n// Call site: orders pie a la mode (needs BOTH pie and ice cream)\nfn order_pie_a_la_mode(stock: &DinerStock) -> bool {\n    let mut pie = stock.pie_count.lock().unwrap();\n    if *pie > 0 {\n        let mut ice_cream = stock.ice_cream_count.lock().unwrap(); // DEADLOCK HAZARD!\n        if *ice_cream > 0 {\n            *pie -= 1;\n            *ice_cream -= 1;\n            return true;\n        }\n    }\n    false\n}\n```",
+  "pattern": "Acquiring separate lock guards sequentially on multiple independent resources to perform a single atomic multi-resource transaction.",
+  "why_bad": "It exposes the system to severe deadlock hazards (if another transaction acquires the locks in the reverse order) or race conditions where intermediate states are observed as inconsistent between the two lock acquisitions.",
+  "detection": "A function acquires a lock on resource `A`, and then, while holding `A`'s lock, attempts to acquire a lock on resource `B` in a nested statement.",
+  "counterexample": "Acquiring a single master transaction lock, or using database-level multi-resource transactions:\n```rust\n// Lock a single coordinated state containing both pie and ice cream counts.\n```",
+  "fix": "Group the resources under a single mutex, or use a lock ordering manager, or utilize transactional memory patterns to perform the update atomically.\n```rust\nstruct ConsolidatedStock {\n    items: Mutex<StockCounts>,\n}\n```",
+  "strength": "Strong",
+  "source": "*The Pragmatic Programmer* by Andrew Hunt and David Thomas (Topic 34, \"Shared State Is Incorrect State\", \"Multiple Resource Transactions\"); *Structure and Interpretation of Computer Programs* by Harold Abelson and Gerald Jay Sussman (Section 3.4.2, \"Complexity of using multiple shared resources\")."
+}

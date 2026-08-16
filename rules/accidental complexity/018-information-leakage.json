@@ -1,0 +1,13 @@
+{
+  "id": 18,
+  "title": "Information Leakage",
+  "category": "Accidental Complexity",
+  "damaged_code": "```rust\n// In module_a.rs\npub fn parse_header(raw: &str) -> (String, usize) {\n    let mut parts = raw.split(',');\n    let name = parts.next().unwrap().to_string();\n    let len = parts.next().unwrap().parse::<usize>().unwrap();\n    (name, len)\n}\n\n// In module_b.rs\npub fn format_header(name: &str, len: usize) -> String {\n    format!(\"{},{}\", name, len)\n}\n```",
+  "pattern": "A single design decision (such as a custom format, protocol, or internal representation detail) is known and processed in multiple independent, disconnected modules instead of being centralized.",
+  "why_bad": "It destroys encapsulation and creates change amplification. If the underlying layout or format changes, developers must manually identify and update every disconnected module that shares this implicit knowledge, risking silent desynchronization bugs.",
+  "detection": "The same string literals, regex patterns, or serialization formats being manually handled, sliced, or formatted in multiple separate modules without sharing a single parsing/formatting module.",
+  "counterexample": "Universal standard formats (like standard JSON or base64) handled by distinct, specialized crates where serialization and deserialization are decoupled by design.",
+  "fix": "Centralize the design decision into a single module with a stable interface. Let other modules call this single source of truth.",
+  "strength": "Strong",
+  "source": "John K. Ousterhout, *A Philosophy of Software Design* (2018), Chapter 5 (\"Information Hiding and Leakage\"), pp. 31, 300–301."
+}

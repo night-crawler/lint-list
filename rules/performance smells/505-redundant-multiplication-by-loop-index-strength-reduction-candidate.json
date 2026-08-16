@@ -1,0 +1,13 @@
+{
+  "id": 505,
+  "title": "Redundant Multiplication by Loop Index (Strength Reduction Candidate)",
+  "category": "Performance Smells",
+  "damaged_code": "```vb\nFor i = 0 To sale_count - 1\n    commission(i) = (i + 1) * revenue * rate * discount // Multiplication inside loop\nNext\n```",
+  "pattern": "Multiplying a loop-invariant value by the loop index on every pass through the loop.",
+  "why_bad": "Multiplication instructions are significantly more computationally expensive than additions, consuming more execution cycles inside the hot path.",
+  "detection": "An inner loop statement multiplying a constant expression by the loop index variable.",
+  "counterexample": "Compilers in compiling languages automatically optimize this via built-in strength reduction. `Context-dependent`.",
+  "fix": "Store the constant multiplication increment outside the loop, and iteratively add the increment to a running accumulator.",
+  "strength": "Contextual",
+  "source": "*Code Complete*, Chapter 26, \"Strength Reduction\" (p. 485 / p. 194-195)."
+}

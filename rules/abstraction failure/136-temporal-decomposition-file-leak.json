@@ -1,0 +1,13 @@
+{
+  "id": 136,
+  "title": "Temporal Decomposition File Leak",
+  "category": "Abstraction Failure",
+  "damaged_code": "```rust\nstruct ConfigReader;\nimpl ConfigReader {\n    pub fn read_json(&self) -> String { /* reads raw JSON string */ \"\" }\n}\n\nstruct ConfigParser;\nimpl ConfigParser {\n    pub fn parse_json(&self, raw: &str) -> std::collections::HashMap<String, String> { /* parses JSON */ std::collections::HashMap::new() }\n}\n\nstruct ConfigWriter;\nimpl ConfigWriter {\n    pub fn write_json(&self, raw: &str) { /* writes JSON back */ }\n}\n```",
+  "pattern": "A system's structure is decomposed chronologically (e.g., Reader, Parser/Modifier, Writer) into separate classes, forcing multiple modules to possess detailed knowledge of the exact same internal file format.",
+  "why_bad": "It leaks the file format or communication protocol design across multiple distinct structures, causing severe information leakage. If the underlying serialization format changes, Reader, Parser, and Writer must all be updated in unison.",
+  "detection": "Distinct structs with methods named sequentially (e.g., `read_*`, `parse_*`, `write_*`) that operate on the same data structures or file targets, sharing knowledge of the formatting.",
+  "counterexample": "Unified serialization frameworks like `serde` where traits like `Serialize` and `Deserialize` are implemented for data structures, but the actual schema format is encapsulated within a single parser/writer type.",
+  "fix": "Consolidate the core mechanisms of reading, modifying, and writing the format into a single, deep struct that encapsulates the format details entirely.",
+  "strength": "Strong",
+  "source": "John K. Ousterhout, *A Philosophy of Software Design* (2018), Chapter 5, Section 5.3 (\"Temporal decomposition\")."
+}

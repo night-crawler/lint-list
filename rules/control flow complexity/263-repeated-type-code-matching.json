@@ -1,0 +1,13 @@
+{
+  "id": 263,
+  "title": "Repeated Type Code Matching",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```rust\nfn draw(shape_type: ShapeType) {\n    match shape_type {\n        ShapeType::Circle => draw_circle(),\n        ShapeType::Square => draw_square(),\n    }\n}\n```",
+  "pattern": "Repeatedly branching on a type code or enum variants in multiple methods across the codebase.",
+  "why_bad": "Violates the Open/Closed Principle. Adding a new type requires searching for and updating every single branch block in the codebase.",
+  "detection": "Repeated `match` or `switch` statements over the same enum type across multiple functions.",
+  "counterexample": "Branching on a closed enum that rarely changes (like `Option` or `Result`) or is localized within a single factory function.",
+  "fix": "Replace type codes with a trait/interface and implement polymorphic methods.",
+  "strength": "Contextual",
+  "source": "Martin Fowler, *Refactoring*, \"Replace Conditional with Polymorphism\"; Steve McConnell, *Code Complete*, Section 15.2."
+}

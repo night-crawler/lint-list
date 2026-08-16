@@ -1,0 +1,13 @@
+{
+  "id": 439,
+  "title": "Relaxed RMW without Fence (Unordered Counters)",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```rust\nfn release_resource(counter: &AtomicUsize) {\n    if counter.fetch_sub(1, Ordering::Relaxed) == 1 {\n        // BUG: Fetch_sub is relaxed, memory access in cleanup \n        // can be reordered before fetch_sub decrement!\n        unsafe { free_resource(); } \n    }\n}\n```",
+  "pattern": "Using a relaxed read-modify-write operation (like `fetch_sub` with `Relaxed` ordering) to decrement a reference counter that gates resource reclamation.",
+  "why_bad": "Relaxed operations do not order surrounding memory accesses. The compiler or CPU can reorder the actual memory access of the resource cleanup *before* the decrement is finalized, allowing concurrent readers to access freed memory.",
+  "detection": "An atomic decrement gating resource deletion or cleanup using relaxed memory ordering without a surrounding acquire/release boundary or fence.",
+  "counterexample": "Using `Release` ordering on the decrement and an `Acquire` barrier on the cleanup path.",
+  "fix": "Use `Release` for decrement, and an `Acquire` fence for the reclamation path.\n```rust\nfn release_resource(counter: &AtomicUsize) {\n    if counter.fetch_sub(1, Ordering::Release) == 1 {\n        // Ensure subsequent operations see the release\n        std::sync::atomic::fence(Ordering::Acquire);\n        unsafe { free_resource(); }\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Paul McKenney 13.2.1.4, Jon Gjengset Ch 9"
+}

@@ -1,0 +1,13 @@
+{
+  "id": 212,
+  "title": "Communicational Cohesion Overlap",
+  "category": "Low Cohesion",
+  "damaged_code": "```rust\nstruct ReportGenerator {\n    data: Vec<String>,\n}\n\nimpl ReportGenerator {\n    // Communicational Cohesion: Unrelated actions grouped because they share data\n    fn print_summary_and_clear_cache(&mut self) {\n        for line in &self.data {\n            println!(\"{}\", line);\n        }\n        self.data.clear(); // Mutates and clears cache as an undocumented side-effect\n    }\n}\n```",
+  "pattern": "A function executes multiple operations that use the same input data, but the operations have completely different semantic responsibilities (e.g., printing data AND mutating/deleting that same data).",
+  "why_bad": "Grouping these operations hides a critical side-effect. A developer who merely wants to print the report will unexpectedly lose their data, violating the principle of least surprise and causing hard-to-track state bugs.",
+  "detection": "A single method performs a read-only operation (such as rendering or exporting) and also performs a destructive mutation or reset of that same data structure.",
+  "counterexample": "Atomic operations where clearing or updating state is a fundamental, verified step of the retrieval process (such as a thread-safe Queue `pop()` method).",
+  "fix": "Split the read operation and write operation into two distinct, functional methods.\n```impl ReportGenerator {\n    fn print_summary(&self) {\n        for line in &self.data { println!(\"{}\", line); }\n    }\n    fn clear_cache(&mut self) {\n        self.data.clear();\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Steve McConnell - Code Complete, Chapter 7, Section \"Aim for Strong Cohesion\" (Communicational Cohesion)*"
+}

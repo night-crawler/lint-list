@@ -1,0 +1,13 @@
+{
+  "id": 515,
+  "title": "Virtual Memory Multi-Transfer Fragmentation (Page Contiguity Invalidation)",
+  "category": "Performance Smells",
+  "damaged_code": "Requesting a single large physical device write (e.g., 40MB) using multiple fragmented virtual memory page frames without memory-mapping or direct page contiguity.",
+  "pattern": "Accessing raw devices sequentially using small physical page sizes mapped non-contiguously in virtual memory.",
+  "why_bad": "Forces physical devices to break up single large transfers into multiple 1MB chunks, incurring multiple seek operations and missing rotation cycles.",
+  "detection": "Large block I/O sequences processed via scattered, non-contiguous page allocations.",
+  "counterexample": "The hardware controller automatically supports scatter-gather I/O. `Contextual`.",
+  "fix": "Use memory-mapped file access (`mmap()`) or contiguous physical page frames to coalesce large file transfers.",
+  "strength": "Context-dependent",
+  "source": "*Understanding Software Dynamics*, Chapter 11 & 25 (p. 223 / 518 / 524)."
+}

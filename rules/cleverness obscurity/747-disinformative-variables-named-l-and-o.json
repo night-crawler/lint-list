@@ -1,0 +1,12 @@
+{
+  "id": 747,
+  "title": "Disinformative Variables Named `l` and `O`",
+  "category": "Cleverness Obscurity",
+  "damaged_code": "```rust\n// Rust\nlet l = 1;\nif O == l {\n    a = O1;\n} else {\n    l = 01; // \"l\" looks like 1, \"O\" looks like 0\n}\n```",
+  "pattern": "Declaring variables named with the lowercase letter `l` or the uppercase letter `O`.",
+  "why_bad": "High visual ambiguity. The lowercase `l` is indistinguishable from the numeric literal `1` in many fonts, and the uppercase `O` is indistinguishable from `0`. It compiles perfectly but creates severe visual confusion.",
+  "detection": "Variables, parameter bindings, or struct fields named exactly `l` or `O`.",
+  "fix": "Rename variables to meaningful, distinctive words that explain their semantic role.\n```rust\nlet limit = 1;\nif status == limit {\n    item = DEFAULT_STATUS;\n}\n```",
+  "strength": "Strong",
+  "source": "*Clean Code*, Chapter 2 (p. 20) / *The Art of Readable Code*."
+}

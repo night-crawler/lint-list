@@ -1,0 +1,13 @@
+{
+  "id": 550,
+  "title": "Premature Use of Sentinel Values to Avoid Loop Bounds Checks",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\nlet mut data = [1, 2, 3, 4, 0]; // 0 is a sentinel value\nlet mut i = 0;\nwhile data[i] != 0 {\n    // Attempting to avoid bounds checking (i < data.len()) using sentinel\n    process(data[i]);\n    i += 1;\n}\n```",
+  "pattern": "Using sentinel values inside raw arrays to terminate searches instead of explicit array length bounds checking.",
+  "why_bad": "Bypassing bounds checking using sentinels invites buffer overflow vulnerabilities and memory unsafety. Modern compilers automatically optimize loop bounds checking via iterator optimization and branch prediction, rendering sentinel optimizations completely obsolete [358].",
+  "detection": "Loops iterating through arrays or collections that lack index limits or bounds checking because they rely on a magic sentinel value (e.g. `0` or `-1`).",
+  "counterexample": "Low-level null-terminated C-string utilities (`char*`) where sentinel-based iteration is the mandated binary API standard. `Contextual`.",
+  "fix": "Use safe Rust iterators which compile down to bounds-check-free assembly under the hood.",
+  "strength": "Strong",
+  "source": "*Code Complete*, Section 26.4 (p. 358)."
+}

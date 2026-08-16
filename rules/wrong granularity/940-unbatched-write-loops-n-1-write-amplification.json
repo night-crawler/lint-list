@@ -1,0 +1,13 @@
+{
+  "id": 940,
+  "title": "Unbatched Write Loops (N+1 Write Amplification)",
+  "category": "Wrong Granularity",
+  "damaged_code": "```rust\nfn insert_users(db: &Database, users: Vec<User>) -> Result<(), Error> {\n    for user in users {\n        // Individual write operations executed in a loop\n        db.execute(\"INSERT INTO users (name) VALUES ($1)\", &[&user.name])?;\n    }\n    Ok(())\n}\n```",
+  "pattern": "Iteratively executing individual, independent database write queries inside a loop instead of batching them into a single bulk write operation.",
+  "why_bad": "Causes extreme write amplification and network overhead. For every single write, the system pays the penalty of database driver round-trips, parsing overhead, write-ahead logging (WAL) flush-to-disk, and index updates. This is particularly destructive for SSD storage wear and transaction log contention.",
+  "detection": "Database write commands executing inside loop structures (`for`, `while`, `.iter().for_each()`) without any grouping or batch parameters.",
+  "counterexample": "Trivial scripts or simple background workers executing a few low-frequency writes where latency is not a concern.",
+  "fix": "Combine the operations into a single bulk insert or batch transaction query.\n```rust\nfn insert_users_batched(db: &Database, users: Vec<User>) -> Result<(), Error> {\n    let mut tx = db.begin_transaction()?;\n    let query = \"INSERT INTO users (name) VALUES ($1)\";\n    tx.execute_batch(query, users)?;\n    tx.commit()?;\n    Ok(())\n}\n```",
+  "strength": "Strong",
+  "source": "*Alex Petrov - Database Internals (2019)*, Chapter 3 & Chapter 5; *Martin Kleppmann - Designing Data-Intensive Applications (2017)*, Chapter 3."
+}

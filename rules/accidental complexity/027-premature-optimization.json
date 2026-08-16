@@ -1,0 +1,13 @@
+{
+  "id": 27,
+  "title": "Premature Optimization",
+  "category": "Accidental Complexity",
+  "damaged_code": "```rust\nfn get_first_element_raw(data: &[i32]) -> i32 {\n    unsafe { *data.as_ptr() }\n}\n```",
+  "pattern": "Writing complex, non-obvious, or unsafe code for hypothetical performance gains during initial drafting, without any profiling or benchmark data.",
+  "why_bad": "It sacrifices clarity, readability, and correct architecture for unverified performance benefits. Programs spend 90% of their time in 10% of the code; optimizing non-hot-paths adds maintenance hazards and bypasses compiler optimizations without real gains.",
+  "detection": "Usage of `unsafe` blocks, manual pointer manipulations, complex manual loop unrolling, or custom caching mechanisms in non-hot paths with no associated performance tests or profiling data.",
+  "counterexample": "`Context-dependent`. Low-level library components (like core database indexing or high-frequency renderers) with strict, predefined performance constraints backed by benchmark suites.",
+  "fix": "Write the code in the simplest, most readable, and idiomatic way first. Benchmark and profile later, and optimize only the proven bottlenecks.",
+  "strength": "Contextual",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 25 (\"Code-Tuning Strategies - Premature Optimization\"), p. 597; Martin Fowler et al., *Refactoring*, Section on Performance, p. 70."
+}

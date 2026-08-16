@@ -1,0 +1,13 @@
+{
+  "id": 286,
+  "title": "Abrupt Process Exit during Shutdown (Abrupt Termination)",
+  "category": "Temporal Coupling Lifecycle Bugs",
+  "damaged_code": "```rust\n// Rust\nfn handle_shutdown_signal() {\n    println!(\"Shutdown requested...\");\n    std::process::exit(0); // BUG: abruptly terminates in-flight transactions!\n}\n```",
+  "pattern": "Shutting down an application by abruptly calling exit primitives (like `std::process::exit(0)`) while database or network transactions are in-flight.",
+  "why_bad": "Causes immediate data corruption, incomplete writes, and broken client connections by forcefully terminating active requests instead of letting them finish.",
+  "detection": "Shutdown signal handlers (e.g., listening for `SIGTERM` or `SIGINT`) immediately trigger process termination calls (`exit`) without notifying the active transaction managers.",
+  "counterexample": "A hard timeout handler that forcefully exits the process if graceful shutdown takes longer than an allocated interval (e.g., 30 seconds).",
+  "fix": "Implement a graceful shutdown sequence that stops accepting *new* work, allows active transactions to drain completely with a timeout, and then exits.",
+  "strength": "Strong",
+  "source": "Michael Nygard, *Release It!*, Section 14.3 / passage [282, 589]."
+}

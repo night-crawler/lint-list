@@ -1,0 +1,13 @@
+{
+  "id": 843,
+  "title": "Silent Error Suppression in Long-Running Background Loops",
+  "category": "Operational Architecture Smells",
+  "damaged_code": "```rust\nloop {\n    if let Err(_) = run_background_job() {\n        // Ignore error and continue loop\n    }\n}\n```",
+  "pattern": "Catching and discarding all errors in a core background process loop, allowing the loop to continue spinning endlessly without logging or alerting.",
+  "why_bad": "If a database connection fails, the background job spins in a tight loop at 100% CPU utilization, generating no value, exhausting resources, and hiding the service failure from monitoring tools.",
+  "detection": "A `loop` containing a catch-all match `Err(_)` that does not contain break logic, sleep modifiers, or error reporting / metrics updates.",
+  "counterexample": "Retrying a highly transient operation with explicit loop counters and backoffs.",
+  "fix": "If a background process fails persistently, log the failure, increment an error metric, and either shut down the process or enter a backed-off retry state.",
+  "strength": "Strong",
+  "source": "*Release It!*, \"Diagnostic Tests,\" p. 176."
+}

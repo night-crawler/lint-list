@@ -1,0 +1,13 @@
+{
+  "id": 630,
+  "title": "Missing Buffer Length Validation (Heartbleed-style)",
+  "category": "Security Boundary Failures",
+  "damaged_code": "```rust\nfn read_packet(packet_buffer: &[u8], payload_len: usize) -> Vec<u8> {\n    // Trusting the payload_len parameter without verifying against buffer boundaries\n    let mut response = vec![0u8; payload_len];\n    response.copy_from_slice(&packet_buffer[0..payload_len]);\n    response\n}\n```",
+  "pattern": "Copying data out of an incoming packet stream buffer into an allocation based on a length parameter supplied in the packet header, without validating that the parameter matches the actual packet buffer size.",
+  "why_bad": "Allows attackers to declare a large payload length while submitting a tiny payload buffer. The copy operation then extracts out-of-bounds bytes from process memory (including TLS keys, session cookies, or passwords) and returns them to the attacker.",
+  "detection": "Slices or copies from a byte array bounded by a variable length variable where the variable has not been actively asserted to be less than or equal to the array length.",
+  "counterexample": "```rust\nfn read_packet(packet_buffer: &[u8], payload_len: usize) -> Option<Vec<u8>> {\n    if payload_len > packet_buffer.len() {\n        return None; // Detect size discrepancy\n    }\n    let mut response = vec![0u8; payload_len];\n    response.copy_from_slice(&packet_buffer[0..payload_len]);\n    Some(response)\n}\n```",
+  "fix": "Always validate that the payload length parameter matches or is strictly less than the physical byte length of the received packet buffer before executing slice copy operations.",
+  "strength": "Strong",
+  "source": "`Heather Adkins et al. - Building Secure and Reliable Systems (2020)`, Ch 12, p. 251."
+}

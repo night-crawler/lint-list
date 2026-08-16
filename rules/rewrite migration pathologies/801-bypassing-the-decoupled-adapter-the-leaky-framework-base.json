@@ -1,0 +1,13 @@
+{
+  "id": 801,
+  "title": "Bypassing the Decoupled Adapter (The Leaky Framework Base)",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```rust\n// Domain entity directly inheriting/subclassing a framework ORM model\nstruct Account {\n    base: sqlx_orm::PersistenceModel, // Couples domain directly to framework API\n}\n```",
+  "pattern": "Directly subclassing, embedding, or inheriting database framework base classes inside core domain entity structures.",
+  "why_bad": "It leaks the third-party framework's entire API into the business domain. Downstream callers bypass domain rules by calling framework methods directly, making future upgrades or migrations to other persistence backends extremely expensive and labor-intensive [774].",
+  "detection": "Domain-level types declaring public fields or traits that are explicitly owned by a third-party framework (e.g., ORM models, web framework request handlers).",
+  "counterexample": "Valid for rapid prototypes or low-scale Transaction Scripts where domain separation is not prioritized.",
+  "fix": "Use delegation: decouple the domain model from the persistence mechanism by defining a data mapper or repository trait [774].\n```rust\nstruct Account {\n    id: u64,\n    balance: f64,\n}\nstruct AccountRepository { db: Database }\nimpl AccountRepository {\n    async fn save(&self, account: &Account) -> Result<(), Error> { ... }\n}\n```",
+  "strength": "Strong",
+  "source": "The Pragmatic Programmer, \"Boundaries: Drawing Lines\" [774]"
+}

@@ -1,0 +1,13 @@
+{
+  "id": 838,
+  "title": "Hardcoded Service Host IP Endpoints",
+  "category": "Operational Architecture Smells",
+  "damaged_code": "```rust\nconst SERVICE_URL: &str = \"http://192.168.1.104:8080/api\";\n```",
+  "pattern": "Hardcoding static IP addresses or port numbers in application constants instead of using logical names or configuration.",
+  "why_bad": "Violates the dynamic nature of operational environments. If a server is rescheduled onto another host, the application fails to resolve it, requiring recompilation or redeployment.",
+  "detection": "Hardcoded IP address patterns inside source code constants or string literals used for socket connections.",
+  "counterexample": "Binding to localhost (`127.0.0.1` or `[::1]`) for internal local testing or testing loopback sockets.",
+  "fix": "Use a DNS name or external configuration with a service discovery mechanism.",
+  "strength": "Strong",
+  "source": "*Release It!*, \"Configuration,\" p. 251."
+}

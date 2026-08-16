@@ -1,0 +1,13 @@
+{
+  "id": 342,
+  "title": "Eager Multi-Aggregate Serialization (The Over-fetched JSON DTO)",
+  "category": "Boundary Representation",
+  "damaged_code": "```rust\n#[derive(Serialize)]\nstruct CustomerDto {\n    id: u64,\n    name: String,\n    orders: Vec<OrderDto>,           // Nested separate aggregate\n    billing_info: BillingInfoDto,     // Nested separate aggregate\n}\n```",
+  "pattern": "Serialization structures (DTOs) that transitively bundle entire clusters of unrelated Aggregates in a single deep hierarchy.",
+  "why_bad": "It causes massive database over-fetching, heavy serialization latency, and bloated memory allocations (referred to as \"jigsaw puzzle pieces in many dimensions\"). It also breaches transactional boundary rules by mixing independent transactional units.",
+  "detection": "Match structs decorated with `#[derive(Serialize)]` containing nested lists or child structs that represent distinct aggregate roots.",
+  "counterexample": "An aggregate root nesting its own local constituent value objects that cannot exist independently:\n```rust\nstruct OrderDto {\n    id: u64,\n    items: Vec<OrderItemDto>, // Local value objects\n}\n```",
+  "fix": "Use identity pointers (e.g., `customer_id: u64`) to relate aggregates, or create specialized, flattened DTOs optimized for specific UI screens.\n```rust\nstruct CustomerDto {\n    id: u64,\n    name: String,\n    order_ids: Vec<u64>,\n}\n```",
+  "strength": "Contextual",
+  "source": "*Implementing Domain-Driven Design* by Vaughn Vernon (Chapter 10, \"Clustering Entities and Value Objects\", p. 348; Chapter 14, p. 513)."
+}

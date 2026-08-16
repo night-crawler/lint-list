@@ -1,0 +1,13 @@
+{
+  "id": 931,
+  "title": "Over-Fragmented Aggregates (Direct Object Reference Misuse)",
+  "category": "Wrong Granularity",
+  "damaged_code": "```rust\nstruct Order {\n    id: OrderId,\n    customer: Customer, // Direct reference to a foreign aggregate root\n}\n```",
+  "pattern": "Placing a direct object reference to a foreign Aggregate Root inside another Aggregate, merging their consistency boundaries.",
+  "why_bad": "Implies that the foreign aggregate (`Customer`) is part of the referencing aggregate's (`Order`) consistency boundary. Mutating `customer` through `Order` violates the invariant that changes to an aggregate must be checked only by its own root. It also forces the persistence layer to load the entire `Customer` record inside the `Order` transaction, slowing throughput.",
+  "detection": "Look for struct fields representing foreign Aggregate Roots instead of referencing them strictly via their unique identifiers.",
+  "counterexample": "Transient domain representations in memory for read-only view models (DTOs) where transactional consistency is not active.",
+  "fix": "```rust\nstruct Order {\n    id: OrderId,\n    customer_id: CustomerId, // Reference strictly by Identity\n}\n```",
+  "strength": "Strong",
+  "source": "*Vaughn Vernon - Implementing Domain-Driven Design (2013)*, Chapter 10, \"Aggregates\" (Rule: Reference Other Aggregates by Identity, p. 359)."
+}

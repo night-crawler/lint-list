@@ -1,0 +1,13 @@
+{
+  "id": 735,
+  "title": "Constructor with Hidden Heavy Side-Effects (Opaque RAII)",
+  "category": "Cleverness Obscurity",
+  "damaged_code": "```rust\n// Rust\nimpl RaftClient {\n    pub fn new() -> Self {\n        let threads = spawn_background_sync_threads(); // Hidden thread spawning!\n        RaftClient { threads }\n    }\n}\n```",
+  "pattern": "Performing heavy, blocking, or asynchronous operations (like spawning threads, opening file descriptors, or initiating TCP connections) inside a standard initializer or constructor.",
+  "why_bad": "Constructors are expected to be cheap, predictable, and side-effect-free heap or stack allocations. Hiding structural side-effects inside constructors leads to resource leaks, test flakiness, and hard-to-trace concurrent race conditions.",
+  "detection": "A constructor method (e.g., `new()`) containing thread spawns, blocking file I/O, or network connections.",
+  "counterexample": "Smart pointers or memory buffer allocations where resource reservation is the explicit, documented purpose of the type (e.g., `Vec::with_capacity`).",
+  "fix": "Separate allocation from activation. Provide an explicit, named initialization method (e.g., `start()`) or rename the constructor to reflect its side-effects.\n```rust\nimpl RaftClient {\n    pub fn spawn() -> Self {\n        let threads = spawn_background_sync_threads();\n        RaftClient { threads }\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*A Philosophy of Software Design*, Chapter 18, \"Code Should Be Obvious\" (p. 148)."
+}

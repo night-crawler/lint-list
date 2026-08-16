@@ -1,0 +1,13 @@
+{
+  "id": 568,
+  "title": "Over-allocation of Database Connections / Connection Pool Contention",
+  "category": "Data Query Modeling Smells",
+  "damaged_code": "```rust\n// Sizing the database connection pool arbitrarily high\nlet mut opts = SqliteConnectOptions::new();\nopts = opts.max_connections(5000); // Massive pool size\n```",
+  "pattern": "Sizing database connection pools excessively high to avoid client-side contention, or failing to establish a maximum connection limit.",
+  "why_bad": "It shifts the bottleneck to the database server. Most database servers spawn dedicated processes or allocate substantial memory buffers (e.g., 1-10MB) per connection. An oversized pool can exhaust database RAM, degrade query performance due to operating system thread context switching, or lead to server-side connection drops [575, 576].",
+  "detection": "Pool configurations where connection count exceeds the database server's physical resource limits (RAM/CPU cores) or is disproportionately larger than the worker thread pool.",
+  "counterexample": "Modest, calibrated connection pools sized to match the maximum number of concurrent request-handling threads.",
+  "fix": "Size connection pools to match database hardware capabilities and use timeouts for connection acquisition.",
+  "strength": "Strong",
+  "source": "*Pragmatic Programmers - Release It! (Nygard), p. 176, 178 [574, 575, 576]*"
+}

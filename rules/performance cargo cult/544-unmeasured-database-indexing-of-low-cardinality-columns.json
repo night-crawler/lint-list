@@ -1,0 +1,13 @@
+{
+  "id": 544,
+  "title": "Unmeasured Database Indexing of Low-Cardinality Columns",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```sql\n-- SQL\nCREATE INDEX idx_user_gender ON users(gender); -- Only 2 or 3 distinct values\n```",
+  "pattern": "Creating a B-Tree or Hash index on columns with low-cardinality data (like boolean flags or status codes with very few distinct values).",
+  "why_bad": "Query planners ignore indexes on low-cardinality columns because a sequential table scan is faster than index seek lookups. The index remains active, slowing down all insertions, updates, and deletes, while wasting storage memory [302].",
+  "detection": "Database schema index definitions (`CREATE INDEX`) targeting boolean, status, or category columns where the total set of distinct values represents less than 5% of the total row count.",
+  "counterexample": "Composite indexes where a low-cardinality column is combined with a high-cardinality column to filter specific queries efficiently. `Contextual`.",
+  "fix": "Remove the low-cardinality index and let the query planner perform a sequential scan.",
+  "strength": "Strong",
+  "source": "*Designing Data-Intensive Applications*, Chapter 10 (p. 302)."
+}

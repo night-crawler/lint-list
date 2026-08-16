@@ -1,0 +1,13 @@
+{
+  "id": 597,
+  "title": "Structural Masquerading via Pointer Casts (STRUCT_CAST_MASQUERADE)",
+  "category": "Protocol Parsing Serialization Smells",
+  "damaged_code": "```rust\nstruct Point {\n    x: f64,\n    y: f64,\n}\n\nstruct NamedPoint {\n    x: f64,\n    y: f64,\n    name: String,\n}\n\nfn distance(p1: &Point, p2: &Point) -> f64 {\n    let dx = p1.x - p2.x;\n    let dy = p1.y - p2.y;\n    (dx*dx + dy*dy).sqrt()\n}\n\n// At call site:\nlet origin = NamedPoint { x: 0.0, y: 0.0, name: \"origin\".to_string() };\nlet upper_right = NamedPoint { x: 1.0, y: 1.0, name: \"upper\".to_string() };\n\n// Masquerading: Casting NamedPoint directly to Point because fields align prefix-wise\nlet d = distance(\n    unsafe { &*( &origin as *const NamedPoint as *const Point ) },\n    unsafe { &*( &upper_right as *const NamedPoint as *const Point ) }\n);\n```",
+  "pattern": "Casting a pointer/reference of one struct to another struct under the assumption that they share a layout prefix (structural inheritance masquerade).",
+  "why_bad": "It bypasses compiled abstraction boundaries and relies entirely on layout prefix stability. Under compiler optimizations (and Rust's default layout non-determinism), field ordering is not guaranteed to match. Rearranging fields in either struct results in silent, catastrophic memory corruption.",
+  "detection": "Look for unsafe raw pointer casts (`as *const ... as *const ...`) converting a larger struct reference to a prefix-compatible smaller struct.",
+  "counterexample": "```rust\n// Valid: Explicit trait abstraction or nested composition\nstruct Point {\n    x: f64,\n    y: f64,\n}\n\nstruct NamedPoint {\n    point: Point,\n    name: String,\n}\n\nfn distance(p1: &Point, p2: &Point) -> f64 {\n    ((p1.x - p2.x).powi(2) + (p1.y - p2.y).powi(2)).sqrt()\n}\n\n// At call site:\nlet origin = NamedPoint { point: Point { x: 0.0, y: 0.0 }, name: \"origin\".into() };\nlet upper_right = NamedPoint { point: Point { x: 1.0, y: 1.0 }, name: \"upper\".into() };\nlet d = distance(&origin.point, &upper_right.point);\n```",
+  "fix": "Extract shared structural data into a nested field (composition) or define a shared Trait representing coordinate accessors.",
+  "strength": "Strong",
+  "source": "*Robert C. Martin - Clean Architecture (2017)*, Chapter 5 (Inheritance); *Martin Fowler - Refactoring, 1st Edition (1999)*, page 239."
+}

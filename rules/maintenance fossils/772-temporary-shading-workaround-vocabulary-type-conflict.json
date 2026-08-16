@@ -1,0 +1,13 @@
+{
+  "id": 772,
+  "title": "Temporary Shading Workaround (Vocabulary Type Conflict)",
+  "category": "Maintenance Fossils",
+  "damaged_code": "```toml\n# Cargo.toml workaround for dependency version clash\n[dependencies]\nlibbase_v1 = { package = \"libbase\", version = \"1.0.0\" }\nlibbase_v2 = { package = \"libbase\", version = \"2.0.0\" }\n```",
+  "pattern": "Renaming (shading) packages to pull two different major versions of the same dependency into a single binary to patch over version conflicts, rather than migrating shared vocabulary types.",
+  "why_bad": "Type incompatibility. Shading only works for isolated function calls. The moment a type defined in `libbase_v1` is passed to a library expecting `libbase_v2`, the compiler rightly rejects it as a type mismatch. It masks actual design debt and bloats binary footprints.",
+  "detection": "The linter must observe:\n1. Multiple major versions of the same package imported in a single module or build config.\n2. Downstream code forced to write manual mapping wrappers to translate types from version A to version B.",
+  "counterexample": "`Context-dependent`\n```toml\n# Valid: Utilizing the semver trick to re-export common types seamlessly\n[dependencies]\nlibbase = \"2.0.0\"\n```",
+  "fix": "Re-architect the package graph to share a unified major version of the vocabulary dependency, utilizing the \"semver trick\" for transitions when appropriate.\n```toml\n[dependencies]\nlibbase = \"2.0.0\"\n```",
+  "strength": "Strong",
+  "source": "- Titus Winters et al., *Software Engineering at Google* (2020) [320, 338]\n- Jon Gjengset, *Rust for Rustaceans* (2021) [578]"
+}

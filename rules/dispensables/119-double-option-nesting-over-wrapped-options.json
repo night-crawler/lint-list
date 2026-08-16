@@ -1,0 +1,13 @@
+{
+  "id": 119,
+  "title": "Double Option Nesting (Over-Wrapped Options)",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nlet val: Option<Option<i32>> = Some(Some(42));\n```",
+  "pattern": "Nesting an `Option` directly inside another `Option` without separate semantic reasons.",
+  "why_bad": "Forces downstream code to execute highly complex, nested match blocks (`Some(Some(x))`, `Some(None)`, `None`) with no added safety.",
+  "detection": "Variables or signatures declared with nested `Option<Option<T>>` types.",
+  "counterexample": "Representing situations where 'no value provided' (outer None) is distinct from 'explicitly set to empty' (inner None).",
+  "fix": "Flatten the type to a single `Option<T>` or define a custom enum with clear semantic variant names.",
+  "strength": "Contextual",
+  "source": "Edwin Brady, *Type-driven Development with Idris* (2017)."
+}

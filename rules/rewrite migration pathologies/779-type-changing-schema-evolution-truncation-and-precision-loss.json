@@ -1,0 +1,13 @@
+{
+  "id": 779,
+  "title": "Type-Changing Schema Evolution (Truncation and Precision Loss)",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```protobuf\n// v1 schema\nmessage Counter {\n  required int32 count = 1;\n}\n\n// v2 schema\nmessage Counter {\n  required int64 count = 1; // Type mutated from 32-bit to 64-bit\n}\n```",
+  "pattern": "Altering a primitive field's numeric width or type signature in a binary schema while keeping the same tag ID.",
+  "why_bad": "If a newer v2 application writes a 64-bit value that exceeds the bounds of a 32-bit integer (e.g., `4,294,967,296`), and an older v1 application reads it using the 32-bit schema, the value will be truncated or corrupted on deserialization [632].",
+  "detection": "Type signatures of the same tag ID changing between schema revisions where the target type represents a wider byte representation than the source type.",
+  "counterexample": "None. Changing primitive bit widths on existing tags violates safe schema evolution guarantees.",
+  "fix": "Allocate a new tag ID with the new type, keeping the old tag active or deprecated [632].\n```protobuf\nmessage Counter {\n  optional int32 count_legacy = 1 [deprecated = true];\n  optional int64 count_v2 = 2; // New field and tag ID\n}\n```",
+  "strength": "Strong",
+  "source": "Designing Data-Intensive Applications, Chapter 4, \"Protobuf / Thrift / Avro compatibility\" [632]"
+}

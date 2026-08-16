@@ -1,0 +1,12 @@
+{
+  "id": 401,
+  "title": "Ignored Exceptional Return Values",
+  "category": "Error Handling Pathologies",
+  "damaged_code": "```go\n// Go returns connection and error, but developer ignores the error!\nconn, _ := net.Dial(\"tcp\", \"golang.org:80\")\n```",
+  "pattern": "Intentionally discarding or ignoring the error component of a dual-return function (e.g., assigning the error to `_` in Go, or using `let _ =` in Rust for a fallible operation).",
+  "why_bad": "Silent crash potential. Discarding the error variable means subsequent statements assume the success value (e.g., `conn` in the Go example) is valid. Invoking methods on a null/uninitialized resource causes an immediate panic. [28, Section 8.3]",
+  "detection": "Explicitly assigning error returns to discard characters (`_`), or ignoring a `Result` output entirely without compiler warnings enabled.",
+  "fix": "Always check the error before proceeding to utilize the success value.\n```go\nconn, err := net.Dial(\"tcp\", \"golang.org:80\")\nif err != nil {\n    log.Fatalf(\"Connection failed: %v\", err)\n}\n```",
+  "strength": "Strong",
+  "source": "*Steve McConnell - Code Complete*, Section 8.3 [28]"
+}

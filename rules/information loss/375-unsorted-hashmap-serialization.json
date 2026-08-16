@@ -1,0 +1,13 @@
+{
+  "id": 375,
+  "title": "Unsorted HashMap Serialization",
+  "category": "Information Loss",
+  "damaged_code": "```rust\nfn serialize_payload(map: &HashMap<String, String>) -> String {\n    // Non-deterministic string output due to hash order!\n    serde_json::to_string(map).unwrap()\n}\n```",
+  "pattern": "Serializing unordered hash-based containers (`HashMap`, `HashSet`) directly to flat strings or byte payloads for network or storage propagation.",
+  "why_bad": "Hash map iteration order is non-deterministic and randomized in modern runtimes to prevent hash-DoS attacks. Downstream clients or verifiers might implicitly depend on field order, causing signature mismatch bugs, or cache invalidation.",
+  "detection": "Serializing a standard `HashMap` or `HashSet` to an external text or binary format.",
+  "counterexample": "Encoding to self-sorting schemas or utilizing the map solely for internal computation:\n```rust\nlet key = map.get(\"id\");\n```",
+  "fix": "Collect entries into a sorted vector, or use deterministic containers like `BTreeMap` prior to serialization.\n```rust\nfn serialize_payload(map: &HashMap<String, String>) -> String {\n    let ordered: BTreeMap<_, _> = map.iter().collect();\n    serde_json::to_string(&ordered).unwrap()\n}\n```",
+  "strength": "Strong",
+  "source": "*Software Engineering at Google* by Titus Winters et al. (Chapter 8, p. 305)."
+}

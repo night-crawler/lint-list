@@ -1,0 +1,13 @@
+{
+  "id": 437,
+  "title": "Out-of-Order Multi-Copy Atomicity Assumption",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```c\n// CPU 0\nWRITE_ONCE(x, 1);\n\n// CPU 1\nr1 = READ_ONCE(x); // Reads 1\nWRITE_ONCE(y, 1);\n\n// CPU 2\nr2 = READ_ONCE(y); // Reads 1\nr3 = READ_ONCE(x); // Can read 0 on non-multicopy atomic CPUs!\n```",
+  "pattern": "Assuming that when a CPU updates a variable, all other CPUs in the system see that update at the exact same instant (multi-copy atomicity).",
+  "why_bad": "On non-multicopy-atomic architectures (such as older ARM or POWER systems), CPU 1 can see CPU 0's write to `x` via a shared local cache and pass a signal via `y` to CPU 2, before the write to `x` has propagated over the global bus to CPU 2. CPU 2 will read `y == 1` but `x == 0`.",
+  "detection": "Relying on multi-variable state assertions across 3+ threads without full memory barriers (`smp_mb()`) or sequentially consistent (`SeqCst`) atomics.",
+  "counterexample": "Using `std::memory_order_seq_cst` or explicit full barriers on all read/write paths.",
+  "fix": "Introduce full memory barriers to enforce global propagation.\n```c\n// CPU 1\nr1 = READ_ONCE(x);\nsmp_mb(); // Enforce propagation\nWRITE_ONCE(y, 1);\n```",
+  "strength": "Strong",
+  "source": "Paul McKenney 15.2.7 (p. 331)"
+}

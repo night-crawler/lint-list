@@ -1,0 +1,13 @@
+{
+  "id": 593,
+  "title": "Brittle Split Parsing (BRITTLE_SPLIT_PARSING)",
+  "category": "Protocol Parsing Serialization Smells",
+  "damaged_code": "```rust\nfn parse_record(line: &str) -> Vec<&str> {\n    // Brittle ad-hoc field extraction using raw string splitting\n    line.split(',').collect()\n}\n```",
+  "pattern": "Extracting structured fields from serialized strings by repeatedly calling unescaped split functions or raw character scan loops without structural grammar or tokenization state.",
+  "why_bad": "It breaks immediately on escaped delimiters (e.g., CSV fields containing nested commas like `\"Smith, John\"`), leading to field misalignment, unvalidated/missing data, and silent downstream state corruption. It lacks grammar validation and error recovery.",
+  "detection": "Look for calls to string split methods (like `.split()`, `.split_whitespace()`, or primitive character-loop delimiter checks) where the resulting segments are immediately mapped to fields of a record or struct, without escaping/quoting checks.",
+  "counterexample": "```rust\n// Valid: Using a proper CSV parser that respects RFC-4180 quotes and escapes\nfn parse_record(line: &str) -> csv::Result<Vec<String>> {\n    let mut rdr = csv::ReaderBuilder::new()\n        .has_headers(false)\n        .from_reader(line.as_bytes());\n    rdr.records().next().unwrap().map(|r| r.iter().map(|s| s.to_string()).collect())\n}\n```",
+  "fix": "Replace ad-hoc splits with a standards-compliant lexer/parser or a parser combinator library that handles quoting, nesting, and escaped character semantics correctly.",
+  "strength": "Strong",
+  "source": "*Steve McConnell - Code Complete, 2nd Edition (2004)*, Page 724; *Andrew Hunt & David Thomas - The Pragmatic Programmer, 20th Anniversary Edition (2019)*, Chapter 5."
+}

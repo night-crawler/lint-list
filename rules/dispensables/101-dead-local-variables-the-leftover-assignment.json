@@ -1,0 +1,13 @@
+{
+  "id": 101,
+  "title": "Dead Local Variables (The Leftover Assignment)",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nfn calculate_area(width: f64, height: f64) -> f64 {\n    let unneeded_scale = 1.0;\n    width * height\n}\n```",
+  "pattern": "Declaring and initializing local variables that are never read or evaluated thereafter.",
+  "why_bad": "Increases visual noise and confuses readers, who must figure out whether the variable was intended to be used or represents a bug.",
+  "detection": "Local variable declarations whose identifiers do not appear as expressions in any downstream path.",
+  "counterexample": "Context-dependent (usually flagged by compilers; but LLMs can identify variables kept alive solely to bypass compiler warnings).",
+  "fix": "Delete the variable declaration and its initialization expression.",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 24 (\"Routine-Level Refactorings\"), p. 186; Fowler, *Refactoring*, Chapter 3."
+}

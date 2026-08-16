@@ -1,0 +1,13 @@
+{
+  "id": 169,
+  "title": "Shotgun Surgery (Solution Sprawl)",
+  "category": "Change Preventers",
+  "damaged_code": "```rust\n// File: src/orders.rs\npub fn create_order(id: u64, amount: f64) {\n    println!(\"Creating order: {}\", id);\n    // Explicit manual insertion of audit, logging, and metrics\n    src::audit::log_action(\"create_order\", id);\n    src::metrics::increment(\"orders_total\");\n}\n\n// File: src/payments.rs\npub fn process_payment(id: u64, amount: f64) {\n    println!(\"Processing payment for order: {}\", id);\n    src::audit::log_action(\"process_payment\", id);\n    src::metrics::increment(\"payments_total\");\n}\n```",
+  "pattern": "A single logical responsibility or policy choice (such as logging, security auditing, or metric accumulation) is physically scattered across multiple independent files and modules, requiring manual edits at each site when the responsibility changes.",
+  "why_bad": "It leads to high change amplification. Adding a new cross-cutting feature (e.g., adding user context to all audit logs) requires finding and editing dozens of distinct modules. This is highly error-prone, as developers can easily miss a spot.",
+  "detection": "The identical sequence of side-effect calls (such as auditing, metrics, or validation helpers) appearing explicitly inside the bodies of functions across multiple disconnected files.",
+  "counterexample": "`Context-dependent`. Standard library calls (like formatting with `println!`) or domain-specific utility functions invoked where behavior is genuinely independent and non-uniform.",
+  "fix": "Consolidate the sprawled responsibility behind a single entry point or apply middleware, decorator patterns, or aspect-oriented approaches to intercept and centralize cross-cutting concerns.",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Refactoring*, Chapter 3 (\"Shotgun Surgery\"); Joshua Kerievsky, *Refactoring to Patterns* (2004), Chapter 3 (\"Solution Sprawl\"), p. 43."
+}

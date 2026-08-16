@@ -1,0 +1,13 @@
+{
+  "id": 504,
+  "title": "Linear Search Loop lacking Sentinel (Redundant Bounds Test)",
+  "category": "Performance Smells",
+  "damaged_code": "```cpp\nint i = 0;\nwhile (i < count && item[i] != test_value) { // Two tests per iteration\n    i++;\n}\n```",
+  "pattern": "A linear search loop that checks both the array index boundary (`i < count`) and the target element matching condition on every step.",
+  "why_bad": "Wastes CPU cycles by executing a redundant branch instruction (`i < count`) on every element scan.",
+  "detection": "Linear search loops executing over arrays with compound termination conditions.",
+  "counterexample": "The array size is dynamic and cannot be padded, or the elements are checked out of bounds. `Context-dependent`.",
+  "fix": "Append a temporary sentinel value (`test_value`) just past the search array end, simplifying the loop test to `item[i] != test_value`.",
+  "strength": "Contextual",
+  "source": "*Code Complete*, Chapter 26, \"Sentinel Values\" (p. 482-484)."
+}

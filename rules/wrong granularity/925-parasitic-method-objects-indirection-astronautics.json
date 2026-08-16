@@ -1,0 +1,13 @@
+{
+  "id": 925,
+  "title": "Parasitic Method Objects (Indirection Astronautics)",
+  "category": "Wrong Granularity",
+  "damaged_code": "```rust\nstruct AdditionCalculator<'a> {\n    a: &'a mut f64,\n    b: f64,\n}\n\nimpl<'a> AdditionCalculator<'a> {\n    fn execute(self) {\n        *self.a += self.b;\n    }\n}\n```",
+  "pattern": "Instantiating a specialized struct (\"Method Object\") for a trivial, non-complex computation simply to avoid passing local variables as arguments.",
+  "why_bad": "Introduces severe indirection and memory/lifetime management overhead (such as mutable references inside short-lived objects) to perform simple operations. It creates a high number of single-use structural ghosts that waste developer time to read and maintain.",
+  "detection": "Identify structs designed to wrap a single method invocation, where all fields are references or local inputs, and the struct's lifecycle ends immediately after calling its executor method.",
+  "counterexample": "`Context-dependent`. Highly complex algorithms with 20+ interacting variables that cannot be cleanly refactored via standard parameter lists.",
+  "fix": "Replace the method object with a simple, direct method or function using clear parameter passing.\n```rust\nfn add_values(a: &mut f64, b: f64) {\n    *a += b;\n}\n```",
+  "strength": "Strong",
+  "source": "*Martin Fowler - Refactoring (1999)*, Chapter 6, \"Replace Method with Method Object\" (p. 151)."
+}

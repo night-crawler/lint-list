@@ -1,0 +1,13 @@
+{
+  "id": 300,
+  "title": "Mutually Derivable States Kept in Tandem",
+  "category": "Duplication",
+  "damaged_code": "```rust\nstruct CustomCollection {\n    items: Vec<String>,\n    is_empty_flag: bool,\n    count: usize,\n}\n\nimpl CustomCollection {\n    fn add(&mut self, item: String) {\n        self.items.push(item);\n        self.count += 1;\n        self.is_empty_flag = false; // Parallel state update\n    }\n}\n```",
+  "pattern": "Tracking a numeric collection size and an empty/full boolean indicator as separate mutable fields updated inside every mutation method.",
+  "why_bad": "Two sources of truth. A bug in any structural modifier method can lead to desynchronization where `count == 0` but `is_empty_flag == false`.",
+  "detection": "A class/struct with fields tracking count and emptiness/fullness together that are modified in parallel within mutation blocks.",
+  "counterexample": "Highly specialized, lock-free concurrent structures that require atomic booleans for hardware reads.",
+  "fix": "Implement the boolean properties as read-only methods derived directly from the primary size state.\n```rust\nstruct CustomCollection {\n    items: Vec<String>,\n}\n\nimpl CustomCollection {\n    fn len(&self) -> usize {\n        self.items.len()\n    }\n\n    fn is_empty(&self) -> bool {\n        self.len() == 0\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "*Clean Code*, Chapter 10: \"Classes\" — \"No Duplication\", p. 173-174."
+}

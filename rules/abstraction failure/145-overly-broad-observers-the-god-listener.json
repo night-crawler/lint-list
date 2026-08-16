@@ -1,0 +1,13 @@
+{
+  "id": 145,
+  "title": "Overly Broad Observers (The God Listener)",
+  "category": "Abstraction Failure",
+  "damaged_code": "```rust\ntrait SystemObserver {\n    fn on_user_signup(&self, user_id: u64);\n    fn on_payment_received(&self, amount: u64);\n    fn on_system_shutdown(&self);\n}\n```",
+  "pattern": "Defining a single, massive observer/listener trait containing many unrelated callback methods, forcing all implementers to write empty default bodies for events they do not care about.",
+  "why_bad": "It couples unrelated components to a single bloated interface, violating the Single Responsibility Principle. Implementers of specific tasks are forced to depend on events from entirely separate modules.",
+  "detection": "A trait containing 3 or more methods representing notifications of unrelated domain events, where concrete implementers commonly leave several methods empty.",
+  "counterexample": "Unified UI frameworks where a single event listener is structured as an explicit enum pattern to support uniform message passing.",
+  "fix": "Split the observer into small, cohesive, highly targeted traits (e.g., `UserLifecycleListener`, `PaymentListener`).",
+  "strength": "Strong",
+  "source": "Joshua Kerievsky, *Refactoring to Patterns* (2004), Chapter 7 (\"Unify Interfaces\")."
+}

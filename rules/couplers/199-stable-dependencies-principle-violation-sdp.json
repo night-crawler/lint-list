@@ -1,0 +1,13 @@
+{
+  "id": 199,
+  "title": "Stable Dependencies Principle Violation (SDP)",
+  "category": "Couplers",
+  "damaged_code": "```rust\n// Core component containing highly stable, rarely changing business logic\nstruct CoreCalculator;\nimpl CoreCalculator {\n    fn execute(&self) {\n        // Depends directly on a highly volatile, experimental utility library\n        experimental_logger::log_verbose(\"calculating\");\n    }\n}\n```",
+  "pattern": "A component with a high number of incoming dependencies (a highly stable, hard-to-change component) depends directly on a component with many outgoing dependencies (a volatile, rapidly changing component).",
+  "why_bad": "It makes the stable component volatile or freezes the volatile component. Because many things depend on `CoreCalculator`, you cannot easily modify `experimental_logger` without breaking the world.",
+  "detection": "Static analysis calculating dependency instability indices ($I = Efferent / (Afferent + Efferent)$) showing stable components depending on components with higher instability metrics.",
+  "counterexample": "System-level standard libraries (like `std::*`) that are extremely stable yet accessed by everything.",
+  "fix": "Invert the dependency. Let the stable component define a clean interface (trait) it requires, and let the volatile component implement that interface.\n```rust\ntrait Logger { fn log(&self, msg: &str); } // Declared in stable core\n```",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Architecture* (2017), Chapter 14 (\"SDP: The Stable Dependencies Principle\")."
+}

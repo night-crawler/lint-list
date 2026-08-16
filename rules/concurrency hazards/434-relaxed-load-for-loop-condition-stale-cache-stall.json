@@ -1,0 +1,13 @@
+{
+  "id": 434,
+  "title": "Relaxed Load for Loop Condition (Stale Cache Stall)",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```rust\n// Thread waiting for signal\nwhile FLAG.load(Ordering::Relaxed) == 0 {\n    // Tight spin-loop with relaxed load\n}\n```",
+  "pattern": "Spinning on an atomic variable load with `Ordering::Relaxed` in a tight loop without intermediate synchronization barriers.",
+  "why_bad": "While correct under a sequentially consistent cache coherency model, some hardware architectures (and optimization-aggressive compilers) can delay flushing store buffers or invalidating cache lines, stalling the spinning thread for an unpredictable duration.",
+  "detection": "A `while` loop condition consisting entirely of an atomic load with `Relaxed` ordering and an empty or near-empty loop body.",
+  "counterexample": "The loop contains an explicit hardware instruction yield (like `spin_loop::hint`) or uses `Acquire` ordering combined with a memory fence.",
+  "fix": "Use `Acquire` ordering and a spin loop hint to yield the pipeline.\n```rust\nwhile FLAG.load(Ordering::Acquire) == 0 {\n    std::hint::spin_loop();\n}\n```",
+  "strength": "Contextual",
+  "source": "Paul McKenney Appendix C, Jon Gjengset Ch 9"
+}

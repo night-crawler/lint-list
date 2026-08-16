@@ -1,0 +1,13 @@
+{
+  "id": 663,
+  "title": "Unconditional Lock Contention in Telemetry/Observability Paths",
+  "category": "Observability Operability Smells",
+  "damaged_code": "```rust\nfn get_metrics() -> String {\n    let _guard = METRICS_LOCK.lock().unwrap(); // blocks concurrent worker threads\n    let mut stats = String::new();\n    format_heavy_telemetry(&mut stats); // heavy string allocation and formatting\n    stats\n}\n```",
+  "pattern": "Acquiring global resource locks to construct, format, or process telemetry messages before checking if the diagnostic/debug layer is actively enabled, or doing heavy formatting under lock.",
+  "why_bad": "Telemetry gathering should be low-overhead. Holding lock guards over expensive allocation or formatting operations blocks critical concurrent work and causes latency spikes under load [239, 667-668].",
+  "detection": "Lock acquisition directly wrapping string formatters, vector expansion, or system metrics generation code.",
+  "counterexample": "```rust\nfn get_metrics() -> Option<String> {\n    if !metrics_enabled() {\n        return None;\n    }\n    // Isolate lock strictly to copying raw numeric data, formatting outside\n}\n```",
+  "fix": "Move the diagnostic flag check to the absolute front of the execution pathway, copy raw data inside a brief lock, and perform formatting asynchronously or outside the lock boundary.",
+  "strength": "Strong",
+  "source": "*Understanding Software Dynamics*, Chapter 13 [239, 667-668]."
+}

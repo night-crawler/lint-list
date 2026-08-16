@@ -1,0 +1,13 @@
+{
+  "id": 305,
+  "title": "Concrete Subtype Schema Field Duplication",
+  "category": "Duplication",
+  "damaged_code": "```rust\nstruct Footballer {\n    id: i64,          // Structural duplicate\n    name: String,     // Structural duplicate\n    club: String,\n}\n\nstruct Cricketer {\n    id: i64,          // Structural duplicate\n    name: String,     // Structural duplicate\n    batting_average: f64,\n}\n```",
+  "pattern": "Duplicating core entity attributes in separate structs/tables that represent subtypes of a shared logical concept.",
+  "why_bad": "Global updates or queries (e.g., \"get names of all players\") must query multiple distinct structures and synchronize changes individually across all layout definitions.",
+  "detection": "Distinct structs sharing exact matches of multiple core fields while representing concrete implementations of a single domain concept.",
+  "counterexample": "Completely unrelated domain types that happen to share standard metadata fields (e.g., `created_at`).",
+  "fix": "Isolate shared supertype fields into a single common struct that is referenced or embedded by the concrete types.\n```rust\nstruct Player {\n    id: i64,\n    name: String,\n}\n\nstruct Footballer {\n    player: Player,\n    club: String,\n}\n```",
+  "strength": "Strong",
+  "source": "*Patterns of Enterprise Application Architecture*, \"Concrete Table Inheritance\", p. 298."
+}

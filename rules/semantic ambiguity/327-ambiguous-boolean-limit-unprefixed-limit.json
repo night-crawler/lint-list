@@ -1,0 +1,13 @@
+{
+  "id": 327,
+  "title": "Ambiguous Boolean Limit (Unprefixed Limit)",
+  "category": "Semantic Ambiguity",
+  "damaged_code": "```rust\nconst CART_LIMIT: u32 = 10;\n\nif cart.items.len() >= CART_LIMIT as usize {\n    panic!(\"Too many items!\");\n}\n```",
+  "pattern": "A limit constant or variable named `_limit` or `_threshold` without a prefix defining whether the boundary is inclusive, exclusive, or an upper/lower bound.",
+  "why_bad": "An unprefixed limit name is ambiguous as to whether the limit is \"up to\" or \"up to and including\", leading to classic off-by-one errors when comparing values.",
+  "detection": "Match numeric constants or variables containing the substring `_limit` or `_threshold` that lack `MAX_` or `MIN_` prefixes.",
+  "counterexample": "Explicit bounds using standard prefixes:\n```rust\nconst MAX_ITEMS_IN_CART: u32 = 10;\n```",
+  "fix": "Prefix the limit name with `MAX_` or `MIN_` to make the inclusive boundary clear.\n```rust\nconst MAX_ITEMS_IN_CART: u32 = 10;\n\nif cart.items.len() > MAX_ITEMS_IN_CART as usize {\n    panic!(\"Too many items!\");\n}\n```",
+  "strength": "Strong",
+  "source": "*The Art of Readable Code* by Dustin Boswell and Trevor Foucher (Chapter 3, pp. 24-25)."
+}

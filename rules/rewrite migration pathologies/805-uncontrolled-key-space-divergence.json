@@ -1,0 +1,13 @@
+{
+  "id": 805,
+  "title": "Uncontrolled Key Space Divergence",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```rust\n// Key generation on two separate database instances using local auto-incrementing integers\nfn create_user_id() -> u64 {\n    // Will cause collisions when the two databases are merged\n    db.query_scalar(\"INSERT INTO users DEFAULT VALUES RETURNING id\") \n}\n```",
+  "pattern": "Using local, uncoordinated auto-incrementing integer keys on separate database instances that are slated to be merged or synchronized during a system migration.",
+  "why_bad": "It causes primary key collisions when importing or synchronizing records between the databases, forcing the migration team to write complex, slow, and fragile key translation logic [416].",
+  "detection": "The use of database-native auto-increment fields (`SERIAL` or `AUTO_INCREMENT`) on databases that are target to merge, multi-leader replication, or cross-datacenter synchronization.",
+  "counterexample": "Valid for strictly isolated, single-node databases that will never replicate or merge data with other instances.",
+  "fix": "Use globally coordinated, collision-free key generation strategies, such as UUIDs/GUIDs, Snowflake IDs, or a centralized key allocator [194, 416, 664].",
+  "strength": "Strong",
+  "source": "Patterns of Enterprise Application Architecture, \"Identity Field\" [416]; Designing Data-Intensive Applications, Chapter 5 [194, 664]"
+}

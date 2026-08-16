@@ -1,0 +1,13 @@
+{
+  "id": 128,
+  "title": "Abstracting Over Technical Implementations (Infrastructure Axis)",
+  "category": "Speculative Generality",
+  "damaged_code": "```rust\ntrait RedisClient { fn get(&self, k: &str) -> String; }\n```",
+  "pattern": "Defining a trait that wraps a low-level, technical technology layer rather than representing a logical business domain operation.",
+  "why_bad": "Callers remain highly coupled to the technical details of the library/database, defeating the purpose of abstraction.",
+  "detection": "Trait named directly after a specific library or database type (e.g., `Sqlite`, `Redis`, `Kafka`) rather than domain operations (e.g., `SessionStore`, `MessageBroker`).",
+  "counterexample": "Standard low-level driver wrappers.",
+  "fix": "Rewrite the trait to express domain-focused logic in terms of business entities.",
+  "strength": "Contextual",
+  "source": "Eric Evans, *Domain-Driven Design* (2003); Vaughn Vernon, *Implementing Domain-Driven Design* (2013)."
+}

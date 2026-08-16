@@ -1,0 +1,13 @@
+{
+  "id": 881,
+  "title": "Poison-Swallowing Mutex Fallbacks",
+  "category": "Robustness Theater",
+  "damaged_code": "```rust\nstatic SHARED_COUNT: Mutex<u32> = Mutex::new(0);\n\nfn increment_count() -> u32 {\n    match SHARED_COUNT.lock() {\n        Ok(mut guard) => {\n            *guard += 1;\n            *guard\n        }\n        Err(_) => {\n            // Swallowing lock-poisoning error and returning a silent garbage fallback\n            0 \n        }\n    }\n}\n```",
+  "pattern": "A lock acquisition operation (such as Mutex lock) handles lock poisoning/failure by silently returning a default \"safe\" fallback value (like 0 or empty string) instead of propagating the failure.",
+  "why_bad": "A poisoned lock means a thread panicked while holding the lock, likely leaving the shared state partially mutated and corrupted. Swallowing the poison error and continuing to read/write that corrupted data pollutes the system state silently and leads to downstream logical bugs.",
+  "detection": "`lock()` calls that match `Err(_)` branches and return a dummy literal or constant without propagating the error or panicking.",
+  "counterexample": "```rust\n// Correct: Panic or propagate immediately to avoid running with corrupt shared state\nfn increment_count() -> u32 {\n    let mut guard = SHARED_COUNT.lock().expect(\"Lock is poisoned!\");\n    *guard += 1;\n    *guard\n}\n```",
+  "fix": "Fail fast. Panic on poisoned locks using `.expect()` or `.unwrap()`, or propagate the failure safely, ensuring that the system does not run with corrupted memory.",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust for Rustaceans*, Chapter 10 (Mutex poisoning and unwinding panic cascades)."
+}

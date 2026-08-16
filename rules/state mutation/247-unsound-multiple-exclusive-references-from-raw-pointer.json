@@ -1,0 +1,13 @@
+{
+  "id": 247,
+  "title": "Unsound Multiple Exclusive References from Raw Pointer",
+  "category": "State Mutation",
+  "damaged_code": "```rust\nfn duplicate_borrow(ptr: *mut i32) {\n    let (r1, r2) = unsafe {\n        (&mut *ptr, &mut *ptr) // Wildly unsound! Multiple active &mut!\n    };\n    *r1 = 10;\n    *r2 = 20; // Undefined Behavior!\n}\n```",
+  "pattern": "A raw pointer (`*mut T`) is dereferenced inside an `unsafe` block to produce multiple concurrent exclusive mutable references (`&mut T`) pointing to the same memory address.",
+  "why_bad": "In Rust, the reference aliasing model relies on the absolute invariant that `&mut` references are completely exclusive. Breaking this invariant causes immediate Undefined Behavior (UB). The compiler may optimize reads/writes under the assumption of exclusivity, leading to silent memory corruption.",
+  "detection": "Look for `unsafe` blocks dereferencing a single pointer to assign to multiple `&mut` reference variables that are active concurrently.",
+  "counterexample": "Utilizing a single exclusive reference, or shared references `&T` combined with safe interior mutability types (`Cell` or `RefCell`):\n```rust\nfn safe_interior_mutability(cell: &Cell<i32>) {\n    cell.set(10);\n    cell.set(20); // Perfectly safe, no raw pointer dereference\n}\n```",
+  "fix": "Ensure only a single exclusive mutable reference is active at any given moment, or transition to safe interior mutability containers (`Cell`, `RefCell`, `Mutex`).\n```rust\nlet r1 = unsafe { &mut *ptr };\n*r1 = 10; // Lifetime of r1 ends here\nlet r2 = unsafe { &mut *ptr };\n*r2 = 20;\n```",
+  "strength": "Strong",
+  "source": "*Rust for Rustaceans* by Jon Gjengset (Chapter 7, \"Unsafe Rust\", \"Interior Mutability\")."
+}

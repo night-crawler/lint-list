@@ -1,0 +1,13 @@
+{
+  "id": 567,
+  "title": "Sharding/Partitioning on Monotonically Increasing Key modulo N (Hash Mod N)",
+  "category": "Data Query Modeling Smells",
+  "damaged_code": "```rust\n// Mapping a hashed routing key to a node using simple modulo\nlet target_node = hash(user_key) % num_nodes;\n```",
+  "pattern": "Mapping a primary or routing key to a database node or partition using direct modulo arithmetic (`hash(key) % N`).",
+  "why_bad": "Rebalancing is catastrophically expensive. When the number of nodes $N$ changes (e.g., scaling up from 10 to 11), almost every key's target partition changes ($123456 \\pmod{10} = 6$ vs. $123456 \\pmod{11} = 3$), forcing a massive, expensive data migration across the entire cluster [157, 158].",
+  "detection": "Database routing code or partition index calculation using raw modulo arithmetic on a variable node count.",
+  "counterexample": "Modulo on a fixed, unchangeable number of virtual partitions (which are then mapped to nodes).",
+  "fix": "Use consistent hashing or a fixed number of logical partitions assigned to physical nodes.",
+  "strength": "Strong",
+  "source": "*Designing Data-Intensive Applications (Kleppmann), p. 201 [157, 158]*"
+}

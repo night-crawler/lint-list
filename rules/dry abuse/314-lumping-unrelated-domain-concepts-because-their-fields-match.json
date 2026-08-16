@@ -1,0 +1,13 @@
+{
+  "id": 314,
+  "title": "Lumping Unrelated Domain Concepts \"Because Their Fields Match\"",
+  "category": "Dry Abuse",
+  "damaged_code": "```rust\nstruct FinancialEntry {\n    amount: f64,\n    date: String,\n    description: String,\n}\n// Shared by both CustomerInvoice and SupplierInvoice\n```",
+  "pattern": "Unifying distinct domain concepts into a single type simply because they share the same primitive fields (e.g., amount, date, description).",
+  "why_bad": "The concepts are \"false cognates\" — they appear similar structurally but have entirely separate rules, lifecycles, and reasons for change. Merging them forces developer teams to step on each other's validation logic, leading to fragile designs.",
+  "detection": "A single struct representing multiple distinct business classifications that do not share common lifecycles or business rules.",
+  "counterexample": "Pure, raw value structures (like `Money`) that are completely devoid of business identity.",
+  "fix": "Declare separate, highly descriptive types for each business domain concept to allow them to evolve independently.\n```rust\nstruct CustomerInvoice {\n    amount: f64,\n    date: String,\n    description: String,\n}\n\nstruct SupplierInvoice {\n    amount: f64,\n    date: String,\n    description: String,\n}\n```",
+  "strength": "Strong",
+  "source": "*Domain-Driven Design* (Evans), Chapter 14: \"duplicate concepts and false cognates\", p. 407."
+}

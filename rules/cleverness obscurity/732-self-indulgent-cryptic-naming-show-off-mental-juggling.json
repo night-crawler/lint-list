@@ -1,0 +1,13 @@
+{
+  "id": 732,
+  "title": "Self-Indulgent Cryptic Naming (Show-Off Mental Juggling)",
+  "category": "Cleverness Obscurity",
+  "damaged_code": "```rust\n// Rust\nlet r = url.host().unwrap(); // \"r\" stands for url with host and scheme removed\n```",
+  "pattern": "Using short, generic, or highly abstract variable names (like single characters) that represent complex, multi-stage state transformations known only to the author.",
+  "why_bad": "It relies on the developer's \"mental juggling\" ability. Once the developer leaves or the context shifts, the naming convention becomes an unreadable enigma, forcing future maintainers to scan the entire block to deduce the variable's meaning.",
+  "detection": "Single-character or highly generic names (such as `r`, `data`, `val`) assigned to the results of complex method chains.",
+  "counterexample": "Mathematical coordinate iterators like `x`, `y`, `z`, or standard index offsets like `i` and `j` in small loops. `Context-dependent`.",
+  "fix": "Use descriptive, precise, and pronounceable names that explain the variable's role in the domain.\n```rust\nlet relative_url = url.host().unwrap();\n```",
+  "strength": "Strong",
+  "source": "*Clean Code*, Chapter 2, \"Use Pronounceable/Searchable Names\" (p. 25) / *The Art of Readable Code* (p. 103)."
+}

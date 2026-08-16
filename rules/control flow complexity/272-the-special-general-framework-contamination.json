@@ -1,0 +1,13 @@
+{
+  "id": 272,
+  "title": "The \"Special-General\" Framework Contamination",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```rust\nfn handle_rpc(request: &Request) {\n    log_request(request);\n    if request.api_path == \"/special_billing_hack\" {\n        apply_tax_override();\n    }\n    execute_handler(request);\n}\n```",
+  "pattern": "Embedding application-specific logic or business rules inside a general-purpose control mechanism.",
+  "why_bad": "Information leakage. Couples the general framework to a single specific use case, making both components brittle and complex to maintain.",
+  "detection": "Application-specific constants or endpoints hardcoded inside generic execution engines or routers.",
+  "counterexample": "A closed application that does not aim to act as a generic library or framework.",
+  "fix": "Extract application logic into a plugin or hook that implements a generic interface.",
+  "strength": "Contextual",
+  "source": "John Ousterhout, *A Philosophy of Software Design*, \"Special-General Mixture\"."
+}

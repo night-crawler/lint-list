@@ -1,0 +1,13 @@
+{
+  "id": 311,
+  "title": "Unified Monolithic Model across Different Bounded Contexts (False Cognates)",
+  "category": "Dry Abuse",
+  "damaged_code": "```rust\nstruct Student {\n    id: u64,\n    name: String,\n    // Admissions Context fields\n    high_school_gpa: f64,\n    sat_score: u32,\n    // Alumni Affairs Context fields\n    donation_history: Vec<Donation>,\n    membership_level: String,\n}\n```",
+  "pattern": "Forcing different business subdomains (Bounded Contexts) to use a single monolithic domain entity because they describe the same physical entity.",
+  "why_bad": "It creates a \"false cognate\" model where different teams step on each other's code, database fields have weird contradictions, and the entity carries massive optional fields that are irrelevant to most operations.",
+  "detection": "A single domain class/struct containing distinct clusters of fields that are only ever accessed together by separate, non-overlapping application services.",
+  "counterexample": "Shared identity mapping (e.g., standard key structures) where only the primary identifier and basic authentication credentials are shared.",
+  "fix": "Separate the model into distinct domain objects residing in their own bounded contexts, utilizing a shared identifier to link them.\n```rust\n// Admissions Bounded Context\nstruct Prospect {\n    id: u64,\n    name: String,\n    high_school_gpa: f64,\n}\n\n// Alumni Bounded Context\nstruct Alumnus {\n    id: u64,\n    donation_history: Vec<Donation>,\n}\n```",
+  "strength": "Strong",
+  "source": "*Domain-Driven Design* (Evans), Chapter 14: \"duplicate concepts and false cognates\", p. 410."
+}

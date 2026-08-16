@@ -1,0 +1,13 @@
+{
+  "id": 929,
+  "title": "Premature Module Segmentation (Shotgun Surgery Modules)",
+  "category": "Wrong Granularity",
+  "damaged_code": "```\n// Located in /src/domain/orders/order.rs\npub struct Order { pub id: u64, pub status: Status }\n\n// Located in /src/domain/orders/status.rs\npub enum Status { Pending, Paid }\n\n// Located in /src/domain/orders/validation.rs\npub fn validate_order(order: &Order) -> bool { ... }\n```",
+  "pattern": "Splitting a highly cohesive, tightly coupled set of types (like a struct, its main enum status, and its simple validation function) into multiple distinct files/modules.",
+  "why_bad": "Forces developers to perform \"shotgun surgery\" across multiple files to make a simple, unified change (e.g., adding a status variant requires modifying `status.rs`, updating validation logic in `validation.rs`, and adjusting the struct in `order.rs`). This ruins the benefits of modular design and increases cognitive load.",
+  "detection": "Identify tiny, single-type modules (less than 30 lines) where any modification requires simultaneous edits to adjacent files within the same directory.",
+  "counterexample": "Very large frameworks where file split is necessary to avoid hitting compiler output limits or to manage thousands of lines of highly complex code.",
+  "fix": "Co-locate highly cohesive types and functions within the same module file.\n```rust\n// In /src/domain/orders.rs\npub struct Order {\n    pub id: u64,\n    pub status: Status,\n}\n\npub enum Status {\n    Pending,\n    Paid,\n}\n\nimpl Order {\n    pub fn validate(&self) -> bool { ... }\n}\n```",
+  "strength": "Contextual",
+  "source": "*Eric Evans - Domain-Driven Design (2003)*, Chapter 5, \"Modules\" (High cohesion / Low coupling, p. 109); *Martin Fowler - Refactoring (1999)*, Chapter 3, \"Shotgun Surgery\"."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 790,
+  "title": "Incompatible MSRV (Minimum Supported Rust Version) Bumps",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```toml\n# Cargo.toml of a library (v1.2.1 minor release)\n[package]\nname = \"my_library\"\nversion = \"1.2.1\"\nrust-version = \"1.56.0\" # Mutated from 1.40.0 in a patch release\n```",
+  "pattern": "Changing the Minimum Supported Rust Version (MSRV) to a significantly newer toolchain in a minor or patch crate release.",
+  "why_bad": "Downstream users pinned to older Rust compiler toolchains (due to corporate mandates or legacy OS constraints) will find their builds immediately break upon running `cargo update`, violating semver stability [42, 537].",
+  "detection": "Any modifications to the `rust-version` field in `Cargo.toml` that require a newer compiler version than the previously tagged minor/patch release.",
+  "counterexample": "`Context-dependent`. Valid if the crate explicitly specifies in its policy that MSRV updates are not considered breaking changes, though this still shifts churn onto users.",
+  "fix": "Treat MSRV updates as breaking changes requiring a major version bump, or keep the MSRV stable across minor versions by avoiding new language features [42, 537].",
+  "strength": "Contextual",
+  "source": "Rust for Rustaceans, Chapter 8, \"Minimum Supported Rust Version\" [42, 537]"
+}

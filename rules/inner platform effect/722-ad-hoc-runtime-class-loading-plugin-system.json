@@ -1,0 +1,13 @@
+{
+  "id": 722,
+  "title": "Ad-Hoc Runtime Class-Loading Plugin System",
+  "category": "Inner Platform Effect",
+  "damaged_code": "```\n// Dynamically loading dynamic libraries (.so/.dll) at runtime for trivial variations\nstruct PluginManager {\n    loaded_plugins: Vec<libloading::Library>,\n}\n\nimpl PluginManager {\n    fn load_plugin(&mut self, path: &str) -> Result<(), &'static str> {\n        let lib = unsafe { libloading::Library::new(path) }.map_err(|_| \"Failed\")?;\n        self.loaded_plugins.push(lib);\n        Ok(())\n    }\n}\n```",
+  "pattern": "Loading arbitrary dynamically compiled shared libraries (`.so` or `.dll` files) at runtime using manual memory offsets, solely to toggle localized system configurations or trivial business rule variants.",
+  "why_bad": "It introduces critical security vulnerabilities (binary hijacking), degrades compiler cross-module optimizations (LTO), and causes runtime segmentation faults or panics if symbols are missing.",
+  "detection": "The direct use of unsafe dynamic library loaders (like the `libloading` crate) inside core domain execution pathways to dispatch variants.",
+  "counterexample": "`Context-dependent`. True microkernel architectures or extensible platforms (like Web browsers) where dynamic module loading is a fundamental requirement.",
+  "fix": "Utilize compile-time polymorphic traits or compile-time feature-flags.\n\n```\n// Static trait polymorphism configured at compile-time\npub trait TradeRule {\n    fn execute(&self);\n}\n\npub struct USTradeRule;\nimpl TradeRule for USTradeRule {\n    fn execute(&self) { /* ... */ }\n}\n```",
+  "strength": "Strong",
+  "source": "Mark Richards, Neal Ford - _Fundamentals of Software Architecture_ An Engineering Approach_ (2020, O'Reilly Media).pdf, Chapter 12 \"Microkernel Architecture Style\"; Joshua Kerievsky - _Refactoring to Patterns_ (2004, Addison-Wesley Professional).pdf, Chapter 7."
+}

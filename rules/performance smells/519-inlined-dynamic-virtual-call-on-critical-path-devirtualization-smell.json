@@ -1,0 +1,13 @@
+{
+  "id": 519,
+  "title": "Inlined Dynamic Virtual Call on Critical Path (Devirtualization Smell)",
+  "category": "Performance Smells",
+  "damaged_code": "```cpp\nstruct Handler { virtual void process() = 0; };\nfor (int i = 0; i < 1000000; i++) {\n    handler->process(); // Virtual call inside tight loop\n}\n```",
+  "pattern": "Tight loop executing trivial, very short (5-10 instruction) methods via virtual dynamic dispatch (`vtable` or pointer-chasing).",
+  "why_bad": "Dynamic dispatch prevents compiler inlining, adds branch predictor strain, and incurs function call overhead that can be several times larger than the computation itself.",
+  "detection": "Dynamic interface or virtual class methods invoked continuously inside innermost loops.",
+  "counterexample": "The polymorphic handler resolves to highly complex, long-running functions where virtual dispatch is negligible. `Contextual`.",
+  "fix": "Use monomorphization (C++ templates / Rust generics), devirtualization optimization, or inlining pointers.",
+  "strength": "Contextual",
+  "source": "*Understanding Software Dynamics*, Chapter 22 (p. 227 / p. 522)."
+}

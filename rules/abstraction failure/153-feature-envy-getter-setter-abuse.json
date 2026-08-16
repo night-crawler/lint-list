@@ -1,0 +1,13 @@
+{
+  "id": 153,
+  "title": "Feature Envy (Getter/Setter Abuse)",
+  "category": "Abstraction Failure",
+  "damaged_code": "```rust\nstruct Item {\n    pub price: f64,\n    pub quantity: u32,\n}\n\nstruct Cart {\n    item: Item,\n}\n\nimpl Cart {\n    pub fn calculate_total(&self) -> f64 {\n        // Envious of Item's fields: calculation uses exclusively Item's data\n        self.item.price * (self.item.quantity as f64)\n    }\n}\n```",
+  "pattern": "A method on one struct spends almost all of its execution accessing and manipulating the fields of another struct to perform a calculation.",
+  "why_bad": "It places behavior in the wrong struct, violating encapsulation. The calculation logic is coupled to the internal layout of the target struct. If the target struct changes its fields, the envious method breaks.",
+  "detection": "A method on struct A that uses getter methods or public fields of struct B to perform standard mathematical or logical calculations on B's data, without using any of A's fields.",
+  "counterexample": "Orchestrators, Mappers, or DTO translation routines whose explicit, single role is combining data from multiple sources.",
+  "fix": "Move the method from struct A into struct B so that the struct owning the data also owns the behavior (e.g., `item.calculate_total()`).",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Refactoring* (1999), Chapter 3 (\"Feature Envy\")."
+}

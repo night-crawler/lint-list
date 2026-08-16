@@ -1,0 +1,13 @@
+{
+  "id": 30,
+  "title": "Over-Constraining Structs with Trait Bounds",
+  "category": "Accidental Complexity",
+  "damaged_code": "```rust\nstruct Container<T: Ord> {\n    elements: Vec<T>,\n}\n```",
+  "pattern": "Declaring trait bounds (such as `T: Ord` or `T: Hash`) directly on a generic `struct` definition itself, rather than restricting them to the specific `impl` blocks where they are needed.",
+  "why_bad": "It severely restricts the utility of the struct. Downstream callers cannot instantiate, store, or move the struct without satisfying those traits, even if they never perform ordered or hashed operations, cluttering signatures across the entire system.",
+  "detection": "A generic struct definition `struct Name<T: Trait>` where the trait bound is not required to define the memory layout of the fields (i.e. the struct only contains standard types like `Vec<T>`).",
+  "counterexample": "When a trait bound directly determines the memory layout (e.g., associated type representations) or is fundamentally required for a field's type declaration.",
+  "fix": "Remove the trait bounds from the `struct` definition, and place them strictly on the specific `impl` blocks or methods that perform the operations requiring those traits.",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust for Rustaceans* (2021), Chapter 3 (\"Types - Traits and Trait Bounds\"), p. 556."
+}

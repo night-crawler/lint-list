@@ -1,0 +1,13 @@
+{
+  "id": 965,
+  "title": "Duplicating Orchestration Logic Across Multiple Clients",
+  "category": "Conceptual Integrity",
+  "damaged_code": "```rust\n// Client-side orchestrating multiple low-level APIs\nfn checkout_client_side(order: Order) {\n    catalog_api.lock_item(order.item_id);\n    payment_api.charge_card(order.total);\n    shipping_api.create_label(order.id);\n}\n```",
+  "pattern": "Forcing multiple client applications (like web, iOS, Android) to independently execute and coordinate the same sequence of fine-grained API calls to complete a single business use case.",
+  "why_bad": "It results in severe logical duplication and consistency issues. Any change to the business workflow requires coordinated updates across all client codebases. It also exposes the database to partial failure states if a client loses connectivity mid-sequence.",
+  "detection": "Flag instances where client applications import and coordinate multiple disjoint services instead of consuming a single unified API facade.",
+  "counterexample": "Highly custom admin panels or dev-tools that explicitly require low-level primitive control of separate subsystems.",
+  "fix": "Expose a single, coarse-grained API facade on the server side that handles the coordination of all sub-services transactionally.",
+  "strength": "Strong",
+  "source": "*Righting Software* by Juval Löwy (2019), p. 21, 493."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 105,
+  "title": "Ceremonial Helpers (Trivial Standard Wrappers)",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nfn insert_to_map(map: &mut HashMap<String, i32>, k: String, v: i32) {\n    map.insert(k, v);\n}\n```",
+  "pattern": "Writing fine-grained helper methods that simply wrap standard library collection operations with no additional validation or logic.",
+  "why_bad": "It increases the cognitive surface of the codebase by introducing a verbose, custom API for a standard operation that every developer already knows.",
+  "detection": "Functions whose bodies are exactly one line calling a standard library collection method with raw parameters.",
+  "counterexample": "Helper functions that perform authorization checks, logging, or complex structural validations prior to insertion.",
+  "fix": "Inline the helper method directly at all call sites and delete the helper function.",
+  "strength": "Strong",
+  "source": "John K. Ousterhout, *A Philosophy of Software Design* (2018), Chapter 4 (\"Modules Should Be Deep - Classitis\"), p. 25."
+}

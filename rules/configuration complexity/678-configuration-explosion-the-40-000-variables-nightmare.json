@@ -1,0 +1,13 @@
+{
+  "id": 678,
+  "title": "Configuration Explosion (The 40,000 Variables Nightmare)",
+  "category": "Configuration Complexity",
+  "damaged_code": "```rust\nstruct AppConfig {\n    button_hover_color_hex: String,\n    dialog_border_radius_px: u32,\n    username_max_char_count: usize,\n    // Thousands of trivial fields exported due to indecision\n}\n```",
+  "pattern": "Exporting every trivial visual property, UI asset, or non-volatile design logic variable to config tables or files.",
+  "why_bad": "Drastically slows down development velocity. Adding a single field requires implementing the layout, properties fields, database migration, and operator testing. It forces developers to manage thousands of untested runtime variables.",
+  "detection": "The presence of massive configuration schemas containing hundreds of low-severity variables or cosmetic styles.",
+  "counterexample": "```rust\nstruct AppConfig {\n    // Only export volatile parameters that actually vary by installation\n    license_key: String,\n}\n```",
+  "fix": "Do not push decisions to configuration out of laziness or indecision; hardcode sensible defaults in compilation structures, using real-world testing to lock in decisions.",
+  "strength": "Context-dependent",
+  "source": "[2nd] Andrew Hunt_ David Hurst Thomas - *The Pragmatic Programmer_ Your Journey to Mastery*, 20th Anniversary Edition (2019, Addison-Wesley Professional).pdf, Topic 32."
+}

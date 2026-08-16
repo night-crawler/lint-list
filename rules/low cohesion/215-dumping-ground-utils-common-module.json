@@ -1,0 +1,13 @@
+{
+  "id": 215,
+  "title": "Dumping Ground \"utils\" / \"common\" Module",
+  "category": "Low Cohesion",
+  "damaged_code": "```rust\n// utils.rs - Dumping ground for completely unrelated operations\npub fn hash_password(password: &str) -> String { /* ... */ }\npub fn format_currency(cents: u64) -> String { /* ... */ }\npub fn load_system_config() -> String { /* ... */ }\n```",
+  "pattern": "A central module named `utils`, `common`, or `helpers` contains a variety of static functions that operate on completely different domains and levels of abstraction.",
+  "why_bad": "It lacks any functional cohesion. It serves as a shortcut that prevents developers from carefully deciding where a behavior truly belongs, leading to circular imports and an unmaintainable codebase.",
+  "detection": "A file or module contains multiple public functions that do not share any common data parameters or represent a unified domain concept.",
+  "counterexample": "Highly specialized mathematical or algorithm utility modules that operate within a single mathematical domain (e.g., `matrix_utils`).",
+  "fix": "Relocate each function to the specific module that owns the data or abstraction it acts upon.\n```rust\n// password.rs\npub fn hash(password: &str) -> String { /* ... */ }\n\n// currency.rs\npub fn format(cents: u64) -> String { /* ... */ }\n```",
+  "strength": "Strong",
+  "source": "*John Ousterhout - A Philosophy of Software Design, Chapter 4 / Steve McConnell - Code Complete, Chapter 6, Section \"Logical Cohesion\"*"
+}

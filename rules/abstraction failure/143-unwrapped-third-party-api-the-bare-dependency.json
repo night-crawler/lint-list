@@ -1,0 +1,13 @@
+{
+  "id": 143,
+  "title": "Unwrapped Third-Party API (The Bare Dependency)",
+  "category": "Abstraction Failure",
+  "damaged_code": "```rust\n// Core Domain Layer\nstruct BillingService;\n\nimpl BillingService {\n    pub fn execute_billing(&self, client: &str) {\n        // Direct dependency on third-party HTTP client and specific API format\n        let res = reqwest::blocking::get(format!(\"https://acme-billing.com/api/{}\", client)).unwrap();\n    }\n}\n```",
+  "pattern": "High-level domain or business logic directly invokes and depends on raw third-party library APIs (like HTTP clients, JSON parsers, or logging engines).",
+  "why_bad": "It couples core domain logic directly to external volatile APIs. If the library updates with breaking changes, gets abandoned, or needs to be swapped out, your core business code must be rewritten.",
+  "detection": "Importing and calling low-level network, parsing, or utility libraries directly inside core business or domain-specific modules.",
+  "counterexample": "Third-party libraries that define universally accepted standards or basic primitives (e.g., standard collections, basic logging macros, datetime primitives).",
+  "fix": "Wrap the third-party dependency behind a clean, application-specific gateway/port trait (e.g., `trait BillingGateway`) that you control, and implement it as an adapter.",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 8, Section 8.3 (\"Using Third-Party Code\"); Andrew Hunt & David Thomas, *The Pragmatic Programmer* (2019), Topic 34 (\"Shared State Is Incorrect State\")."
+}

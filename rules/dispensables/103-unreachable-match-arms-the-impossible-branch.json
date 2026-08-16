@@ -1,0 +1,13 @@
+{
+  "id": 103,
+  "title": "Unreachable Match Arms (The Impossible Branch)",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nfn classify(val: u8) -> &'static str {\n    if val > 200 {\n        match val {\n            0..=100 => \"low\",\n            _ => \"high\",\n        }\n    } else { \"other\" }\n}\n```",
+  "pattern": "Writing match arms or conditional branches checking values that are mathematically or logically impossible due to preceding guard checks.",
+  "why_bad": "Adds dead logical paths that can never be executed, increasing cognitive load and giving a false sense of comprehensive coverage.",
+  "detection": "A match arm or conditional branch whose target value domain is completely excluded by preceding assertions, guards, or type constraints.",
+  "counterexample": "Context-dependent",
+  "fix": "Delete the unreachable match arm or redundant conditional check.",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 17 (\"Smells and Heuristics - G9: Dead Code\"), p. 168."
+}

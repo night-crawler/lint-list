@@ -1,0 +1,13 @@
+{
+  "id": 353,
+  "title": "Universal Identifier Reuse Across Bounded Contexts",
+  "category": "Boundary Representation",
+  "damaged_code": "```rust\n// Billing Context\nstruct BillingAccount { id: u64 } // Account refers to financial ledger\n// Literary Context\nstruct BookAccount { id: u64 } // Account refers to publisher record\n```",
+  "pattern": "Using the exact same raw identifier primitive type to represent different business concepts across different Bounded Contexts.",
+  "why_bad": "It leads to logical semantic errors. Developers can easily pass a ledger ID where a publisher ID is expected, bypassing compiler checks because both are raw `u64` primitives.",
+  "detection": "Identical identifier primitives used for logically distinct, same-named entities across separate system packages.",
+  "counterexample": "Unified enterprise-wide stable system identity keys (e.g. UUIDs used strictly as strings). Mark as `Context-dependent`.",
+  "fix": "Wrap identifiers in unique newtypes specific to each Bounded Context's Ubiquitous Language.\n```rust\nstruct LedgerAccountId(Uuid);\nstruct PublisherAccountId(Uuid);\n```",
+  "strength": "Strong",
+  "source": "*Domain-Driven Design* by Eric Evans (Chapter 14); *Implementing Domain-Driven Design* (Chapter 3, p. 179)."
+}

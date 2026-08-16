@@ -1,0 +1,13 @@
+{
+  "id": 261,
+  "title": "Blocking Async Executors",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```rust\nasync fn handle_request(req: Request) -> Response {\n    std::thread::sleep(std::time::Duration::from_millis(50));\n    Response::ok()\n}\n```",
+  "pattern": "Calling a synchronous, blocking OS function (like sleeping or synchronous file/network I/O) directly within an asynchronous task.",
+  "why_bad": "Executor starvation. Cooperative multitasking systems rely on tasks yielding voluntarily. Blocking blocks the executor thread itself, stalling all other tasks on that thread.",
+  "detection": "Invoking known synchronous blocking functions inside an `async fn` or `Future::poll` block.",
+  "counterexample": "Invoking blocking operations inside standard synchronous threads or dedicated background threads.",
+  "fix": "Use non-blocking asynchronous alternatives, or offload blocking operations to a dedicated blocking pool:\n```rust\nasync fn handle_request(req: Request) -> Response {\n    tokio::time::sleep(std::time::Duration::from_millis(50)).await;\n    Response::ok()\n}\n```",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust For Rustaceans*, Chapter 9 \"Blocking in Async Code\"."
+}

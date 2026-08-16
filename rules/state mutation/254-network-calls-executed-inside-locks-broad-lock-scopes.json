@@ -1,0 +1,13 @@
+{
+  "id": 254,
+  "title": "Network Calls Executed inside Locks (Broad Lock Scopes)",
+  "category": "State Mutation",
+  "damaged_code": "```rust\nfn process_payment(mutex: &Mutex<Account>) {\n    let mut guard = mutex.lock().unwrap();\n    // CRITICAL BUG: Making a slow HTTP RPC network call while holding a local state lock!\n    let status = make_http_payment_request(guard.card_info()); \n    guard.set_status(status);\n}\n```",
+  "pattern": "An expensive, synchronous remote procedure call (RPC), network request, or file I/O operation is executed while holding a local concurrency lock (such as a `MutexGuard`).",
+  "why_bad": "It causes severe lock contention and thread starvation. If the network call blocks or slows down (e.g., due to packet latency or network lag), the local state lock is held indefinitely, blocking all other threads in the application, multiplying local latency by orders of magnitude, and potentially freezing the entire server.",
+  "detection": "The acquisition of a lock (e.g., `lock()`) is followed by an I/O or network call (e.g., `make_http_payment_request()`, `File::open()`, SQL query) within the same block scope.",
+  "counterexample": "Reading the required parameters inside the lock, releasing the lock, executing the network call, and then re-acquiring the lock to apply the result:\n```rust\nfn process_payment_clean(mutex: &Mutex<Account>) {\n    let card_info = {\n        let guard = mutex.lock().unwrap();\n        guard.card_info().clone() // Read quickly, release lock immediately\n    };\n    let status = make_http_payment_request(card_info); // Safe, network call outside lock\n    let mut guard = mutex.lock().unwrap();\n    guard.set_status(status);\n}\n```",
+  "fix": "Narrow the lock scope to the absolute minimum required to read or write the data, and execute all external I/O and network operations completely outside the lock boundary.\n```rust\n// Wrap critical fields in smaller locks or use scoped blocks to release guards early.\n```",
+  "strength": "Strong",
+  "source": "*Understanding Software Dynamics* by Richard L. Sites (Chapter 27, \"A dashboard thread holds both locks...\"); *Release It!* by Michael T. Nygard (Integration Points)."
+}

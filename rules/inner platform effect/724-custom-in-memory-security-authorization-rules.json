@@ -1,0 +1,13 @@
+{
+  "id": 724,
+  "title": "Custom In-Memory Security/Authorization Rules",
+  "category": "Inner Platform Effect",
+  "damaged_code": "```\n// Manual, dynamic string parsing to evaluate user role access\nstruct User {\n    roles: Vec<String>,\n}\n\nfn check_permission(user: &User, required_scope: &str) -> bool {\n    // Ad-hoc, untyped check prone to typos: \"admin\" vs \"Admin\"\n    user.roles.iter().any(|role| {\n        let formatted = format!(\"scope:{}\", role);\n        formatted == required_scope\n    })\n}\n```",
+  "pattern": "Parsing authorization rules, access control lists, and user scopes dynamically using string concatenation and matching inside application loops.",
+  "why_bad": "It bypasses compiler guarantees for access paths, leading to potential security vulnerabilities due to minor typos. It makes security audits hard because the roles are handled as opaque string arrays.",
+  "detection": "String manipulation and comparison loops evaluated to establish authorization bounds in domain code.",
+  "counterexample": "`Context-dependent`. Dynamic systems where roles, scopes, and target rules are updated in database records by security administrators.",
+  "fix": "Model access scopes using strongly typed, compiled Enums.\n\n```\n// Safe compile-time checked scopes\n#[derive(PartialEq, Eq)]\npub enum Permission {\n    ReadAuditLog,\n    WriteMetrics,\n}\n\npub struct User {\n    pub permissions: Vec<Permission>,\n}\n\nfn authorize(user: &User, required: Permission) -> bool {\n    user.permissions.contains(&required)\n}\n```",
+  "strength": "Strong",
+  "source": "Heather Adkins_ Betsy Beyer_ Paul Blankinship_ Ana Oprea_ Piotr - _Building Secure and Reliable Systems_ Best Practices for Designing, Implementing, and Maintaining Systems_ (2020, O'Reilly Media).pdf, Chapter 11; Vaughn Vernon - _Implementing Domain-Driven Design_ (2013, Addison-Wesley Professional).pdf, Chapter 3."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 652,
+  "title": "Creational Dependency Overload (Complex Scaffolding)",
+  "category": "Test Smells",
+  "damaged_code": "```rust\n#[test]\nfn test_calculate_simple_shipping_cost() {\n    // 15 lines of object construction just to test a single mathematical helper\n    let config = Config::new();\n    let cache = Cache::new();\n    let db = Database::new(config, cache);\n    let logger = Logger::new();\n    let event_bus = EventBus::new();\n    let calculator = ShippingCalculator::new(db, logger, event_bus);\n\n    let cost = calculator.calculate_rate(10); // Simple calculation based on distance\n    assert_eq!(cost, 100);\n}\n```",
+  "pattern": "A test setup block that requires assembling a massive, complex object graph (transitive dependencies depending on other dependencies) just to exercise a simple calculation.",
+  "why_bad": "It points to poor code design: high coupling and responsibility overload in production code [157]. It increases test maintenance costs since any change to an unrelated constructor breaks tests across the entire codebase [203].",
+  "detection": "The test setup is dominated by constructors and complex object instantiation chains compared to the actual execution step [203].",
+  "counterexample": "Constructing a complete object graph inside integration tests where actual end-to-end component interaction is the subject of validation.",
+  "fix": "Refactor production code to extract the decision logic into pure functions that operate on primitive values, decoupled from complex dependency structures [15, 157].",
+  "strength": "Strong",
+  "source": "*   *Software Engineering at Google*, \"Dependency Construction\" (p. 267) [203, 524]\n*   *Software Engineering at Google*, \"Unit Testing: Thoughtful Design\" (p. 213) [157]\n*   *Working Effectively with Legacy Code*, \"The Case of the Onion Parameter\" (p. 120) [311]"
+}

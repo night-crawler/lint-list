@@ -1,0 +1,13 @@
+{
+  "id": 789,
+  "title": "Ambiguity Seduction (The Redesign Spec Fallacy)",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```rust\n// Spec written for a complete rewrite based on legacy documentation\n// \"System shall validate order data and save to database.\"\n// (Fails to specify the 100+ undocumented edge-case bug fixes applied over 10 years)\n```",
+  "pattern": "Approving a complete greenfield system rewrite under the assumption that the legacy system can simply be used as a \"specification\" or that the design is fully understood.",
+  "why_bad": "Legacy systems are not static specs. They are filled with decades of undocumented edge cases, bug fixes, and critical workarounds. Rewriting them from scratch introduces a massive wave of regressions and misses critical business constraints [102, 104, 106].",
+  "detection": "Project plans committing to a full rewrite of a highly complex, active legacy system without first writing end-to-end characterization tests to document the actual runtime behavior [406].",
+  "counterexample": "Valid for isolated, low-complexity modules (e.g. a simple parser utility) with small, well-defined domains.",
+  "fix": "Avoid full rewrites where possible; instead, iteratively refactor the system in place, extracting highly cohesive subcomponents behind adapters one at a time [122, 165, 215, 393].",
+  "strength": "Contextual",
+  "source": "Kill It with Fire, Chapter 4 [101, 102, 104, 105, 106, 148]; Refactoring [165]; Clean Code [215]"
+}

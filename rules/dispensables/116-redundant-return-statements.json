@@ -1,0 +1,13 @@
+{
+  "id": 116,
+  "title": "Redundant Return Statements",
+  "category": "Dispensables",
+  "damaged_code": "```rust\nfn add(a: i32, b: i32) -> i32 {\n    return a + b;\n}\n```",
+  "pattern": "Explicitly writing the `return` keyword as the final, trailing expression in a block or function.",
+  "why_bad": "Violates the clean, expression-oriented style of modern languages like Rust, adding redundant boilerplate where implicit expression returns are idiomatic.",
+  "detection": "A `return` statement placed as the last syntactic node of a block or function.",
+  "counterexample": "Early returns (guard clauses) nested inside conditional branches.",
+  "fix": "Remove the `return` keyword and the trailing semicolon, leaving a clean expression return.",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust For Rustaceans* (2021); Fowler, *Refactoring*, Chapter 3."
+}

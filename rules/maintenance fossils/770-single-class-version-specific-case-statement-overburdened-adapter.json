@@ -1,0 +1,13 @@
+{
+  "id": 770,
+  "title": "Single Class Version-Specific Case Statement (Overburdened Adapter)",
+  "category": "Maintenance Fossils",
+  "damaged_code": "```rust\npub fn execute_query(&self, sql: &str) {\n    if self.use_super_db_v5_2 {\n        self.sd_v52_client.run(sql);\n    } else {\n        self.sd_v51_client.execute(sql);\n    }\n}\n```",
+  "pattern": "A single client class that uses conditional flags (such as `use_super_db_v5_2`) to toggle between incompatible API versions or library versions of the same component, accompanied by comments promising to \"delete this when we migrate.\"",
+  "why_bad": "High coupling and Solution Sprawl. It combines multiple incompatible version contracts into a single interface. Developers will rarely delete the obsolete version branch for fear of breaking hidden legacy callers, meaning the \"temporary\" conditional check becomes a permanent architecture.",
+  "detection": "The linter must observe:\n1. Conditional statements (`if/else` or `match`) checking software/library version variables to route behavior to distinct library client instances.\n2. High structural similarity in the arguments passed to both version paths.",
+  "counterexample": "```rust\n// Valid: Separate adapters implementing a common abstraction interface\npub trait DbAdapter {\n    fn run_query(&self, sql: &str);\n}\n\npub struct DbAdapterV51 { client: SdV51Client }\nimpl DbAdapter for DbAdapterV51 {\n    fn run_query(&self, sql: &str) { self.client.execute(sql); }\n}\n```",
+  "fix": "Apply polymorphically segregated Adapters, and let runtime configuration instantiate the appropriate Adapter.\n```rust\npub trait DbAdapter {\n    fn run_query(&self, sql: &str);\n}\n\npub struct DbAdapterV52 { client: SdV52Client }\nimpl DbAdapter for DbAdapterV52 {\n    fn run_query(&self, sql: &str) { self.client.run(sql); }\n}\n```",
+  "strength": "Strong",
+  "source": "- Joshua Kerievsky, *Refactoring to Patterns* (2004) [53, 54]"
+}

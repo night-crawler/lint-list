@@ -1,0 +1,13 @@
+{
+  "id": 809,
+  "title": "Eager/Lazy Load Misalignment (Lazy Loading Exceptions)",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Returning an entity with unresolved lazy-loaded relations outside of the transaction scope\npub fn get_order_summary(order: Order) -> OrderSummary {\n    // Triggers a runtime exception because the database connection session has already closed\n    let line_items = order.line_items; \n    OrderSummary { id: order.id, count: line_items.len() }\n}\n```",
+  "pattern": "Passing active ORM-managed entities containing unresolved lazy-loaded collections or relationships to outer presentation or service layers outside of the active transaction/session boundary.",
+  "why_bad": "It results in runtime exceptions or silent failures (like LazyInitializationException) when the outer layer tries to access un-fetched associations after the database session has closed.",
+  "detection": "Accessing lazily-evaluated collection fields of an ORM entity outside the module/block marked with transaction boundaries or lifetime scopes.",
+  "counterexample": "Mapping the entity to a clean, fully-resolved Data Transfer Object (DTO) inside the transaction boundary before returning it.",
+  "fix": "Fetch the required associations eagerly in the query, or use a use-case-specific Strategy (Domain Dependency Resolver) to fully resolve fields before transaction commit.",
+  "strength": "Strong",
+  "source": "*Implementing Domain-Driven Design (Vernon), Chapter 12, p. 238, 516 [238]*"
+}

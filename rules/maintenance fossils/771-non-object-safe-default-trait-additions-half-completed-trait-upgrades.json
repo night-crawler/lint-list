@@ -1,0 +1,13 @@
+{
+  "id": 771,
+  "title": "Non-Object-Safe Default Trait Additions (Half-Completed Trait Upgrades)",
+  "category": "Maintenance Fossils",
+  "damaged_code": "```rust\npub trait Widget {\n    fn draw(&self);\n    // Non-object-safe method added with a default implementation to avoid breaking implementations\n    fn update_state<T>(&mut self, data: T) where Self: Sized {\n        // default impl\n    }\n}\n```",
+  "pattern": "Adding a generic method with a default implementation to an existing trait to avoid breaking downstream implementations, but inadvertently making the trait non-object-safe (`dyn Trait`) in the process.",
+  "why_bad": "Compile-time breakage. Adding a non-object-safe method immediately blocks downstream callers from utilizing trait objects, disrupting polymorphic collections and dynamic dispatch patterns across the entire codebase.",
+  "detection": "The linter must observe:\n1. A trait that was previously used as a trait object (`dyn Trait`).\n2. A new method added to the trait containing generic type parameters or requiring `Self: Sized`, which compromises its object safety.",
+  "counterexample": "```rust\n// Valid: Trait remains object-safe; generic method is separated into an extension trait\npub trait Widget {\n    fn draw(&self);\n}\n\npub trait WidgetExt: Widget {\n    fn update_state<T>(&mut self, data: T);\n}\n```",
+  "fix": "Implement an extension trait for generic methods, or seal the trait if dynamic dispatch is not intended.\n```rust\npub trait Widget {\n    fn draw(&self);\n}\n```",
+  "strength": "Strong",
+  "source": "- Jon Gjengset, *Rust for Rustaceans* (2021) [568, 573]"
+}

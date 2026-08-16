@@ -1,0 +1,13 @@
+{
+  "id": 569,
+  "title": "Schema Driven by Database-First Mindset (Domain Leakage)",
+  "category": "Data Query Modeling Smells",
+  "damaged_code": "```rust\n// Modeling domain structures directly around relational table schemas\nstruct CustomerRecord {\n    id: i32,\n    shipping_address_id: i32,\n    billing_address_id: i32,\n    is_quote: bool,\n}\n```",
+  "pattern": "Modeling the application's core domain types and workflows to match the database's physical schema layout 1-to-1.",
+  "why_bad": "It breaks encapsulations and forces database details (like foreign keys and normalization structures) into the business logic. It forces domain workflows to work with raw IDs, increases transactional boundary size, and couples business logic to database migrations [510, 590].",
+  "detection": "Domain types that contain fields named `*_id` pointing to other tables, or types representing join tables rather than rich domain concepts.",
+  "counterexample": "Repository implementation classes or ORM mapper entities where database schema representation is strictly localized and separated from domain models.",
+  "fix": "Design domain types around business rules and invariants, using a repository/data-mapper pattern to map database-level rows to domain-level objects.",
+  "strength": "Strong",
+  "source": "*Domain Modeling Made Functional (Wlaschin), p. 222 [510]*  \n*Clean Architecture (Martin), p. 279 [590, 591]*"
+}

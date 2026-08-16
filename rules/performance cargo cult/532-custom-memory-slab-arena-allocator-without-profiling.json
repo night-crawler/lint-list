@@ -1,0 +1,13 @@
+{
+  "id": 532,
+  "title": "Custom Memory Slab/Arena Allocator without Profiling",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Rust\n// A complex custom heap chunk allocator implemented to bypass standard jemalloc\n```",
+  "pattern": "Re-implementing a custom slab, pool, or arena memory allocator inside application code before measuring standard memory allocation overhead.",
+  "why_bad": "Modern system allocators (like jemalloc) are heavily optimized for multi-threaded thread caching and prevent fragmentation. Custom allocators often introduce memory safety issues, memory leaks, high overhead, and can easily run slower than standard malloc/free [317, 328, 422].",
+  "detection": "Custom memory block allocations, unsafe pointer recycling, or manual reuse of discarded nodes in vector pools instead of normal drop and instantiations.",
+  "counterexample": "High-speed compiler implementations where a massive pool of AST nodes is allocated and dropped entirely as a single arena at compilation end. `Context-dependent`.",
+  "fix": "Use the default standard allocator or configure the program to use jemalloc globally.",
+  "strength": "Strong",
+  "source": "*A Philosophy of Software Design*, Chapter 20 (p. 317); *Code Complete*, Section 25.2 (p. 328); *Release It!*, Section 10 (p. 422)."
+}

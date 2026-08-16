@@ -1,0 +1,13 @@
+{
+  "id": 285,
+  "title": "Permitting Connections Before Application Bootstrapping Completes",
+  "category": "Temporal Coupling Lifecycle Bugs",
+  "damaged_code": "```rust\n// Rust\nfn main() {\n    let listener = TcpListener::bind(\"127.0.0.1:8080\").unwrap();\n    spawn(accept_requests(listener)); // Accepting connections too early!\n    initialize_database_pool();      // Pool is not ready yet!\n}\n```",
+  "pattern": "A server binds to a socket and starts accepting incoming client connections *before* the underlying application components (like database connection pools or repositories) are fully initialized.",
+  "why_bad": "Clients can submit requests that immediately crash or hang because the backing storage engine or configuration is still uninitialized.",
+  "detection": "Network listening or listener thread spawning occurs before application-level dependency injection, configuration parsing, or database pool initialization.",
+  "counterexample": "A gateway server that safely buffers incoming connections in a queue until the worker pool signals readiness.",
+  "fix": "Fully initialize all internal application services and pools before binding to the network socket and flipping the \"master switch\" to accept client traffic.",
+  "strength": "Strong",
+  "source": "Michael Nygard, *Release It!*, Section 14.3 / passage [280, 587]."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 141,
+  "title": "Implementation-Leaked Naming",
+  "category": "Abstraction Failure",
+  "damaged_code": "```rust\nstruct User;\nstruct SQLUserDatabase {\n    user_vector: Vec<User>,\n}\n\nimpl SQLUserDatabase {\n    pub fn query_from_sql_db(&self) -> Vec<User> {\n        self.user_vector.clone()\n    }\n}\n```",
+  "pattern": "Variables, fields, structs, or functions are named after their low-level implementation details rather than their functional, domain-level role.",
+  "why_bad": "It leaks details of the implementation to readers and users. If the underlying data structure changes from a `Vec` to a `HashMap`, or the database switches from SQL to a NoSQL store, the names become misleading or force widespread renames.",
+  "detection": "Names containing container types (e.g., `_vector`, `_list`, `_hashmap`) or specific database/framework technologies (e.g., `sql_`, `redis_`) inside high-level business layers.",
+  "counterexample": "Low-level drivers or system utilities where referencing the exact technology in the name is essential for clarity.",
+  "fix": "Rename variables and functions functionally for what they represent in the domain (e.g., `users` instead of `user_vector`, `find_user` instead of `query_from_sql_db`).",
+  "strength": "Contextual",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 17, G6 (\"Names at the appropriate level of abstraction\"); Steve McConnell, *Code Complete* (2004), Chapter 11."
+}

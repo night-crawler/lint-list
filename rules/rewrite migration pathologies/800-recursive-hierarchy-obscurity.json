@@ -1,0 +1,13 @@
+{
+  "id": 800,
+  "title": "Recursive Hierarchy Obscurity",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```sql\n-- Infinite flexibility: A entity can contain any other entity recursively\nCREATE TABLE nodes (\n    id INT PRIMARY KEY,\n    parent_id INT, -- Refers back to nodes(id)\n    node_type VARCHAR(50)\n);\n```",
+  "pattern": "Replacing a clean, multi-layered data schema with a recursive self-referential table configuration to achieve \"infinite flexibility\" for future migrations.",
+  "why_bad": "It introduces massive obscurity. It hides the concrete business rules and entities, forces the codebase to write highly complex recursive queries, destroys query performance, and makes referential integrity validation extremely difficult [769].",
+  "detection": "A table containing a foreign key referencing its own primary key, combined with an application model that uses recursive functions to map simple business structures.",
+  "counterexample": "Valid for domains that are intrinsically hierarchical and recursive (e.g., directory trees or nested comments). Mark as `Context-dependent`.",
+  "fix": "Design a concrete flat table schema that explicitly represents each level of the business hierarchy, adding nullable relations only as required [769].",
+  "strength": "Strong",
+  "source": "Data and Reality, Chapter 3, \"Optionality\" [769]"
+}
