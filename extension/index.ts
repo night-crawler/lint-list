@@ -23,7 +23,7 @@
  * Defaults can also be set in `<cwd>/.omp/lint-audit.json` or `<pkg>/lint-audit.json`
  * (command args win): {"groupSize":24,"concurrency":4,"seed":1337,"model":"","apply":true}
  */
-import { existsSync } from "node:fs";
+import { existsSync, realpathSync } from "node:fs";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
@@ -296,10 +296,21 @@ async function readConfigFile(path: string): Promise<Partial<AuditConfig>> {
 	}
 }
 
-function resolveRulesDir(configured: string, cwd: string): string | undefined {
-	const candidates = configured
-		? [configured, join(cwd, configured)]
-		: [join(import.meta.dir, "rules"), join(import.meta.dir, "..", "rules")];
+export function resolveRulesDir(configured: string, cwd: string): string | undefined {
+	if (configured) return [configured, join(cwd, configured)].find((c) => existsSync(c));
+	// import.meta.dir keeps a symlinked install path, and join() collapses ".."
+	// lexically — resolve the realpath too so "<repo>/rules" is found when the
+	// extension is symlinked into an .omp/extensions directory.
+	let real = import.meta.dir;
+	try {
+		real = realpathSync(import.meta.dir);
+	} catch {}
+	const candidates = [
+		join(import.meta.dir, "rules"),
+		join(import.meta.dir, "..", "rules"),
+		join(real, "rules"),
+		join(real, "..", "rules"),
+	];
 	return candidates.find((c) => existsSync(c));
 }
 
