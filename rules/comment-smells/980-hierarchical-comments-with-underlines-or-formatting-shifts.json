@@ -1,0 +1,13 @@
+{
+  "id": 980,
+  "title": "Hierarchical Comments with Underlines or Formatting Shifts",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n// COPY THE TABLE DATA\n// ------------------------------------\n// ... determine length of table\nlet len = table.len();\n// ... copy active items\nlet active = copy_active(table);\n```",
+  "pattern": "Differentiating major and minor comment levels using all-caps, underlines, or initial ellipses within a single function body.",
+  "why_bad": "Increases complexity. This custom visual hierarchy is highly subjective, tedious to maintain, and requires the reader to learn a custom markup standard for a single file.",
+  "detection": "Inline comments where consecutive blocks shift from uppercase with underlines to lower-case with custom symbols (like `...`).",
+  "counterexample": "Uniform sentence-case comments; a function complex enough to need an outline is split into well-named helpers instead.",
+  "fix": "Simplify all comments to use consistent standard layout (regular sentence casing, no custom hierarchies); split the complex function if it requires an outline to read.",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 32 (\"C++ Example of Differentiating Between Major and Minor Comments\")."
+}

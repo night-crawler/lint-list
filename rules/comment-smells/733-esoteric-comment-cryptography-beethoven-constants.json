@@ -1,7 +1,7 @@
 {
   "id": 733,
   "title": "Esoteric Comment Cryptography (Beethoven Constants)",
-  "category": "Cleverness Obscurity",
+  "category": "Comment Smells",
   "damaged_code": "```rust\n// Rust\nconst CONFIG_FLAG: u32 = 0x723; // RIP LVB (Rest in peace, Ludwig van Beethoven)\n```",
   "pattern": "Adding obscure, highly personal, or historic comments to justify magic numbers instead of creating a descriptively named domain constant.",
   "why_bad": "The comment acts as an enigma. It requires deep trivia knowledge (e.g., that Beethoven died in 1827, which is 0x723 in hexadecimal) while failing to explain *why* the value `0x723` is functionally necessary for the compiler or execution environment.",

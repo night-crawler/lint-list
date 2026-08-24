@@ -1,0 +1,13 @@
+{
+  "id": 996,
+  "title": "Vague or Unassigned TODO Comments",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n// TODO: fix this later\nfn process_payload(data: &mut [u8]) {\n    // ...\n}\n```",
+  "pattern": "`TODO` or `FIXME` comments without an explicit assignee, tracker reference, or descriptive action plan.",
+  "why_bad": "Decay hazard. Unassigned, vague todo comments quickly lose context, are ignored by readers, and are untrackable by tooling, leaving permanent design flaws or hacks in the codebase.",
+  "detection": "Comments matching patterns `TODO` or `FIXME` that do not contain an assignee name in parentheses (e.g., `TODO(username)`) or a tracking issue ID.",
+  "counterexample": "`// TODO(alice): Refactor buffer allocation in issue #423 to avoid copy-on-write` - assigned, tracked, and actionable.",
+  "fix": "Add an explicit assignee (username or email) and a reference to a tracking ticket or precise description of the required fix.",
+  "strength": "Contextual",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 4 (\"TODO Comments\"); Steve McConnell, *Code Complete* (2004), Chapter 32.4 (\"Marker in the Code\")."
+}

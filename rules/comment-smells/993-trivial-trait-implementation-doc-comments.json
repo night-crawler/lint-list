@@ -1,0 +1,13 @@
+{
+  "id": 993,
+  "title": "Trivial Trait Implementation Doc-Comments",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\nimpl Clone for Account {\n    /// Clones the account instance.\n    fn clone(&self) -> Self {\n        Account { id: self.id }\n    }\n}\n```",
+  "pattern": "Doc-comments on standard language trait implementations (like Clone, Debug, Display) repeating the trait's basic action.",
+  "why_bad": "Noise clutter. The semantic meaning of standard traits is globally known. Trivial comments restating standard operations waste reader scan time and offer no custom module-level context.",
+  "detection": "Doc-comments on functions implementing standard traits, containing only a repeat of the trait's name.",
+  "counterexample": "A trait impl doc-comment describing genuinely custom semantics, e.g. a `Display` impl that masks account numbers for security.",
+  "fix": "Delete the doc-comment.",
+  "strength": "Strong",
+  "source": "Kent Beck, *Tidy First?* (2023), Chapter 15 (\"Delete Redundant Comments\")."
+}

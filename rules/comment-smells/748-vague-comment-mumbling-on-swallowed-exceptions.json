@@ -1,11 +1,12 @@
 {
   "id": 748,
   "title": "Vague Comment Mumbling on Swallowed Exceptions",
-  "category": "Cleverness Obscurity",
+  "category": "Comment Smells",
   "damaged_code": "```rust\n// Rust\nmatch load_properties() {\n    Ok(_) => {}\n    Err(_) => {} // No properties file; all defaults are loaded.\n}\n```",
   "pattern": "Leaving an empty error handling block annotated with a vague comment claiming that recovery is handled elsewhere, with no concrete code path.",
   "why_bad": "It creates an enigma. Future developers cannot tell if the author is comforting themselves about an empty block, warning of a future TODO, or if safe defaults are actually loaded (and if so, who loaded them).",
   "detection": "An empty `Err` block containing comments that describe system properties but do not invoke error logging, fallback values, or recovery methods.",
+  "counterexample": "An error arm that programmatically performs the recovery it describes, e.g. `unwrap_or_else(|_| load_default_properties())`.",
   "fix": "Programmatically initialize the default properties inside the error recovery block.\n```rust\nlet properties = load_properties().unwrap_or_else(|_| load_default_properties());\n```",
   "strength": "Strong",
   "source": "*Clean Code*, Chapter 4, \"Mumbling\" (p. 60)."

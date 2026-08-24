@@ -1,0 +1,13 @@
+{
+  "id": 988,
+  "title": "Documenting Units in Prose Instead of Types",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n// x_pos is in meters, and latency is in milliseconds\nfn set_position(&mut self, x_pos: f64, latency: u32) {\n    // ...\n}\n```",
+  "pattern": "Comments detailing the physical units (meters, milliseconds, bytes) of primitive parameters.",
+  "why_bad": "No compiler enforcement. Prose cannot prevent developers from passing feet instead of meters or seconds instead of milliseconds. Strong type patterns resolve this error at compile time.",
+  "detection": "Comments on parameters containing terms like 'in meters', 'in ms', 'in milliseconds', or units describing primitive types.",
+  "counterexample": "FFI or serialization boundaries where primitives are mandatory; there, unit-suffixed names (`latency_ms`) plus doc-comments are the practical limit.",
+  "fix": "Refactor primitives to custom types or wrapper structs representing the units (e.g., `std::time::Duration`), removing the units comment.",
+  "strength": "Contextual",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 32 (\"Are units on data declarations commented?\"); John K. Ousterhout, *A Philosophy of Software Design* (2018), Chapter 13.2."
+}

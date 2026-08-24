@@ -1,0 +1,13 @@
+{
+  "id": 979,
+  "title": "Leader Dots and Boxed Formatting",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n// Variables ........ Meaning\n// x_pos ........... X Coordinate Position (meters)\n// y_pos ........... Y Coordinate Position (meters)\n```",
+  "pattern": "Comments using special padding strings like leader dots, boxed border lines, or column alignment markers.",
+  "why_bad": "Maintenance trap. Modifying or adding a variable requires manual adjustment of all adjacent padding characters. Developers will avoid updating comments to bypass the tedious formatting work, causing comments to go stale.",
+  "detection": "Inline comments containing long chains of dots (`...`), lines of dashes, or pluses (`+-------+`) used for vertical key-value alignment.",
+  "counterexample": "Plain unaligned one-line comments ('// x_pos - X coordinate position (meters)') that need no padding maintenance.",
+  "fix": "Format comments as standard paragraphs or simple clean lists with no padding alignments.",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 32 (\"Java Example of a Commenting Style That's Hard to Maintain\")."
+}

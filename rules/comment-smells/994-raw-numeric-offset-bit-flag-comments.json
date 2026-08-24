@@ -1,0 +1,13 @@
+{
+  "id": 994,
+  "title": "Raw Numeric Offset Bit-Flag Comments",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n// Status flags: bit 4 is printer ready, bit 14 is unused\nlet status = get_flags();\n```",
+  "pattern": "Inline comments detailing bitwise offsets and boolean flags directly in raw numeric operations.",
+  "why_bad": "High error rate. Developers cannot easily query, inspect, or modify raw offsets safely. Updating bitfields requires editing prose and code in parallel.",
+  "detection": "Comments explaining raw numeric offsets or shifts on integers used as status containers.",
+  "counterexample": "A declarative `bitflags!` definition naming each bit as a compiler-checked constant (`const PRINTER_READY = 1 << 4;`).",
+  "fix": "Use a declarative bitfield macro (like `bitflags!`) to make each flag a named compiler constant, removing the offset comment.",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 32 (\"Stamp comments related to a variable with the variable's name\")."
+}

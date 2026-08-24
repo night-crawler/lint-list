@@ -1,0 +1,13 @@
+{
+  "id": 999,
+  "title": "Trivial Conditional Syntax Translation (How vs. Why)",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n// If account flag is zero, set active to true\nif account_flag == 0 {\n    self.active = true;\n}\n```",
+  "pattern": "Inline comments on a conditional statement that merely translate variable names, comparison operators, and boolean assignments into standard words.",
+  "why_bad": "Adds visual noise with zero semantic benefit. A reader can immediately parse what variables are checked; the comment fails its primary purpose of explaining *why* a zero flag implies an active state.",
+  "detection": "Comments preceding conditional checks where the text matches the code keywords, variable names, and literals exactly or through synonym substitution.",
+  "counterexample": "A comment supplying the domain rationale ('a zero flag indicates a pre-approved customer account that starts active') rather than the mechanics.",
+  "fix": "Replace the mechanical translation with a comment explaining the domain rule/rationale, or encapsulate the check in a named helper method.",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 32 (\"Focus paragraph comments on the why rather than the how\")."
+}

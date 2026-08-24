@@ -1,0 +1,13 @@
+{
+  "id": 995,
+  "title": "Closing Brace Comments",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\nfn check_permissions(user: &User) -> bool {\n    if user.is_authenticated() {\n        while let Some(role) = user.roles.next() {\n            if role.name == \"admin\" {\n                return true;\n            } // if admin\n        } // while roles\n    } // if authenticated\n    false\n}\n```",
+  "pattern": "Inline comments appended immediately after closing braces (`}`) to indicate which block is being terminated.",
+  "why_bad": "Visual noise and a sign of high complexity. In well-designed, modular code, routines are sufficiently short that closing braces do not require textual tracking.",
+  "detection": "Comments on the same line as a closing brace `}` containing keywords matching surrounding control flow constructs (`if`, `while`, `for`, `match`).",
+  "counterexample": "Short routines whose block structure is visible on one screen, requiring no brace tracking.",
+  "fix": "Remove closing brace comments; refactor long or nested blocks into smaller helper routines if readability remains poor.",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 4 (\"Closing Brace Comments\")."
+}

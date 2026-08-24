@@ -1,0 +1,13 @@
+{
+  "id": 983,
+  "title": "Undocumented Background Constructor Threads",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\nfn main() {\n    let client = RaftClient::new();\n    // main exits now, but background polling threads keep the process alive...\n}\n```",
+  "pattern": "A library constructor that spawns long-lived background threads without indicating this in its doc-comment or API behavior.",
+  "why_bad": "Violates reader expectations. Callers expect the application to exit when `main` completes. If background threads are left active silently, the application hangs or behaves non-deterministically without any clear logging or documentation.",
+  "detection": "Struct constructors spawning threads or registering async runtime loops, where the doc-comment lacks standard concurrency or lifecycle markers.",
+  "counterexample": "A constructor doc-comment declaring lifecycle behavior: 'Spawns background network polling threads that keep the runtime active until `shutdown()` is called.'",
+  "fix": "Document the threading model in the constructor's doc-comment, or restructure the API to require explicit spawn/run method calls.",
+  "strength": "Strong",
+  "source": "John K. Ousterhout, *A Philosophy of Software Design* (2018), Chapter 18.2 (\"Nonobvious Code\")."
+}

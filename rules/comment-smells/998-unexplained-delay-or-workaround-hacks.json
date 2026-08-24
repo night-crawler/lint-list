@@ -1,0 +1,13 @@
+{
+  "id": 998,
+  "title": "Unexplained Delay or Workaround Hacks",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n// We must sleep here or the lock will fail\nstd::thread::sleep(Duration::from_millis(50));\n```",
+  "pattern": "Adding a workaround or hack comment (e.g., hardcoded sleeps, retries) without explaining the technical rationale or timing issue being addressed.",
+  "why_bad": "Fosters 'voodoo programming.' Future developers are forced to leave fragile hacks untouched because they cannot verify what boundary condition or race the delay is shielding.",
+  "detection": "Comments describing an operational workaround (such as a hardcoded `sleep` or retry loop) without specifying the upstream bug, race condition, or hardware register manual references.",
+  "counterexample": "A sleep documented with the precise constraint: 'controller chip reset self-test takes 40ms per hardware manual section 4.2.'",
+  "fix": "Document the precise hardware register reference, upstream issue ID, or timing constraint justifying the workaround.",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 32 (\"Differentiate between major and minor comments\"); Dustin Boswell & Trevor Foucher, *The Art of Readable Code* (2012), Chapter 5 (\"Include \\\"Director Commentary\\\"\")."
+}

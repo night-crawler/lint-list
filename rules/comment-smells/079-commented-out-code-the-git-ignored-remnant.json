@@ -1,7 +1,7 @@
 {
   "id": 79,
   "title": "Commented-Out Code (The Git-Ignored Remnant)",
-  "category": "Dispensables",
+  "category": "Comment Smells",
   "damaged_code": "```rust\n// let data = fetch_historical_payload(id)?;\n// let parsed = parse_payload(&data)?;\nprocess_payload(&parsed);\n```",
   "pattern": "Valid syntactic expressions or blocks of code that have been commented out instead of being deleted.",
   "why_bad": "It creates fear among other maintainers, who assume the code is there for a critical reason and refuse to delete it. It clutters visual scanning and references defunct types or APIs.",

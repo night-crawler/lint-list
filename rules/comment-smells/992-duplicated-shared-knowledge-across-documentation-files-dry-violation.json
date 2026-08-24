@@ -1,0 +1,13 @@
+{
+  "id": 992,
+  "title": "Duplicated Shared Knowledge across Documentation Files (DRY Violation)",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n// File: fees.rs\n// Each returned check costs $20. If overdraft exceeds 3 days, charge $10/day.\nfn calculate_fees() { /* ... */ }\n\n// File: reports.rs\n// Remember: returned checks are $20 and overdrafts > 3 days charge $10/day.\nfn print_fees() { /* ... */ }\n```",
+  "pattern": "Identical business rules or policy constraints documented in multiple independent source comments.",
+  "why_bad": "Dual-maintenance failure. When business fees or rules change, developers must hunt down and update every scattered text reference, guaranteeing stale, conflicting documentation.",
+  "detection": "Substantially identical descriptions of business formulas or numeric limits appearing in comments in separate source files.",
+  "counterexample": "Business rules centralized as named constants or a single policy function, referenced by name from any comment that needs them.",
+  "fix": "Centralize business rules in code as structured constants or unified methods, and reference them by name rather than hardcoding numbers in prose comments.",
+  "strength": "Strong",
+  "source": "Andrew Hunt & David Thomas, *The Pragmatic Programmer* (1999), Chapter 2 (\"Duplication in Documentation\")."
+}

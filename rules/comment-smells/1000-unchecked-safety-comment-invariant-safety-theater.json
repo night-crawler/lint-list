@@ -1,0 +1,13 @@
+{
+  "id": 1000,
+  "title": "Unchecked Safety Comment Invariant (Safety Theater)",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n// INVARIANT: count must always be positive and non-zero\nfn divide_buffer(buf: &[u8], count: i32) -> usize {\n    buf.len() / count as usize\n}\n```",
+  "pattern": "Prose comments asserting crucial safety invariants or numerical bounds without any compiler-enforced types or runtime checks.",
+  "why_bad": "Illusion of safety. If a caller violates the comment-only rule, the program suffers silent corruption or panic. Invariants must be enforced structurally or verified with assertions.",
+  "detection": "Comments asserting safety limits (e.g. 'must not be zero', 'must be positive') on primitives where there are no compile-time type barriers or runtime `assert!` operations.",
+  "counterexample": "The invariant enforced structurally (`NonZeroI32`) or mechanically (`assert!(count > 0)`) at function entry.",
+  "fix": "Enforce the invariant with custom types (e.g., `NonZeroI32`) or add a mechanical `assert!` check at function entry.",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Refactoring* (2018), Chapter 3 (\"Bad Smells in Code - Comments - Introduce Assertion\")."
+}

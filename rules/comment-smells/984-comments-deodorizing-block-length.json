@@ -1,0 +1,13 @@
+{
+  "id": 984,
+  "title": "Comments Deodorizing Block Length",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\nfn process_order(&mut self, order: Order) {\n    // Check if employee is eligible for full discount rate and seniority benefits\n    if order.employee_status == Status::Hourly && order.age > 65 && order.seniority_years > 10 {\n        // ... complex block of 30 lines ...\n    }\n}\n```",
+  "pattern": "Inline comments placed above large, complex conditional blocks explaining what the block checks or executes.",
+  "why_bad": "Comments as deodorant for bad code. If a block needs a sentence to explain its intent, it should be extracted into a separate, well-named function. Keeping it inline forces readers to parse complex boolean logic rather than reading a high-level descriptor.",
+  "detection": "Inline comment preceding a block of code (more than 5 lines) or complex conditional statements, where the comment explains the high-level intent of that specific block.",
+  "counterexample": "The condition extracted into a named predicate (`is_eligible_for_senior_discount`) whose call site reads as prose without any comment.",
+  "fix": "Extract the block or condition into a helper function named after the comment's intent.",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Refactoring* (2018), Chapter 3 (\"Bad Smells in Code - Comments\")."
+}

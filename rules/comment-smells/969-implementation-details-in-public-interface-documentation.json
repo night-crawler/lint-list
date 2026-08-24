@@ -1,0 +1,13 @@
+{
+  "id": 969,
+  "title": "Implementation Details in Public Interface Documentation",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n/// Create a new connection pool.\n///\n/// The pool maintains a list of idle connections in `self.idle_conns`,\n/// which is a `VecDeque` protected by a `Mutex`, and checks readiness\n/// rules 1 to 4 sequentially in a `while` loop.\npub fn new(size: usize) -> Self {\n    // ...\n}\n```",
+  "pattern": "Public doc-comments explaining private internal mechanics — fields, helper types, data structures, algorithms, or loop structures — instead of the interface contract.",
+  "why_bad": "Leaky abstraction. Callers of public APIs should not be exposed to internal implementation choices; this couples callers and documentation to volatile internals and increases maintenance on every refactor.",
+  "detection": "Doc-comments (`///`) on public items referencing private fields, private helper types, inner loops, algorithm names, or threading primitives of the implementation.",
+  "counterexample": "A public doc-comment describing only externally observable behavior (e.g., 'Creates a connection pool with the specified capacity limit'), with mechanism notes kept as `//` comments inside the body.",
+  "fix": "Move implementation details to internal inline comments (`//`) inside the function body; keep the doc-comment focused strictly on the API contract.",
+  "strength": "Strong",
+  "source": "John K. Ousterhout, *A Philosophy of Software Design* (2018), Chapter 13.2 (\"Red Flag: Implementation Documentation Contaminates Interface\")."
+}

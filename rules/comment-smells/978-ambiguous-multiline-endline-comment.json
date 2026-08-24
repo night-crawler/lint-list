@@ -1,0 +1,13 @@
+{
+  "id": 978,
+  "title": "Ambiguous Multiline Endline Comment",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\nfor idx in 0..rate_count { // Compute discounted rates\n    lookup_rate(idx, &mut rate);\n    apply_discount(idx, &mut rate);\n}\n```",
+  "pattern": "An endline comment placed on the opening line of a control block, intended to describe the entire block.",
+  "why_bad": "Scope ambiguity. It is visually unclear whether the comment refers solely to the first line (the loop initialization) or the entire block body, forcing readers to parse both in detail.",
+  "detection": "Endline comments placed on `for`, `while`, `match`, or `if` headers describing the action of subsequent statements.",
+  "counterexample": "A block comment placed on its own line above the loop, unambiguously scoping the description to the whole block.",
+  "fix": "Move the comment to a separate block comment above the control loop to clearly signal its scope.",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 32 (\"Endline Comments and Their Problems - Avoid endline comments for multiple lines of code\")."
+}

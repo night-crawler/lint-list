@@ -1,0 +1,13 @@
+{
+  "id": 991,
+  "title": "YAGNI / Speculative Code Comments",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n// This method is not used yet, but will be needed for the 2027\n// multi-region data replication migration.\nfn replicate_region() {\n    // ...\n}\n```",
+  "pattern": "Comments explaining that a block of unused, dead, or empty code is being kept 'just in case' for future plans.",
+  "why_bad": "YAGNI violation. Speculative code adds active maintenance cost, requires compilation, complicates search results, and often goes obsolete before ever being activated.",
+  "detection": "Comments containing future dates or terms like 'will be needed for', 'just in case', 'not used yet', or 'future expansion'.",
+  "counterexample": "None. Speculative code and its justification comments should be deleted; version control preserves them if ever needed.",
+  "fix": "Delete the unused code and its speculative comment.",
+  "strength": "Strong",
+  "source": "Heather Adkins et al., *Building Secure and Reliable Systems* (2020), Chapter 6 (\"Eliminate YAGNI Smells\"); Robert C. Martin, *Clean Code* (2008), Chapter 17 (G9: \"Dead Code\")."
+}

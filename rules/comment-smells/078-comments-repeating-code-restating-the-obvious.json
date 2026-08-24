@@ -1,7 +1,7 @@
 {
   "id": 78,
   "title": "Comments Repeating Code (Restating the Obvious)",
-  "category": "Dispensables",
+  "category": "Comment Smells",
   "damaged_code": "```rust\n// increment i by 1\ni += 1;\n```",
   "pattern": "A comment on a line of code that merely translates the adjacent identifiers and operators into prose without adding any context or intent.",
   "why_bad": "It increases visual noise and maintenance overhead. Since code changes rapidly, these comments quickly get out of sync, becoming misleading and creating a breeding ground for lies.",

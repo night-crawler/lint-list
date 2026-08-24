@@ -1,0 +1,13 @@
+{
+  "id": 976,
+  "title": "Comment Explains Magic Numbers Without Rationale",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n// Start with an array big enough to hold all pixels plus 200 bytes extra\nlet bytes = vec![0u8; (width + 1) * height * 3 + 200];\n```",
+  "pattern": "A comment that merely restates the magic numbers present in the formula below it without explaining what they represent.",
+  "why_bad": "Fails to explain intent. The comment leaves the reader asking 'Why width + 1?', 'Why multiply by 3?', and 'Why 200?'. It fails its primary job of explaining code that does not explain itself.",
+  "detection": "Comments placed immediately above math formulas with hardcoded literals, where the comment restates the numbers without mapping them to clear domain concepts.",
+  "counterexample": "A comment mapping each literal to a domain concept ('RGB pixels, +1 filter byte per row, fixed 200-byte PNG header'), with the literals extracted to named constants.",
+  "fix": "Extract numbers to named constants and write a comment explaining the architectural reason behind the sizing values.",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 4 (\"Inobvious Connection\")."
+}

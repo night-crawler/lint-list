@@ -1,7 +1,7 @@
 {
   "id": 85,
   "title": "Preamble Section-Header Banners",
-  "category": "Dispensables",
+  "category": "Comment Smells",
   "damaged_code": "```rust\n// ==========================================\n//                 ACTIONS                   \n// ==========================================\nfn play() {}\n```",
   "pattern": "Noisy, visual-heavy banner comments dividing a file into arbitrary sections like 'Actions', 'Getters', or 'Setters'.",
   "why_bad": "Adds visual clutter that breaks scanning. It encourages files to grow too large by grouping unrelated tasks instead of splitting files.",

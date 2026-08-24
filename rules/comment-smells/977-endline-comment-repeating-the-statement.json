@@ -1,0 +1,13 @@
+{
+  "id": 977,
+  "title": "Endline Comment Repeating the Statement",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\nfn increment_metrics(id: u64) {\n    self.counter += 1; // Increment counter\n}\n```",
+  "pattern": "An inline comment placed at the end of a line of code that merely restates the statement's direct action.",
+  "why_bad": "Visual noise and maintenance chore. Endline comments disrupt vertical scanning, require alignment maintenance, and repeat the obvious.",
+  "detection": "Comments starting with `//` on the same line as a statement, containing only a translation of the code syntax.",
+  "counterexample": "Short endline annotations carrying non-obvious data, such as units or protocol field names on packed struct fields.",
+  "fix": "Delete the endline comment.",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 32 (\"Endline Comments and Their Problems\")."
+}

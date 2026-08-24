@@ -1,0 +1,13 @@
+{
+  "id": 975,
+  "title": "Irrelevant Background/Historical Discussion (TMI)",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n/// Encode data into base64.\n///\n/// Base64 was first detailed in RFC 1421. Later, RFC 2045 modified the alphabet.\n/// Alice once tried using an alternative offset lookup, but we rolled it back\n/// in 2024 because the hardware cache struggled with the branch predictions.\npub fn encode_b64(data: &[u8]) -> String {\n    // ...\n}\n```",
+  "pattern": "API documentation bloated with long historical narratives, RFC histories, or design back-and-forths.",
+  "why_bad": "High cognitive overhead. API consumers must read through essays of historical context to find basic contract rules. It increases code bloat and offers no value to current callers.",
+  "detection": "Comments containing long narrative paragraphs (over 3 sentences) discussing historical changes, author opinions, or extensive reference citations unrelated to the API contract.",
+  "counterexample": "A single-sentence contract reference: 'Encodes data to base64 using the standard alphabet defined in RFC 3548.'",
+  "fix": "Prune historical details; move architectural discussions to design docs or Git commits.",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 4 (\"Too Much Information\"), Chapter 17 (G8: \"Too Much Information\")."
+}

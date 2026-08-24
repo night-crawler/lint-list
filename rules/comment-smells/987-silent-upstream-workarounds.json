@@ -1,0 +1,13 @@
+{
+  "id": 987,
+  "title": "Silent Upstream Workarounds",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n// We shift the offset by 1 because the underlying hardware library has\n// an off-by-one bug when reading registers.\nlet offset = read_raw() + 1;\n```",
+  "pattern": "Workarounds for external bugs written inline without tracking links, issue numbers, or alternative fallback plans.",
+  "why_bad": "Fossils. When the upstream library fixes its bug, this workaround becomes an active bug. Without a tracked reference or automated test checking the upstream behavior, there is no trigger to clean it up.",
+  "detection": "Inline comments mentioning third-party, upstream, or hardware library bugs without an accompanying link to an issue tracker or automated assertion checking for the bug.",
+  "counterexample": "A workaround annotated with the upstream issue ID and guarded by an assertion or test that fails once the upstream bug is fixed.",
+  "fix": "Add a tracking ID (e.g., ticket number, GitHub issue link) and wrap the workaround in a conditional runtime check or assertion.",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 32 (\"Differentiate between major and minor comments - Code that works around an error\")."
+}

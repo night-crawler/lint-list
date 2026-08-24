@@ -1,0 +1,13 @@
+{
+  "id": 990,
+  "title": "Clever Bit-Shifting Explanations",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n// Use right shift to divide by two.\n// This cut the loop time by 75% in the 1998 JVM release.\nlet val = raw_data >> 1;\n```",
+  "pattern": "Inline comments explaining mathematical optimizations using raw binary bit-shifting.",
+  "why_bad": "Micro-optimization relic. Modern compilers automatically convert division by powers of two into optimized bitwise instructions. The raw shift notation makes code hard to read and requires comments to restore basic math meanings.",
+  "detection": "Comments explaining that `>>` or `<<` operations are performing division or multiplication, on non-hardware-bound data structures.",
+  "counterexample": "Hardware register manipulation, hashing, or codec code where bit-level operations are the domain itself and shift semantics are intrinsic.",
+  "fix": "Replace the bit-shift with standard arithmetic operators (`/`, `*`), allowing the compiler to optimize and deleting the explanation.",
+  "strength": "Contextual",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 32 (\"C++ Example of Documenting a Surprise\")."
+}

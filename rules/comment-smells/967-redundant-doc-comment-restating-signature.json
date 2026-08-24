@@ -1,0 +1,13 @@
+{
+  "id": 967,
+  "title": "Redundant Doc-Comment Restating Signature",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n/// Add a CD to the list.\n///\n/// # Arguments\n/// * `title` - The title of the CD\n/// * `author` - The author of the CD\n/// * `tracks` - The number of tracks on the CD\n/// * `duration` - The duration in minutes\npub fn add_cd(&mut self, title: String, author: String, tracks: u32, duration: u32) {\n    self.cd_list.push(CD::new(title, author, tracks, duration));\n}\n```",
+  "pattern": "Doc-comment list of arguments that merely repeats the names and types of function parameters with no added constraints or units.",
+  "why_bad": "Boilerplate clutter that dilutes the actual code and creates a high risk of stale documentation when signatures are refactored.",
+  "detection": "Documentation comments on parameter arguments where the description contains only the parameter name, type, or trivial conversions thereof (e.g., parameter `title` documented as 'The title').",
+  "counterexample": "Parameter documentation stating constraints not visible in the signature, such as units, valid ranges, or ownership rules (e.g., '`duration` - playback length in whole minutes; must be non-zero').",
+  "fix": "Delete the explicit parameter boilerplate; document only high-level behavior or exceptional invariants in a single cohesive paragraph.",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 4 (\"Bad Comments - Redundant Comments\"); Titus Winters et al., *Software Engineering at Google* (2020), Chapter 10.2 (\"Documentation Types\")."
+}

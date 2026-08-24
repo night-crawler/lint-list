@@ -1,0 +1,13 @@
+{
+  "id": 974,
+  "title": "HTML Markup Tags in Comments",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n/// Format string efficiently.\n///\n/// <p> This method uses a <b>special internal buffer</b> to avoid copies. </p>\n/// <ul>\n///   <li>Fast</li>\n///   <li>Thread-safe</li>\n/// </ul>\npub fn format_msg() {}\n```",
+  "pattern": "Using raw HTML tags inside comment blocks to structure or style documentation text.",
+  "why_bad": "Unreadable source. HTML tags make comments highly distracting and difficult to read directly within the IDE or code editor. Documentation styling belongs to doc generators (e.g., rustdoc's Markdown support) rather than raw HTML markup in source files.",
+  "detection": "Comments containing HTML open/close tags like `<p>`, `<b>`, `<ul>`, `<li>`.",
+  "counterexample": "Javadoc-era codebases where limited HTML is the documentation generator's native and expected markup.",
+  "fix": "Convert HTML tags to standard Markdown or simple plaintext equivalents.",
+  "strength": "Contextual",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 4 (\"HTML Comments\"), Chapter 16."
+}

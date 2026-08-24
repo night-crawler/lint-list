@@ -1,0 +1,13 @@
+{
+  "id": 982,
+  "title": "Three-Line Definition Shape Description",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n// The u32 is the CategoryType.\n// The first f32 in the inner pair is the score.\n// The second is the weight.\ntype ScoreMap = HashMap<u32, (f32, f32)>;\n```",
+  "pattern": "Writing multiple lines of text to describe the inner components of a tuple or map structure in detail.",
+  "why_bad": "Inefficient layout. A single clear layout comment mapping keys to values is faster to scan, more compact, and easier to keep aligned.",
+  "detection": "Comments on type definitions spanning multiple lines, detailing the sequential types in a generic structure.",
+  "counterexample": "A compact single-line layout comment ('// CategoryType -> (score, weight)') or a struct with named fields.",
+  "fix": "Condense the multi-line description into a single-line structural representation, or define a custom struct with named fields.",
+  "strength": "Strong",
+  "source": "Dustin Boswell & Trevor Foucher, *The Art of Readable Code* (2012), Chapter 6 (\"Keep Comments Compact\")."
+}

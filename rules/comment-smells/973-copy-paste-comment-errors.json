@@ -1,0 +1,13 @@
+{
+  "id": 973,
+  "title": "Copy-Paste Comment Errors",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n/// Set the start timeout.\npub fn set_start_timeout(&mut self, t: Duration) {\n    self.start_timeout = t;\n}\n\n/// Set the start timeout.\npub fn set_stop_timeout(&mut self, t: Duration) {\n    self.stop_timeout = t;\n}\n```",
+  "pattern": "Identical comments or doc-comments on adjacent, distinct methods or fields due to unchecked copying.",
+  "why_bad": "Lies and confusion. Copy-paste errors lead to severe documentation bugs, indicating that the developer did not write or review the code with care and rendering all surrounding documentation untrustworthy.",
+  "detection": "Two or more consecutive functions, structures, or fields having identical doc-comments.",
+  "counterexample": "Adjacent setters each documented with their own accurate one-liner ('Set the start timeout.' / 'Set the stop timeout.').",
+  "fix": "Update the duplicated comment to accurately describe the unique behavior of the target item.",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 4 (\"Scary Noise\")."
+}

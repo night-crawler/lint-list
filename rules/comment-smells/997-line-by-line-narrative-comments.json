@@ -1,0 +1,13 @@
+{
+  "id": 997,
+  "title": "Line-by-Line Narrative Comments",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n// Establish an empty list of records\nlet mut items = Vec::new();\n// Read the socket address configuration\nlet addr = get_socket_addr();\n// Connect to the TCP stream address\nlet stream = TcpStream::connect(addr)?;\n```",
+  "pattern": "Inline comments preceding almost every single statement in a routine, translating code mechanics directly into prose.",
+  "why_bad": "Visual scanning impediment and redundancy. Line-by-line comments repeat obvious syntactic statements, cluttering files and hiding the actual logic behind unnecessary text.",
+  "detection": "Three or more consecutive lines of code where each line (or every statement block) is immediately preceded by a single-line comment translating the code.",
+  "counterexample": "Statements grouped into logical paragraphs with blank lines, with at most one intent comment per paragraph.",
+  "fix": "Delete the line-by-line comments; organize statements with blank lines into paragraphs of logical intent.",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 32.2 (\"Optimum Number of Comments\"); John K. Ousterhout, *A Philosophy of Software Design* (2018), Chapter 13.2 (\"Red Flag: Comment Repeats Code\")."
+}

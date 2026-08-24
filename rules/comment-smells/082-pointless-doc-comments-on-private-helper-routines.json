@@ -1,7 +1,7 @@
 {
   "id": 82,
   "title": "Pointless Doc Comments on Private Helper Routines",
-  "category": "Dispensables",
+  "category": "Comment Smells",
   "damaged_code": "```rust\n/// Returns the name of the user.\nfn get_private_name(user: &User) -> &str {\n    &user.name\n}\n```",
   "pattern": "Documentation comments (`///` or `/**`) placed on private, internal functions that simply restate the function's name and arguments.",
   "why_bad": "Adds visual noise and documentation maintenance debt to internal utilities that are never exposed as part of a public API.",

@@ -1,7 +1,7 @@
 {
   "id": 80,
   "title": "Bureaucratic Header Comments (The Redundant Prolog)",
-  "category": "Dispensables",
+  "category": "Comment Smells",
   "damaged_code": "```rust\n// **********************************************************************\n// Name: process_invoice\n// Author: Dwight K. Coder\n// Date Created: 2024-10-01\n// Blood Type: O+\n// Mother's Maiden Name: None\n// **********************************************************************\nfn process_invoice() {}\n```",
   "pattern": "Fixed-format header comment blocks detailing author name, creation date, modification history, and other metadata at the file or routine level.",
   "why_bad": "Duplicates metadata that is automatically and more accurately tracked by modern Version Control Systems (VCS). They are high-maintenance and frequently rot.",

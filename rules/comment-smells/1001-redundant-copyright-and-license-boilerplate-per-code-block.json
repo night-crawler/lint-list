@@ -1,0 +1,13 @@
+{
+  "id": 1001,
+  "title": "Redundant Copyright and License Boilerplate per Code Block",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n// ======================================================\n// Copyright (C) 2026 Acme Software Corp. All rights reserved.\n// Licensed under Apache License Version 2.0.\n// ======================================================\npub struct Client { /* ... */ }\n```",
+  "pattern": "License and copyright block comments placed immediately above individual structs, classes, or routines rather than at the file level.",
+  "why_bad": "Visual clutter. Copyright notices must not obstruct the reading of core interfaces. Standard licensing belongs in file-level headers or a single global file, never repeated in the body of source code.",
+  "detection": "Standard license terms, copyright marks, or legal disclaimers appearing in comments that do not start at line 1 of the source file.",
+  "counterexample": "A single file-level license header at line 1, mandated by legal compliance, with no repetition per item.",
+  "fix": "Remove the inline legal block; rely on project-level `LICENSE` files and file-level header templates.",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 4 (\"Legal Comments\"), Chapter 17 (C1: \"Inappropriate Information\")."
+}

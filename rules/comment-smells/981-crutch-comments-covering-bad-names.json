@@ -1,0 +1,13 @@
+{
+  "id": 981,
+  "title": "Crutch Comments Covering Bad Names",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n// Make sure the server response meets the byte limit size\nfn clean_reply(reply: &mut Response) {\n    // ...\n}\n```",
+  "pattern": "Comments written primarily to explain what an ambiguous or misleading variable/function name actually means.",
+  "why_bad": "Fails to address the root defect. A good name is always superior to a comment. Instead of fixing the obscure name, the developer uses prose to bridge the readability gap, creating double maintenance overhead.",
+  "detection": "Functions or variables with vague names (like `clean`, `process`, `handle`) preceded by comments detailing the precise limit or business logic being checked.",
+  "counterexample": "A self-descriptive name that eliminates the need for the comment: `fn enforce_response_byte_limit(reply: &mut Response)`.",
+  "fix": "Rename the function or variable to reflect its true semantic intent; remove the comment.",
+  "strength": "Strong",
+  "source": "Dustin Boswell & Trevor Foucher, *The Art of Readable Code* (2012), Chapter 5 (\"Don't Comment Bad Names - Fix the Names Instead\")."
+}

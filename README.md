@@ -1,9 +1,9 @@
 # lint-list
 
-A corpus of 965 code-smell rules (49 categories, JSON) plus an [omp](https://omp.sh) extension that audits a codebase against **all** of them: seeded shuffle → fixed-size groups → parallel read-only sub-agent evaluations → findings applied to the code by the main session.
+A corpus of 1002 code-smell rules (50 categories, JSON) plus an [omp](https://omp.sh) extension that audits a codebase against **all** of them: seeded shuffle → fixed-size groups → parallel read-only sub-agent evaluations → findings applied to the code by the main session.
 
 ```
-rules/               # 965 rule JSONs, one directory per category
+rules/               # 1002 rule JSONs, one directory per category
 extension/           # the omp extension (lint-audit)
   package.json       # omp plugin manifest
   index.ts

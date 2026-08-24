@@ -1,0 +1,13 @@
+{
+  "id": 970,
+  "title": "Misleading Control Flow Documentation",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n/// Waits for the connection to close and returns.\npub fn wait_for_close(&self) {\n    while !self.closed.load(Ordering::SeqCst) {\n        std::thread::sleep(Duration::from_millis(100));\n        if self.has_timed_out() {\n            panic!(\"Timeout!\");\n        }\n    }\n}\n```",
+  "pattern": "Comments stating that a function executes a simple, unconditional behavior when it actually contains conditional escape paths or panics.",
+  "why_bad": "Creates severe runtime failures. Callers design their systems assuming a safe loop return, but get hit with hard panics or exceptions due to the undocumented branch.",
+  "detection": "Doc-comments using terms like 'always returns X' or 'returns when Y' on functions containing distinct control-flow branches, panic statements, or timeouts not described in the text.",
+  "counterexample": "A doc-comment enumerating every exit path: 'Waits for the connection to close. Panics if the operation times out.'",
+  "fix": "Align the comment text with all execution branches and boundary behaviors.",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 4 (\"Bad Comments - Misleading Comments\")."
+}

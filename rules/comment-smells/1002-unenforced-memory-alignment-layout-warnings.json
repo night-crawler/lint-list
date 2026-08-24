@@ -1,0 +1,13 @@
+{
+  "id": 1002,
+  "title": "Unenforced Memory Alignment/Layout Warnings",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n// WARNING: The buffer offset must be aligned to 16 bytes manually\n// or SSE operations will cause a segmentation fault!\nlet aligned_offset = (offset + 15) & !15;\n```",
+  "pattern": "Prose comments warning of extreme safety or segmentation faults resulting from manual pointer or byte-layout alignments.",
+  "why_bad": "Fragile and dangerous. Humans are poor at enforcing byte alignments manually across updates. Modern compiled languages provide explicit memory layout attributes to enforce alignment safely at compile-time.",
+  "detection": "Warning comments regarding pointer or memory-alignment bounds placed above bitwise arithmetic on offsets or manual byte padding.",
+  "counterexample": "Compiler-enforced layout via `#[repr(align(16))]`, making misalignment unrepresentable without any warning prose.",
+  "fix": "Replace manual bit-manipulation and warning comments with compiler-level memory alignment attributes like `#[repr(align(...))]`.",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 32 (\"Don't comment tricky code; rewrite it\")."
+}

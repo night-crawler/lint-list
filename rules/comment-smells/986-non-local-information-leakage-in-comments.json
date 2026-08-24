@@ -1,0 +1,13 @@
+{
+  "id": 986,
+  "title": "Non-local Information Leakage in Comments",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\nimpl RequestHandler {\n    // The request pool is initialized in server.rs with size 128\n    fn handle_request(&self) {\n        // ...\n    }\n}\n```",
+  "pattern": "Comments in one class or file documenting structural properties, configurations, or limits of completely separate files.",
+  "why_bad": "Dual maintenance failure. If the foreign file changes its initialization, this comment goes silently stale. Information is duplicated across modules, leading to documentation decay.",
+  "detection": "Comments referencing files, configurations, parameters, or constants located in other packages or directories.",
+  "counterexample": "Referencing a shared constant by its path (`pool::DEFAULT_SIZE`) so the compiler keeps the reference true, instead of restating its value in prose.",
+  "fix": "Remove the local reference to foreign parameters, or link to a single source of truth using shared module constants.",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 4 (\"Nonlocal Information\")."
+}

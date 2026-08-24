@@ -1,0 +1,13 @@
+{
+  "id": 968,
+  "title": "Non-Standard Marker Comments",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\nfn process_payment() {\n    // *****!!! NEED TO TEST THIS BEFORE RELEASE !!!*****\n    gateway::submit();\n}\n```",
+  "pattern": "Temporary developer note denoting incomplete work or issues, written using non-standard symbols instead of standardized compiler/linter tags.",
+  "why_bad": "Fails mechanical tool lookup. Arbitrary strings cannot be indexed by compilers, IDEs, or automated CI release checklists, leading to incomplete code slipping into production.",
+  "detection": "Inline comments containing indicators like 'NEED TO', 'FIX', 'TBD', 'NOT DONE', or heavy punctuation (e.g., '!!!', '***') that do not conform to standard parser tags (`TODO` or `FIXME`).",
+  "counterexample": "Standardized `// TODO:` or `// FIXME:` tags that IDEs, linters, and CI checklists can index mechanically.",
+  "fix": "Convert to standard `// TODO:` or `// FIXME:` format.",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 32.4 (\"Marker in the Code\")."
+}

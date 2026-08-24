@@ -1,7 +1,7 @@
 {
   "id": 83,
   "title": "Venting or Emotional Commentary (Editorial Exhaustion)",
-  "category": "Dispensables",
+  "category": "Comment Smells",
   "damaged_code": "```rust\n// This is a horrible, smelly hack because the payment gateway API is absolute garbage.\n// Don't blame me, Dwight forced me to write this.\nfn execute_payment() {}\n```",
   "pattern": "Comments containing subjective, emotional, frustrated, or finger-pointing prose instead of technical explanations.",
   "why_bad": "Fails to explain the technical invariants, limitations, or workarounds required to maintain the code, replacing logic with emotional noise.",

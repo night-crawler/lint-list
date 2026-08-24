@@ -1,0 +1,13 @@
+{
+  "id": 989,
+  "title": "Documenting Temporal Coupling Requirements",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\nimpl Device {\n    // WARNING: initialize() must be called before configure()\n    fn configure(&mut self) {\n        // ...\n    }\n}\n```",
+  "pattern": "Warning comments asserting strict temporal execution ordering requirements between independent public API methods.",
+  "why_bad": "Runtime vulnerability. Nothing structurally prevents a developer from calling `configure()` first, resulting in silent memory bugs or invalid states. Temporal coupling should be enforced by the API structure.",
+  "detection": "Comments containing 'must be called before' or 'call X first' on public struct methods.",
+  "counterexample": "A typestate API (`fn initialize(self) -> ConfiguredDevice`) that makes out-of-order calls unrepresentable, needing no warning.",
+  "fix": "Use the typestate pattern, forcing the transition structurally so that non-initialized configurations cannot compile.",
+  "strength": "Strong",
+  "source": "John K. Ousterhout, *A Philosophy of Software Design* (2018), Chapter 5.3 (\"Temporal decomposition\"); Benjamin C. Pierce, *Types and Programming Languages* (2002)."
+}

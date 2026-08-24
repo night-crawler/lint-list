@@ -1,0 +1,13 @@
+{
+  "id": 985,
+  "title": "Loop Iterator Helper Comments",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n// Find factors of i and mark their multiples false\nfor i in 2..=(num / 2) {\n    let mut j = i + i;\n    while j <= num {\n        meets_criteria[j] = false;\n        j += i;\n    }\n}\n```",
+  "pattern": "Comments explaining math calculations inside nested loops using generic, uninformative iterator names (`i`, `j`).",
+  "why_bad": "Hides business domain concepts. Renaming the iterators to clear domain terms (like `factor`, `multiple`) makes the code self-documenting and removes the need for structural explanations.",
+  "detection": "Nested loops utilizing single-letter iterators (`i`, `j`, `k`) accompanied by descriptive comments explaining what the math represents.",
+  "counterexample": "Loops over domain-named iterators (`factor`, `multiple`) that read as self-documenting math without prose.",
+  "fix": "Rename loop iterators to meaningful domain names and remove the explanatory comment.",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete* (2004), Chapter 32 (\"Java Example of Poor Documentation Resulting from Bad Programming Style\")."
+}

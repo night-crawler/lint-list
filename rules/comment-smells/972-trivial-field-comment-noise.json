@@ -1,0 +1,13 @@
+{
+  "id": 972,
+  "title": "Trivial Field Comment Noise",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\nstruct Session {\n    /// The day of the month.\n    day_of_month: u32,\n}\n```",
+  "pattern": "Doc-comment on a struct field that merely translates the field's snake_case name into standard English words.",
+  "why_bad": "Adds noise and maintenance weight. Developers learn to skip over doc-comments entirely when they are filled with obvious text, risking missing actual non-obvious details.",
+  "detection": "Field doc-comments where the text matches the field name characters, ignoring case and spacing.",
+  "counterexample": "A field doc-comment carrying actual invariants, e.g. '/// The day of the month (1-31, adjusted for leap years).'",
+  "fix": "Delete the comment if the field name is self-explanatory, or expand it with actual business invariants (e.g., valid bounds).",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Code* (2008), Chapter 4 (\"Noise Comments\"); John K. Ousterhout, *A Philosophy of Software Design* (2018), Chapter 13.2."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 966,
+  "title": "Redundant Trivial Getter Comment",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\nimpl Account {\n    /// Returns the account ID.\n    pub fn account_id(&self) -> u64 {\n        self.account_id\n    }\n}\n```",
+  "pattern": "Doc-comment on a trivial getter function that simply restates the function name.",
+  "why_bad": "Dual-maintenance hazard and visual noise. Renaming the method requires updating the doc-comment, with zero added semantic value for the reader.",
+  "detection": "Doc-comment on a function returning a field of the same name, where the comment's text merely converts the name's snake_case to standard English words.",
+  "counterexample": "A getter doc-comment adding real contract information beyond the name, such as units, valid ranges, stability guarantees, or caching behavior.",
+  "fix": "Remove the doc-comment.",
+  "strength": "Strong",
+  "source": "Kent Beck, *Tidy First?* (2023), Chapter 15 (\"Delete Redundant Comments\"); John K. Ousterhout, *A Philosophy of Software Design* (2018), Chapter 13.2 (\"Red Flag: Comment Repeats Code\")."
+}
