@@ -1,79 +1,64 @@
 /**
  * lint-audit — omp extension.
  *
- * /lint-audit [group=24] [c=4] [seed=1337] [model=<spec|@role>] [apply=true|false]
- *             [scope=auto|diff|full] [base=<ref>] [dir=<rules dir>]
+ * /lint-audit [router=auto|heuristic|all] [router_model=@smol] [model=<spec|@role>] [group=24] [c=4]
+ *             [scope=auto|diff|full] [base=<ref>] [dir=<rules dir>] [out=<report path>] [fix=false]
  *
  * Flow:
- *  1. Load ALL rule JSON files from the bundled rules dir (`<pkg>/rules` or `<pkg>/../rules`).
- *  1b. Resolve the audit scope. Default `auto`: when the cwd is a git repo with a resolvable
- *      base branch (origin/HEAD -> main -> master, override with base=), audit ONLY the
- *      PR diff (merge-base..working tree, uncommitted included); auditing the whole tree is
- *      expensive. `full` forces a whole-tree audit; `diff` fails instead of falling back.
- *  2. Seeded full Fisher-Yates shuffle of the whole rule array (random draw with removal;
- *     same seed => same order). Shuffling de-biases group composition, nothing is skipped.
- *  3. Partition the shuffled array into groups of `groupSize`; EVERY group is evaluated in a
- *     headless read-only sub-session, with concurrency C, using the current or configured model.
- *     Grouping bounds per-evaluation context; concurrency bounds wall-clock time.
- *  4. Persist every group result to `.omp/lint-audit/<run>/` (intermediate store).
- *  5. Groups with zero findings report success only and stay out of the final context.
- *  6. Aggregate positive detections into one message sent to the main session,
- *     which applies the suggested changes to the code.
+ *  1. Resolve the scope. Default `auto`: PR diff (merge-base of HEAD and the base branch, diffed
+ *     against the working tree) when detectable, else the full tree. `diff` fails instead of
+ *     falling back; `full` forces a whole-tree audit.
+ *  2. Route. The scope is split into change units (one per file). Baseline routes are always
+ *     scheduled; host heuristics add routes from strong lexical/path signals; a cheap router model
+ *     judges semantic applicability per unit (routing-prompt.md) and adds the rest. Routes only
+ *     ever accumulate. A router failure falls back to every route for that batch, never to none.
+ *  3. Evaluate. Selected routes expand to rule ids (routing-map.json); rules are ordered by route,
+ *     partitioned into groups, and each group is reviewed by a read-only sub-session that gets the
+ *     routing evidence as focus hints.
+ *  4. Report. A markdown report (findings by file, routing table, coverage) is written to the run
+ *     dir, echoed into the chat, and nothing is changed in the code.
+ *  5. fix=true additionally hands the findings to the main session to apply.
  *
- * Defaults can also be set in `<cwd>/.omp/lint-audit.json` or `<pkg>/lint-audit.json`
- * (command args win): {"groupSize":24,"concurrency":4,"seed":1337,"model":"","apply":true}
+ * Defaults can also be set in `<cwd>/.omp/lint-audit.json` or `<pkg>/lint-audit.json` (command args win).
  */
 import { existsSync, realpathSync } from "node:fs";
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
+import { dirname, join, relative } from "node:path";
 import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
+import { buildFixMessage, buildReport, describeScope } from "./report";
+import {
+	type ChangeUnit,
+	type RouteSelection,
+	type RouterResponse,
+	RouteSelector,
+	type RoutingMap,
+	batchUnits,
+	buildRouterInput,
+	extractJsonObject,
+	heuristicRoutes,
+	loadRoutingMap,
+	unitFromFile,
+	unitsFromDiff,
+	validateRouterResponse,
+} from "./router";
+import type { AuditScope, Finding, GroupResult, Rule, Severity } from "./types";
 
-interface Rule {
-	id: number | string;
-	title: string;
-	category: string;
-	pattern?: string;
-	why_bad?: string;
-	detection?: string;
-	counterexample?: string;
-	fix?: string;
-	/** relative path of the source JSON, for diagnostics */
-	_path: string;
-}
-
-interface Finding {
-	rule_id: number | string;
-	file: string;
-	lines?: string;
-	evidence?: string;
-	suggestion: string;
-}
-
-interface GroupResult {
-	group: string;
-	ruleIds: (number | string)[];
-	findings: Finding[];
-	clean: boolean;
-	error?: string;
-	raw?: string;
-}
+type RouterMode = "auto" | "heuristic" | "all";
 
 interface AuditConfig {
 	groupSize: number;
 	concurrency: number;
-	seed: number;
 	model: string;
-	apply: boolean;
+	routerModel: string;
+	router: RouterMode;
+	fix: boolean;
 	rulesDir: string;
 	evalTimeoutSec: number;
+	routerTimeoutSec: number;
 	scope: "auto" | "diff" | "full";
 	base: string;
+	out: string;
 }
-
-/** Whole-tree audit, or one bounded to the current branch's diff against a base ref. */
-export type AuditScope =
-	| { kind: "full" }
-	| { kind: "diff"; base: string; files: string[]; diffText?: string };
 
 /** Minimal structural view of the untyped `pi.pi` SDK export bag. */
 interface SdkMessageBlock {
@@ -101,50 +86,30 @@ interface SdkExports {
 const DEFAULTS: AuditConfig = {
 	groupSize: 24,
 	concurrency: 4,
-	seed: 1337,
 	model: "",
-	apply: true,
+	routerModel: "@smol",
+	router: "auto",
+	fix: false,
 	rulesDir: "",
 	evalTimeoutSec: 600,
+	routerTimeoutSec: 300,
 	scope: "auto",
 	base: "",
+	out: "",
 };
 
 /** Above this, the diff is not embedded per group; auditors get the file list and read on demand. */
 const MAX_EMBEDDED_DIFF_CHARS = 48_000;
-
-/** Deterministic PRNG. Not cryptographic; stability is the only requirement. */
-export function mulberry32(seed: number): () => number {
-	let a = seed >>> 0;
-	return () => {
-		a = (a + 0x6d2b79f5) | 0;
-		let t = Math.imul(a ^ (a >>> 15), 1 | a);
-		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-	};
-}
-
-/**
- * Full Fisher-Yates shuffle (random draw with removal) of the whole array.
- * Same sorted input + seed => same order. Every element survives.
- */
-export function seededShuffle<T>(items: readonly T[], seed: number): T[] {
-	const out = items.slice();
-	const rand = mulberry32(seed);
-	for (let i = 0; i < out.length - 1; i++) {
-		const j = i + Math.floor(rand() * (out.length - i));
-		[out[i], out[j]] = [out[j], out[i]];
-	}
-	return out;
-}
+/** Full-tree scope: files above this size are listed but not excerpted for the router. */
+const MAX_FULL_SCOPE_FILE_BYTES = 512 * 1024;
+const SKIPPED_DIRS = new Set([".git", ".hg", ".svn", "node_modules", "target", "dist", "build", "out", "vendor", "third_party", ".omp", ".idea", ".vscode", "__pycache__", ".venv", "venv", ".next", ".turbo", "coverage"]);
+const BINARY_EXTENSIONS = /\.(png|jpe?g|gif|webp|ico|bmp|svg|pdf|zip|gz|tgz|bz2|xz|zst|7z|rar|jar|war|class|o|a|so|dll|dylib|exe|bin|wasm|woff2?|ttf|otf|eot|mp[34]|mov|avi|mkv|lockb|sqlite|db|parquet)$/i;
 
 /** Partition into consecutive chunks of `size`; the last chunk may be smaller. */
 export function partition<T>(items: readonly T[], size: number): T[][] {
-	const chunkSize = Math.max(1, size);
+	const step = Math.max(1, Math.floor(size));
 	const chunks: T[][] = [];
-	for (let i = 0; i < items.length; i += chunkSize) {
-		chunks.push(items.slice(i, i + chunkSize));
-	}
+	for (let i = 0; i < items.length; i += step) chunks.push(items.slice(i, i + step));
 	return chunks;
 }
 
@@ -158,7 +123,7 @@ export async function loadRules(dir: string): Promise<Rule[]> {
 			if (parsed && typeof parsed === "object" && "title" in parsed && parsed.title) {
 				// Trusted local rule file; shape re-validated field-by-field at prompt build.
 				const rule = parsed as Omit<Rule, "_path">;
-				rules.push({ ...rule, _path: rel });
+				rules.push({ ...rule, category: rule.category || dirname(rel).split("/").pop() || "uncategorized", _path: rel });
 			}
 		} catch {
 			// malformed rule file: skip, never abort the audit
@@ -167,9 +132,16 @@ export async function loadRules(dir: string): Promise<Rule[]> {
 	return rules;
 }
 
-export function buildGroupPrompt(groupLabel: string, rules: Rule[], scope: AuditScope): string {
-	const sections = rules.map((r) => {
-		const parts = [`### Rule ${r.id} [${r.category || "uncategorized"}]: ${r.title}`];
+export interface GroupSpec {
+	label: string;
+	rules: Rule[];
+	/** Selected routes whose rules are in this group, in route order. */
+	routes: RouteSelection[];
+}
+
+export function buildGroupPrompt(group: GroupSpec, scope: AuditScope): string {
+	const sections = group.rules.map((r) => {
+		const parts = [`### Rule ${r.id} [${r.category}]: ${r.title}`];
 		if (r.pattern) parts.push(`Pattern: ${r.pattern}`);
 		if (r.detection) parts.push(`Detection: ${r.detection}`);
 		if (r.why_bad) parts.push(`Why bad: ${r.why_bad}`);
@@ -180,27 +152,34 @@ export function buildGroupPrompt(groupLabel: string, rules: Rule[], scope: Audit
 	const scopeLines =
 		scope.kind === "full"
 			? [
-					`You are a code-smell auditor. Audit the source code of the current working directory against every rule below (audit batch ${groupLabel}; the rules span multiple categories).`,
+					`You are a code-smell auditor. Audit the source code of the current working directory against every rule below (audit batch ${group.label}).`,
 					`Use read/grep/glob to inspect the actual code. Skip vendored/generated/third-party code and the .omp directory.`,
 				]
 			: [
-					`You are a code-smell auditor. Audit ONLY the current branch's changes against ${scope.base} (the PR diff) using every rule below (audit batch ${groupLabel}; the rules span multiple categories).`,
+					`You are a code-smell auditor. Audit ONLY the current branch's changes against ${scope.base} (the PR diff) using every rule below (audit batch ${group.label}).`,
 					`Changed files:`,
 					...scope.files.map((f) => `- ${f}`),
+					...(scope.deletedFiles.length ? [`Deleted files (no longer present): ${scope.deletedFiles.join(", ")}`] : []),
 					`Only report violations introduced or touched by these changes: the violating code must be in a changed file and involve changed lines or code directly connected to them. Pre-existing violations in untouched code are out of scope.`,
 					`Use read/grep/glob for surrounding context where needed.`,
-					...(scope.diffText ? [``, `## Diff vs ${scope.base}`, "```diff", scope.diffText, "```"] : []),
+					...(scope.embedDiff ? [``, `## Diff vs ${scope.base}`, "```diff", scope.diffText, "```"] : []),
 				];
+	const focus = group.routes.flatMap((r) => r.evidence.map((e) => `- ${r.route}: ${e}`));
 	return [
 		...scopeLines,
 		`Only report a violation you can evidence with a specific file and location, and only when it clearly matches the rule's detection criteria (respect the counterexamples). When in doubt, do not report.`,
+		``,
+		`## Why these rules were selected`,
+		`A routing pass judged the rules' subjects to be touched by the change. Start from the cited locations, but check each rule against the whole scope; selection is applicability, not a predicted violation.`,
+		...focus,
 		``,
 		`## Rules`,
 		sections.join("\n\n"),
 		``,
 		`## Output`,
 		`Your FINAL message must be ONLY a JSON object, no prose, no code fence:`,
-		`{"findings":[{"rule_id":<id>,"file":"<relative path>","lines":"<N-M>","evidence":"<what you saw>","suggestion":"<concrete change to make>"}]}`,
+		`{"findings":[{"rule_id":<id>,"file":"<relative path>","lines":"<N-M>","severity":"high|medium|low","evidence":"<what you saw>","suggestion":"<concrete change to make>"}]}`,
+		`severity: high = correctness/safety/security impact; medium = maintainability or performance smell; low = cosmetic/consistency.`,
 		`If none of the rules are violated, output exactly {"findings":[]}.`,
 	].join("\n");
 }
@@ -211,32 +190,21 @@ function coerceFinding(value: unknown): Finding | undefined {
 	const file = typeof record.file === "string" ? record.file : "";
 	const suggestion = typeof record.suggestion === "string" ? record.suggestion : "";
 	if (!file || !suggestion) return undefined;
+	const severity = record.severity === "high" || record.severity === "medium" || record.severity === "low" ? (record.severity as Severity) : undefined;
 	return {
 		rule_id: typeof record.rule_id === "number" || typeof record.rule_id === "string" ? record.rule_id : "?",
 		file,
 		suggestion,
+		severity,
 		lines: record.lines === undefined ? undefined : String(record.lines),
 		evidence: record.evidence === undefined ? undefined : String(record.evidence),
 	};
 }
 
-/** Lenient JSON extraction: direct parse -> fenced block -> outermost brace slice. */
 export function extractFindings(text: string): Finding[] | undefined {
-	const candidates: string[] = [text.trim()];
-	const fenced = [...text.matchAll(/```(?:json)?\s*([\s\S]*?)```/g)];
-	if (fenced.length > 0) candidates.push(fenced[fenced.length - 1][1].trim());
-	const first = text.indexOf("{");
-	const last = text.lastIndexOf("}");
-	if (first !== -1 && last > first) candidates.push(text.slice(first, last + 1));
-	for (const candidate of candidates) {
-		try {
-			const parsed: unknown = JSON.parse(candidate);
-			if (parsed && typeof parsed === "object" && "findings" in parsed && Array.isArray(parsed.findings)) {
-				return parsed.findings.map(coerceFinding).filter((f): f is Finding => f !== undefined);
-			}
-		} catch {
-			// try next candidate
-		}
+	const parsed = extractJsonObject(text);
+	if (parsed && typeof parsed === "object" && "findings" in parsed && Array.isArray(parsed.findings)) {
+		return parsed.findings.map(coerceFinding).filter((f): f is Finding => f !== undefined);
 	}
 	return undefined;
 }
@@ -254,22 +222,29 @@ async function pool<T, R>(items: T[], limit: number, fn: (item: T, index: number
 	return results;
 }
 
+const isRouterMode = (value: unknown): value is RouterMode => value === "auto" || value === "heuristic" || value === "all";
+const isScopeMode = (value: unknown): value is AuditConfig["scope"] => value === "auto" || value === "diff" || value === "full";
+const parseBool = (value: string): boolean => value !== "false" && value !== "0" && value !== "no";
+
 function parseArgs(args: string): Partial<AuditConfig> {
 	const out: Partial<AuditConfig> = {};
 	for (const token of args.trim().split(/\s+/).filter(Boolean)) {
 		const eq = token.indexOf("=");
 		if (eq === -1) continue;
-		const key = token.slice(0, eq).toLowerCase();
+		const key = token.slice(0, eq).toLowerCase().replace(/[-_]/g, "");
 		const value = token.slice(eq + 1);
 		if (key === "group" || key === "groupsize" || key === "n") out.groupSize = Number(value) || DEFAULTS.groupSize;
 		else if (key === "c" || key === "concurrency") out.concurrency = Number(value) || DEFAULTS.concurrency;
-		else if (key === "seed") out.seed = Number(value) || DEFAULTS.seed;
 		else if (key === "model") out.model = value;
-		else if (key === "apply") out.apply = value !== "false" && value !== "0";
+		else if (key === "routermodel") out.routerModel = value;
+		else if (key === "router" && isRouterMode(value)) out.router = value;
+		else if (key === "fix") out.fix = parseBool(value);
 		else if (key === "dir") out.rulesDir = value;
 		else if (key === "timeout") out.evalTimeoutSec = Number(value) || DEFAULTS.evalTimeoutSec;
-		else if (key === "scope" && (value === "auto" || value === "diff" || value === "full")) out.scope = value;
+		else if (key === "routertimeout") out.routerTimeoutSec = Number(value) || DEFAULTS.routerTimeoutSec;
+		else if (key === "scope" && isScopeMode(value)) out.scope = value;
 		else if (key === "base") out.base = value;
+		else if (key === "out") out.out = value;
 	}
 	return out;
 }
@@ -283,43 +258,45 @@ async function readConfigFile(path: string): Promise<Partial<AuditConfig>> {
 		const out: Partial<AuditConfig> = {};
 		if (typeof record.groupSize === "number") out.groupSize = record.groupSize;
 		if (typeof record.concurrency === "number") out.concurrency = record.concurrency;
-		if (typeof record.seed === "number") out.seed = record.seed;
 		if (typeof record.model === "string") out.model = record.model;
-		if (typeof record.apply === "boolean") out.apply = record.apply;
+		if (typeof record.routerModel === "string") out.routerModel = record.routerModel;
+		if (isRouterMode(record.router)) out.router = record.router;
+		if (typeof record.fix === "boolean") out.fix = record.fix;
 		if (typeof record.rulesDir === "string") out.rulesDir = record.rulesDir;
 		if (typeof record.evalTimeoutSec === "number") out.evalTimeoutSec = record.evalTimeoutSec;
-		if (record.scope === "auto" || record.scope === "diff" || record.scope === "full") out.scope = record.scope;
+		if (typeof record.routerTimeoutSec === "number") out.routerTimeoutSec = record.routerTimeoutSec;
+		if (isScopeMode(record.scope)) out.scope = record.scope;
 		if (typeof record.base === "string") out.base = record.base;
+		if (typeof record.out === "string") out.out = record.out;
 		return out;
 	} catch {
 		return {};
 	}
 }
 
-export function resolveRulesDir(configured: string, cwd: string): string | undefined {
-	if (configured) return [configured, join(cwd, configured)].find((c) => existsSync(c));
-	// import.meta.dir keeps a symlinked install path, and join() collapses ".."
-	// lexically — resolve the realpath too so "<repo>/rules" is found when the
-	// extension is symlinked into an .omp/extensions directory.
+/** Resolve a path relative to the extension, following a symlinked install to the real package dir. */
+function packagePath(...segments: string[]): string {
 	let real = import.meta.dir;
 	try {
 		real = realpathSync(import.meta.dir);
 	} catch {}
-	const candidates = [
-		join(import.meta.dir, "rules"),
-		join(import.meta.dir, "..", "rules"),
-		join(real, "rules"),
-		join(real, "..", "rules"),
-	];
-	return candidates.find((c) => existsSync(c));
+	return [join(import.meta.dir, ...segments), join(real, ...segments)].find((c) => existsSync(c)) ?? join(real, ...segments);
+}
+
+export function resolveRulesDir(configured: string, cwd: string): string | undefined {
+	if (configured) return [configured, join(cwd, configured)].find((c) => existsSync(c));
+	// import.meta.dir keeps a symlinked install path, and join() collapses ".."
+	// lexically — check the realpath too so "<repo>/rules" is found when the
+	// extension is symlinked into an .omp/extensions directory.
+	return [packagePath("rules"), packagePath("..", "rules")].find((c) => existsSync(c));
 }
 
 type GitExec = (command: string, args: string[], options?: { cwd?: string; timeout?: number }) => Promise<{ stdout: string; code: number }>;
 
 /**
- * Resolve the PR-diff scope: merge-base of HEAD and a base ref, diffed against the
- * working tree (uncommitted changes included, deleted files excluded).
- * Returns undefined when cwd is not a git repo, no base ref resolves, or the diff is empty.
+ * Resolve the PR-diff scope: merge-base of HEAD and a base ref, diffed against the working tree
+ * (uncommitted changes included). Returns undefined when cwd is not a git repo, no base ref
+ * resolves, or the diff is empty.
  */
 async function resolveDiffScope(exec: GitExec, cwd: string, baseArg: string): Promise<AuditScope | undefined> {
 	const git = async (...args: string[]) => {
@@ -343,54 +320,179 @@ async function resolveDiffScope(exec: GitExec, cwd: string, baseArg: string): Pr
 	if (!mergeBase) return undefined;
 
 	// Diff merge-base against the working tree: committed + staged + unstaged PR work.
-	const nameList = await git("diff", "--name-only", "--diff-filter=d", mergeBase);
-	const files = nameList ? nameList.split("\n").filter(Boolean) : [];
-	if (files.length === 0) return undefined;
+	const nameStatus = await git("diff", "--name-status", "-M", mergeBase);
+	const files: string[] = [];
+	const deletedFiles: string[] = [];
+	for (const line of (nameStatus ?? "").split("\n").filter(Boolean)) {
+		const [status, ...paths] = line.split("\t");
+		if (status.startsWith("D")) deletedFiles.push(paths[0]);
+		else files.push(paths[paths.length - 1]);
+	}
 
-	const diffText = await git("diff", "--unified=3", "--diff-filter=d", mergeBase);
+	// Untracked files are PR work too, but `git diff` never shows them. Synthesize an
+	// added-file diff for each text file so units, embedding, and evaluators see them uniformly.
+	let diffText = (await git("diff", "--unified=3", "-M", mergeBase)) ?? "";
+	const untracked = ((await git("ls-files", "-z", "--others", "--exclude-standard")) ?? "").split("\0").filter(Boolean);
+	for (const file of untracked) {
+		if (BINARY_EXTENSIONS.test(file) || file.split("/").some((seg) => SKIPPED_DIRS.has(seg))) continue;
+		const abs = join(cwd, file);
+		try {
+			if ((await stat(abs)).size > MAX_FULL_SCOPE_FILE_BYTES) continue;
+			const lines = (await readFile(abs, "utf8")).split("\n");
+			if (lines.at(-1) === "") lines.pop();
+			files.push(file);
+			diffText += `${diffText && !diffText.endsWith("\n") ? "\n" : ""}diff --git a/${file} b/${file}\nnew file mode 100644\n--- /dev/null\n+++ b/${file}\n@@ -0,0 +1,${lines.length} @@\n${lines.map((l) => `+${l}`).join("\n")}\n`;
+		} catch {
+			// unreadable: leave it out of the scope
+		}
+	}
+	if (files.length === 0 && deletedFiles.length === 0) return undefined;
+	return { kind: "diff", base, files, deletedFiles, diffText, embedDiff: diffText.length > 0 && diffText.length <= MAX_EMBEDDED_DIFF_CHARS };
+}
+
+/** Text files of the working tree (git-tracked when available), excluding build/vendor/VCS dirs. */
+async function listTreeFiles(exec: GitExec, cwd: string): Promise<string[]> {
+	const tracked = await exec("git", ["ls-files", "-z", "--cached", "--others", "--exclude-standard"], { cwd, timeout: 15_000 });
+	const files: string[] = [];
+	if (tracked.code === 0) {
+		files.push(...tracked.stdout.split("\0").filter(Boolean));
+	} else {
+		const walk = async (dir: string) => {
+			for (const entry of await readdir(dir, { withFileTypes: true })) {
+				if (entry.isDirectory()) {
+					if (!SKIPPED_DIRS.has(entry.name)) await walk(join(dir, entry.name));
+				} else if (entry.isFile()) files.push(relative(cwd, join(dir, entry.name)));
+			}
+		};
+		await walk(cwd);
+	}
+	return files.filter((f) => !BINARY_EXTENSIONS.test(f) && !f.split("/").some((seg) => SKIPPED_DIRS.has(seg))).sort();
+}
+
+interface OpenSessionOptions {
+	sdk: SdkExports;
+	model: unknown;
+	modelRegistry: unknown;
+	cwd: string;
+	tools: string[];
+	systemPrompt?: string;
+	timeoutSec: number;
+	onActivity: (action: string) => void;
+}
+
+interface SubSession {
+	/** Send one prompt; resolves to the final assistant text, watchdog-bounded. */
+	ask(prompt: string): Promise<string>;
+	dispose(): Promise<void>;
+}
+
+/** A headless, tool-restricted sub-session on a private in-memory session manager. */
+async function openSession(options: OpenSessionOptions): Promise<SubSession> {
+	const { createAgentSession, SessionManager, AgentRegistry } = options.sdk;
+	const registry = options.modelRegistry as { authStorage?: unknown };
+	const { session } = await createAgentSession({
+		model: options.model,
+		modelRegistry: options.modelRegistry,
+		// modelRegistry.authStorage must be the same instance passed as authStorage.
+		authStorage: registry.authStorage,
+		sessionManager: SessionManager.inMemory(),
+		// Private registry: the process-global one admits a single "Main" identity.
+		...(AgentRegistry ? { agentRegistry: new AgentRegistry() } : {}),
+		...(options.systemPrompt ? { systemPrompt: [options.systemPrompt] } : {}),
+		toolNames: options.tools,
+		restrictToolNames: true, // also disables ambient MCP/extensions/LSP
+		enableMCP: false,
+		enableLsp: false,
+		disableExtensionDiscovery: true,
+		cwd: options.cwd,
+	});
+	let lastAssistantText = "";
+	const unsubscribe = session.subscribe((event) => {
+		if (event.type === "tool_execution_start" && event.toolName) {
+			options.onActivity(`${event.toolName}${event.intent ? ` — ${event.intent}` : ""}`);
+		} else if (event.type === "message_end" && event.message?.role === "assistant") {
+			const text = (event.message.content ?? [])
+				.filter((block) => block.type === "text")
+				.map((block) => block.text ?? "")
+				.join("\n");
+			if (text.trim()) lastAssistantText = text;
+		}
+	});
 	return {
-		kind: "diff",
-		base,
-		files,
-		diffText: diffText && diffText.length <= MAX_EMBEDDED_DIFF_CHARS ? diffText : undefined,
+		async ask(prompt: string): Promise<string> {
+			lastAssistantText = "";
+			const watchdog = Promise.withResolvers<never>();
+			const timer = setTimeout(() => {
+				try {
+					session.abort();
+				} catch {}
+				watchdog.reject(new Error(`timed out after ${options.timeoutSec}s`));
+			}, options.timeoutSec * 1000);
+			if (typeof timer === "object" && timer !== null && "unref" in timer && typeof timer.unref === "function") {
+				timer.unref(); // never keep the process alive for the watchdog
+			}
+			try {
+				await Promise.race([session.prompt(prompt), watchdog.promise]);
+			} finally {
+				clearTimeout(timer);
+			}
+			return lastAssistantText;
+		},
+		async dispose() {
+			unsubscribe();
+			try {
+				await session.dispose();
+			} catch {}
+		},
 	};
 }
 
-function buildApplyMessage(results: GroupResult[]): string {
-	const lines = [
-		"# Lint audit findings",
-		"A rule-based audit of this codebase produced the confirmed findings below.",
-		"Apply each suggestion to the code now. Keep changes minimal and behavior-preserving unless the suggestion says otherwise; skip a finding only if the code has changed and it no longer applies (say so explicitly).",
-		"",
-		"## Findings",
-	];
-	const findings = results.flatMap((r) => r.findings);
-	findings.sort((a, b) => a.file.localeCompare(b.file));
-	for (const f of findings) {
-		lines.push(`- **Rule ${f.rule_id}** — \`${f.file}\`${f.lines ? ` (lines ${f.lines})` : ""}`);
-		if (f.evidence) lines.push(`  - Evidence: ${f.evidence}`);
-		lines.push(`  - Change: ${f.suggestion}`);
+/** Rules ordered by selected route, each once; rules absent from the map are appended as always-on. */
+export function planGroups(rules: Rule[], selector: RouteSelector, map: RoutingMap, groupSize: number): GroupSpec[] {
+	const rulesById = new Map(rules.map((r) => [String(r.id), r]));
+	const mapped = new Set(Object.values(map.routes).flatMap((r) => r.rule_ids.map(String)));
+	const unmapped = rules.filter((r) => !mapped.has(String(r.id)));
+	selector.addUnmapped(unmapped.length);
+
+	const selectedRoutes = selector.routes();
+	const ordered: { rule: Rule; routes: string[] }[] = [];
+	for (const { id, routes } of selector.ruleIds()) {
+		const rule = rulesById.get(String(id));
+		if (rule) ordered.push({ rule, routes });
 	}
-	return lines.join("\n");
+	for (const rule of unmapped) ordered.push({ rule, routes: ["unmapped"] });
+	// The map's membership size is meaningless with a curated rules dir; report what is actually evaluated.
+	for (const selection of selectedRoutes) selection.ruleCount = ordered.filter((e) => e.routes.includes(selection.route)).length;
+
+	const groups = partition(ordered, groupSize);
+	const pad = String(groups.length).length;
+	return groups.map((entries, index) => {
+		const routeNames = new Set(entries.flatMap((e) => e.routes));
+		return {
+			label: `group-${String(index + 1).padStart(pad, "0")}`,
+			rules: entries.map((e) => e.rule),
+			routes: selectedRoutes.filter((r) => routeNames.has(r.route)),
+		};
+	}).filter((g) => g.rules.length > 0);
 }
 
 export default function lintAudit(pi: ExtensionAPI) {
 	pi.setLabel("Lint Audit");
 
 	pi.registerCommand("lint-audit", {
-		description: "Run ALL rules: seeded shuffle, partition into groups, evaluate in parallel, apply findings",
+		description: "Route the change set to applicable rule batches, evaluate them in parallel, report (fix=true to apply)",
 		handler: async (args, ctx) => {
 			// pi.pi is the untyped package-export bag; structural cast at this boundary only.
 			const sdk = pi.pi as unknown as Partial<SdkExports>;
-			const { createAgentSession, SessionManager, AgentRegistry } = sdk;
-			if (!createAgentSession || !SessionManager) {
+			if (!sdk.createAgentSession || !sdk.SessionManager) {
 				ctx.ui.notify("lint-audit: SDK exports unavailable (createAgentSession/SessionManager)", "error");
 				return;
 			}
+			const fullSdk = sdk as SdkExports;
 
 			const cfg: AuditConfig = {
 				...DEFAULTS,
-				...(await readConfigFile(join(import.meta.dir, "lint-audit.json"))),
+				...(await readConfigFile(packagePath("lint-audit.json"))),
 				...(await readConfigFile(join(ctx.cwd, ".omp", "lint-audit.json"))),
 				...parseArgs(args),
 			};
@@ -405,187 +507,241 @@ export default function lintAudit(pi: ExtensionAPI) {
 				ctx.ui.notify(`lint-audit: no valid rule JSON files in ${rulesDir}`, "error");
 				return;
 			}
+			const rulesById = new Map(allRules.map((r) => [String(r.id), r]));
+
+			let map: RoutingMap;
+			try {
+				map = await loadRoutingMap(packagePath("routing-map.json"));
+			} catch (error) {
+				ctx.ui.notify(`lint-audit: ${error instanceof Error ? error.message : String(error)}`, "error");
+				return;
+			}
 
 			const model = cfg.model ? ctx.models.resolve(cfg.model) : ctx.models.current();
 			if (!model) {
 				ctx.ui.notify(`lint-audit: cannot resolve model "${cfg.model || "<current>"}"`, "error");
 				return;
 			}
-
-			let scope: AuditScope = { kind: "full" };
-			if (cfg.scope !== "full") {
-				const diffScope = await resolveDiffScope(pi.exec.bind(pi), ctx.cwd, cfg.base);
-				if (diffScope) {
-					scope = diffScope;
-				} else if (cfg.scope === "diff") {
-					ctx.ui.notify(
-						"lint-audit: scope=diff but no PR diff found (not a git repo, no base ref, or no changes vs base)",
-						"error",
-					);
-					return;
-				} else {
-					ctx.ui.notify("lint-audit: no PR diff detected; falling back to a full-tree audit", "warning");
-				}
+			let routerModel = model;
+			if (cfg.router === "auto") {
+				const resolved = cfg.routerModel ? ctx.models.resolve(cfg.routerModel) : undefined;
+				if (resolved) routerModel = resolved;
+				else if (cfg.routerModel) ctx.ui.notify(`lint-audit: router model "${cfg.routerModel}" not resolvable; routing with ${model.id}`, "warning");
 			}
 
-			// Every rule runs exactly once: shuffle de-biases group composition,
-			// partition bounds per-evaluation context, the pool bounds wall time.
-			const shuffled = seededShuffle(allRules, cfg.seed);
-			const groups = partition(shuffled, cfg.groupSize);
-			const pad = String(groups.length).length;
-			const runId = `${new Date().toISOString().replace(/[:.]/g, "-")}-seed${cfg.seed}-g${cfg.groupSize}`;
+			const exec = pi.exec.bind(pi);
+			let scope: AuditScope | undefined;
+			if (cfg.scope !== "full") {
+				scope = await resolveDiffScope(exec, ctx.cwd, cfg.base);
+				if (!scope && cfg.scope === "diff") {
+					ctx.ui.notify("lint-audit: scope=diff but no PR diff found (not a git repo, no base ref, or no changes vs base)", "error");
+					return;
+				}
+				if (!scope) ctx.ui.notify("lint-audit: no PR diff detected; falling back to a full-tree audit", "warning");
+			}
+			if (!scope) scope = { kind: "full", files: await listTreeFiles(exec, ctx.cwd) };
+
+			const runId = new Date().toISOString().replace(/[:.]/g, "-");
 			const runDir = join(ctx.cwd, ".omp", "lint-audit", runId);
 			await mkdir(runDir, { recursive: true });
+			const reportPath = cfg.out ? (cfg.out.startsWith("/") ? cfg.out : join(ctx.cwd, cfg.out)) : join(runDir, "report.md");
 
-			const scopeDesc =
-				scope.kind === "diff"
-					? `diff vs ${scope.base} (${scope.files.length} files${scope.diffText ? "" : ", diff too large to embed"})`
-					: "full tree";
-			ctx.ui.notify(
-				`lint-audit: ${allRules.length} rules in ${groups.length} groups of <=${cfg.groupSize}, c=${cfg.concurrency}, seed=${cfg.seed}, model=${model.id}, scope=${scopeDesc}`,
-				"info",
-			);
-
-			// Live progress: one line per in-flight group (widget capped at 10 lines),
+			// Live progress: one line per in-flight sub-session (widget capped at 10 lines),
 			// plus a compact status-bar line. All of it is a no-op without a UI.
-			const activity = new Map<string, string>(); // label -> latest sub-agent action
+			const activity = new Map<string, string>();
+			let phase = "routing";
 			let done = 0;
+			let total = 0;
 			let findingsSoFar = 0;
 			const renderProgress = () => {
-				const summary = `lint-audit ${done}/${groups.length} groups | ${findingsSoFar} findings | c=${cfg.concurrency} seed=${cfg.seed}`;
+				const summary = `lint-audit ${phase} ${done}/${total}${phase === "evaluating" ? ` groups | ${findingsSoFar} findings` : " batches"} | c=${cfg.concurrency}`;
 				const running = [...activity.entries()].map(([label, action]) => `  ▶ ${label}: ${action}`);
 				ctx.ui.setStatus("lint-audit", summary);
 				ctx.ui.setWorkingMessage(summary);
 				ctx.ui.setWidget("lint-audit", [summary, ...running.slice(0, 9)], { placement: "belowEditor" });
 			};
-			renderProgress();
+			const clearProgress = () => {
+				ctx.ui.setStatus("lint-audit", undefined);
+				ctx.ui.setWidget("lint-audit", undefined);
+				ctx.ui.setWorkingMessage();
+			};
 
-			const results = await pool(groups, cfg.concurrency, async (rules, index): Promise<GroupResult> => {
-				const label = `group-${String(index + 1).padStart(pad, "0")}`;
-				const base: GroupResult = { group: label, ruleIds: rules.map((r) => r.id), findings: [], clean: true };
-				activity.set(label, `starting (${rules.length} rules)`);
-				renderProgress();
-				let session: SdkSession | undefined;
-				try {
-					const created = await createAgentSession({
-						model,
-						modelRegistry: ctx.modelRegistry,
-						// modelRegistry.authStorage must be the same instance passed as authStorage.
-						authStorage:
-							"authStorage" in ctx.modelRegistry ? ctx.modelRegistry.authStorage : undefined,
-						sessionManager: SessionManager.inMemory(),
-						// Private registry: the process-global one admits a single "Main" identity.
-						...(AgentRegistry ? { agentRegistry: new AgentRegistry() } : {}),
-						toolNames: ["read", "grep", "glob"],
-						restrictToolNames: true, // read-only; also disables ambient MCP/extensions/LSP
-						enableMCP: false,
-						enableLsp: false,
-						disableExtensionDiscovery: true,
-						cwd: ctx.cwd,
-					});
-					session = created.session;
+			// ---- Stage 1: routing -------------------------------------------------------------
+			const selector = new RouteSelector(map);
+			selector.addBaseline();
+			const routerNotes: string[] = [];
+			const scopeDesc = describeScope(scope).replace(/`/g, "");
 
-					let lastAssistantText = "";
-					const unsubscribe = session.subscribe((event) => {
-						if (event.type === "tool_execution_start" && event.toolName) {
-							activity.set(label, `${event.toolName}${event.intent ? ` — ${event.intent}` : ""}`);
-							renderProgress();
-						} else if (event.type === "message_end" && event.message?.role === "assistant") {
-							const text = (event.message.content ?? [])
-								.filter((block) => block.type === "text")
-								.map((block) => block.text ?? "")
-								.join("\n");
-							if (text.trim()) lastAssistantText = text;
-						}
-					});
-
-					const activeSession = session;
-					const watchdog = Promise.withResolvers<never>();
-					const timer = setTimeout(() => {
+			if (cfg.router === "all") {
+				selector.addAll("fallback", "router=all: every rule evaluated");
+			} else {
+				let units: ChangeUnit[];
+				if (scope.kind === "diff") {
+					units = unitsFromDiff(scope.diffText);
+				} else {
+					units = [];
+					for (const file of scope.files) {
+						const abs = join(ctx.cwd, file);
 						try {
-							activeSession.abort();
-						} catch {}
-						watchdog.reject(new Error(`evaluation timed out after ${cfg.evalTimeoutSec}s`));
-					}, cfg.evalTimeoutSec * 1000);
-					if (typeof timer === "object" && timer !== null && "unref" in timer && typeof timer.unref === "function") {
-						timer.unref(); // never keep the process alive for the watchdog
+							const info = await stat(abs);
+							if (info.size > MAX_FULL_SCOPE_FILE_BYTES) {
+								units.push({ id: `U${units.length + 1}`, path: file, status: "file", language: "unknown", text: `(${info.size} bytes; too large to excerpt)`, truncated: true, signalLines: [] });
+								continue;
+							}
+							units.push(unitFromFile(`U${units.length + 1}`, file, await readFile(abs, "utf8")));
+						} catch {
+							// unreadable file: nothing to route
+						}
 					}
-					try {
-						await Promise.race([session.prompt(buildGroupPrompt(label, rules, scope)), watchdog.promise]);
-					} finally {
-						clearTimeout(timer);
-					}
-					unsubscribe();
+				}
+				const unitsById = new Map(units.map((u) => [u.id, u]));
+				const heuristics = new Map<string, Map<string, string[]>>();
+				for (const unit of units) {
+					const hits = heuristicRoutes(unit);
+					heuristics.set(unit.id, hits);
+					selector.addHeuristics(unit, hits);
+				}
 
-					const findings = extractFindings(lastAssistantText);
+				if (cfg.router === "auto" && units.length > 0) {
+					const routingPrompt = await readFile(packagePath("routing-prompt.md"), "utf8");
+					const batches = batchUnits(units);
+					total = batches.length;
+					renderProgress();
+					await pool(batches, cfg.concurrency, async (batch, index) => {
+						const label = `router-${index + 1}`;
+						activity.set(label, `routing ${batch.length} unit${batch.length === 1 ? "" : "s"}`);
+						renderProgress();
+						const input = buildRouterInput(batch, heuristics, { scopeDescription: scopeDesc, deletedFiles: scope.kind === "diff" ? scope.deletedFiles : undefined, manifestComplete: batches.length === 1 });
+						let session: SubSession | undefined;
+						let raw = "";
+						try {
+							session = await openSession({ sdk: fullSdk, model: routerModel, modelRegistry: ctx.modelRegistry, cwd: ctx.cwd, tools: [], systemPrompt: routingPrompt, timeoutSec: cfg.routerTimeoutSec, onActivity: (a) => { activity.set(label, a); renderProgress(); } });
+							raw = await session.ask(input);
+							let response: RouterResponse;
+							try {
+								response = validateRouterResponse(raw, batch, map);
+							} catch (first) {
+								const reason = first instanceof Error ? first.message : String(first);
+								activity.set(label, `retrying: ${reason}`);
+								renderProgress();
+								raw = await session.ask(`Your previous output was invalid: ${reason}. Return only the corrected JSON object, covering every unit exactly once.`);
+								response = validateRouterResponse(raw, batch, map);
+								routerNotes.push(`${label}: first response rejected (${reason}); retry accepted.`);
+							}
+							selector.addRouterResponse(response, unitsById);
+							for (const u of response.unrouted) routerNotes.push(`${label}: ${u.id} ${unitsById.get(u.id)?.path ?? ""} left unrouted — ${u.reason || "no reason given"}. Baseline and heuristic routes still apply.`);
+							await writeFile(join(runDir, `${label}.json`), JSON.stringify({ units: batch.map((u) => ({ id: u.id, path: u.path, status: u.status })), response }, null, 2));
+						} catch (error) {
+							const reason = error instanceof Error ? error.message : String(error);
+							selector.addAll("fallback", `${label} failed (${reason}); every route scheduled for its ${batch.length} units`);
+							routerNotes.push(`${label} failed after retry (${reason}); fell back to evaluating every route for units ${batch.map((u) => u.id).join(", ")}.`);
+							await writeFile(join(runDir, `${label}.json`), JSON.stringify({ units: batch.map((u) => ({ id: u.id, path: u.path })), error: reason, raw: raw.slice(0, 4000) }, null, 2));
+						} finally {
+							await session?.dispose();
+						}
+						done++;
+						activity.delete(label);
+						renderProgress();
+					});
+				}
+			}
+
+			// ---- Stage 2: evaluation ----------------------------------------------------------
+			const groups = planGroups(allRules, selector, map, cfg.groupSize);
+			const selectedRoutes = selector.routes();
+			const ruleCount = groups.reduce((n, g) => n + g.rules.length, 0);
+			phase = "evaluating";
+			done = 0;
+			total = groups.length;
+			renderProgress();
+			ctx.ui.notify(
+				`lint-audit: ${scopeDesc}; ${selectedRoutes.length} routes → ${ruleCount}/${allRules.length} rules in ${groups.length} groups of <=${cfg.groupSize}; evaluator ${model.id}${cfg.router === "auto" ? `, router ${routerModel.id}` : ""}`,
+				"info",
+			);
+
+			const results = await pool(groups, cfg.concurrency, async (group): Promise<GroupResult> => {
+				const result: GroupResult = { group: group.label, ruleIds: group.rules.map((r) => r.id), routes: group.routes.map((r) => r.route), findings: [], clean: true };
+				activity.set(group.label, `starting (${group.rules.length} rules)`);
+				renderProgress();
+				let session: SubSession | undefined;
+				try {
+					session = await openSession({ sdk: fullSdk, model, modelRegistry: ctx.modelRegistry, cwd: ctx.cwd, tools: ["read", "grep", "glob"], timeoutSec: cfg.evalTimeoutSec, onActivity: (a) => { activity.set(group.label, a); renderProgress(); } });
+					const text = await session.ask(buildGroupPrompt(group, scope));
+					const findings = extractFindings(text);
 					if (findings === undefined) {
-						base.error = "unparseable evaluation output";
-						base.raw = lastAssistantText.slice(0, 4000);
-						base.clean = false;
+						result.error = "unparseable evaluation output";
+						result.raw = text.slice(0, 4000);
+						result.clean = false;
 					} else {
-						base.findings = findings;
-						base.clean = findings.length === 0;
+						result.findings = findings;
+						result.clean = findings.length === 0;
 						findingsSoFar += findings.length;
 					}
 				} catch (error) {
-					base.error = error instanceof Error ? error.message : String(error);
-					base.clean = false;
+					result.error = error instanceof Error ? error.message : String(error);
+					result.clean = false;
 				} finally {
-					try {
-						await session?.dispose();
-					} catch {}
+					await session?.dispose();
 				}
-				await writeFile(join(runDir, `${label}.json`), JSON.stringify(base, null, 2));
+				await writeFile(join(runDir, `${group.label}.json`), JSON.stringify(result, null, 2));
 				done++;
-				activity.delete(label);
+				activity.delete(group.label);
 				renderProgress();
-				return base;
+				return result;
 			});
 
-			const positive = results.filter((r) => r.findings.length > 0);
-			const clean = results.filter((r) => r.clean);
+			// ---- Stage 3: report ----------------------------------------------------------------
+			const findings = results.flatMap((r) => r.findings);
 			const failed = results.filter((r) => r.error);
-			const totalFindings = positive.reduce((sum, r) => sum + r.findings.length, 0);
-
+			const report = buildReport({
+				generatedAt: new Date(),
+				scope,
+				model: model.id,
+				routerMode: cfg.router,
+				routerModel: cfg.router === "auto" ? routerModel.id : undefined,
+				rulesTotal: allRules.length,
+				routes: selectedRoutes,
+				routerNotes,
+				groups: results,
+				rulesById,
+				runDir,
+			});
+			await mkdir(dirname(reportPath), { recursive: true });
+			await writeFile(reportPath, report);
 			await writeFile(
 				join(runDir, "summary.json"),
 				JSON.stringify(
 					{
-						seed: cfg.seed,
-						groupSize: cfg.groupSize,
+						config: { ...cfg, model: model.id, routerModel: cfg.router === "auto" ? routerModel.id : undefined },
+						scope: scope.kind === "diff" ? { kind: "diff", base: scope.base, files: scope.files, deletedFiles: scope.deletedFiles } : { kind: "full", files: scope.files.length },
 						totalRules: allRules.length,
-						model: model.id,
-						scope: scope.kind === "diff" ? { kind: "diff", base: scope.base, files: scope.files } : { kind: "full" },
-						groups: results.map((r) => ({
-							group: r.group,
-							ruleIds: r.ruleIds,
-							findings: r.findings.length,
-							clean: r.clean,
-							error: r.error,
-						})),
+						evaluatedRules: ruleCount,
+						routes: selectedRoutes.map((r) => ({ route: r.route, sources: [...r.sources], evidence: r.evidence, unresolved: r.unresolved })),
+						routerNotes,
+						groups: results.map((r) => ({ group: r.group, routes: r.routes, ruleIds: r.ruleIds, findings: r.findings.length, clean: r.clean, error: r.error })),
+						reportPath,
 					},
 					null,
 					2,
 				),
 			);
 
-			ctx.ui.setStatus("lint-audit", undefined);
-			ctx.ui.setWidget("lint-audit", undefined);
-			ctx.ui.setWorkingMessage();
+			clearProgress();
 			ctx.ui.notify(
-				`lint-audit: ${totalFindings} findings in ${positive.length}/${groups.length} groups; ${clean.length} clean; ${failed.length} failed. Results: ${runDir}`,
-				totalFindings > 0 ? "warning" : "info",
+				`lint-audit: ${findings.length} findings; ${ruleCount}/${allRules.length} rules in ${groups.length} groups, ${failed.length} failed. Report: ${reportPath}`,
+				findings.length > 0 || failed.length > 0 ? "warning" : "info",
 			);
+			pi.sendMessage({ customType: "lint-audit.report", content: report, display: true }, { triggerTurn: false });
+			if (!ctx.hasUI) process.stdout.write(`${report}\n`);
 
-			// Clean groups reported success above; only positive detections reach the model context.
-			if (totalFindings === 0) return;
-			if (!cfg.apply) return;
+			// ---- Stage 4: fix (opt-in) ----------------------------------------------------------
+			if (!cfg.fix || findings.length === 0) return;
 			await ctx.waitForIdle();
-			pi.sendUserMessage(buildApplyMessage(positive));
-			// Keep the handler alive until the apply turn has started and finished;
+			pi.sendUserMessage(buildFixMessage(findings, rulesById, reportPath));
+			// Keep the handler alive until the fix turn has started and finished;
 			// otherwise print mode exits before the message is ever processed.
-			const applyStart = Date.now();
-			while (ctx.isIdle() && Date.now() - applyStart < 15_000) {
+			const fixStart = Date.now();
+			while (ctx.isIdle() && Date.now() - fixStart < 15_000) {
 				const tick = Promise.withResolvers<void>();
 				setTimeout(tick.resolve, 100);
 				await tick.promise;
