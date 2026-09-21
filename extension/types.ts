@@ -22,11 +22,24 @@ export interface Finding {
 	severity?: Severity;
 }
 
+export interface LabelProbabilities {
+	tokenProbabilities: { a: number | null; b: number | null };
+	probabilitiesGivenAOrB: { a: number; b: number } | null;
+	missingLabels: ("a" | "b")[];
+}
+
+export interface PredictionResult {
+	ruleId: number | string;
+	answer?: "a" | "b";
+	error?: string;
+	raw?: string;
+	probabilities?: LabelProbabilities;
+	probabilityError?: string;
+}
+
 export interface GroupResult {
 	group: string;
 	ruleIds: (number | string)[];
-	/** Routes that selected the rules of this group, in route order. */
-	routes: string[];
 	findings: Finding[];
 	clean: boolean;
 	error?: string;
@@ -35,5 +48,5 @@ export interface GroupResult {
 
 /** Whole-tree audit, or one bounded to the current branch's diff against a base ref. */
 export type AuditScope =
-	| { kind: "full"; files: string[] }
-	| { kind: "diff"; base: string; files: string[]; deletedFiles: string[]; diffText: string; embedDiff: boolean };
+	| { kind: "full"; files: string[]; diffText: string }
+	| { kind: "diff"; base: string; baseCommit: string; files: string[]; deletedFiles: string[]; diffText: string };

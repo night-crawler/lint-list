@@ -1,34 +1,22 @@
-import type { RouteSelection, RouteSource } from "./router";
-import type { AuditScope, Finding, GroupResult, Rule, Severity } from "./types";
+import type { AuditScope, Finding, GroupResult, PredictionResult, Rule, Severity } from "./types";
 
 export interface ReportInput {
 	generatedAt: Date;
 	scope: AuditScope;
-	model: string;
-	routerMode: "auto" | "heuristic" | "all";
-	routerModel?: string;
+	predictorModel: string;
+	validatorModel: string;
 	rulesTotal: number;
-	routes: RouteSelection[];
-	/** Router-stage observations worth surfacing: unrouted units, retries, fallbacks. */
-	routerNotes: string[];
+	predictions: PredictionResult[];
 	groups: GroupResult[];
 	rulesById: Map<string, Rule>;
 	runDir: string;
 }
 
 const SEVERITY_RANK: Record<Severity, number> = { high: 0, medium: 1, low: 2 };
-const SOURCE_LABEL: Record<RouteSource, string> = {
-	baseline: "baseline",
-	heuristic: "heuristic",
-	router: "router",
-	"router-need": "router (context unresolved)",
-	fallback: "fallback",
-	unmapped: "unmapped rules",
-};
 
 export function describeScope(scope: AuditScope): string {
 	return scope.kind === "diff"
-		? `diff vs \`${scope.base}\` (${scope.files.length} changed file${scope.files.length === 1 ? "" : "s"}${scope.deletedFiles.length ? `, ${scope.deletedFiles.length} deleted` : ""})`
+		? `git diff \`${scope.base}\` at \`${scope.baseCommit.slice(0, 12)}\` (${scope.files.length} changed tracked file${scope.files.length === 1 ? "" : "s"}${scope.deletedFiles.length ? `, ${scope.deletedFiles.length} deleted` : ""})`
 		: `full tree (${scope.files.length} files)`;
 }
 
@@ -52,7 +40,10 @@ function groupByFile(findings: Finding[]): Map<string, Finding[]> {
 	const byFile = new Map<string, Finding[]>();
 	for (const finding of sortFindings(findings)) {
 		let list = byFile.get(finding.file);
-		if (!list) byFile.set(finding.file, (list = []));
+		if (!list) {
+			list = [];
+			byFile.set(finding.file, list);
+		}
 		list.push(finding);
 	}
 	return byFile;
@@ -68,8 +59,21 @@ function indent(text: string, prefix: string): string {
 
 export function buildReport(input: ReportInput): string {
 	const findings = input.groups.flatMap((g) => g.findings);
-	const failed = input.groups.filter((g) => g.error);
-	const rulesEvaluated = new Set(input.groups.flatMap((g) => g.ruleIds.map(String))).size;
+	const failedGroups = input.groups.filter((g) => g.error !== undefined);
+	const failedPredictions: PredictionResult[] = [];
+	let predictedViolations = 0;
+	let predictorNegatives = 0;
+	for (const prediction of input.predictions) {
+		if (prediction.error !== undefined || (prediction.answer !== "a" && prediction.answer !== "b")) {
+			failedPredictions.push(prediction);
+		} else if (prediction.answer === "a") {
+			predictedViolations++;
+		} else {
+			predictorNegatives++;
+		}
+	}
+	const rulesSubmitted = new Set(input.groups.flatMap((g) => g.ruleIds.map(String))).size;
+	const incomplete = failedPredictions.length > 0 || failedGroups.length > 0;
 	const bySeverity: Record<Severity, number> = { high: 0, medium: 0, low: 0 };
 	for (const f of findings) bySeverity[f.severity ?? "medium"]++;
 	const byFile = groupByFile(findings);
@@ -77,20 +81,35 @@ export function buildReport(input: ReportInput): string {
 	const out: string[] = [];
 	out.push("# Lint audit report");
 	out.push("");
-	out.push(`_${input.generatedAt.toISOString()}_ · scope: ${describeScope(input.scope)} · evaluator: \`${input.model}\`${input.routerModel ? ` · router: \`${input.routerModel}\`` : ""} · routing: ${input.routerMode}`);
+	out.push(
+		`_${input.generatedAt.toISOString()}_ · scope: ${describeScope(input.scope)} · predictor: \`${input.predictorModel}\` · validator: \`${input.validatorModel}\``,
+	);
 	out.push("");
 	out.push("## Summary");
 	out.push("");
-	out.push(`- **${findings.length} finding${findings.length === 1 ? "" : "s"}** (${bySeverity.high} high · ${bySeverity.medium} medium · ${bySeverity.low} low) across ${byFile.size} file${byFile.size === 1 ? "" : "s"}`);
-	out.push(`- Rules evaluated: ${rulesEvaluated} of ${input.rulesTotal} (${input.routes.length} routes selected) in ${input.groups.length} group${input.groups.length === 1 ? "" : "s"}${failed.length ? `; **${failed.length} group${failed.length === 1 ? "" : "s"} failed** (coverage incomplete, see below)` : ""}`);
-	if (input.scope.kind === "diff") out.push(`- Only violations introduced or touched by the diff are reported; pre-existing smells in untouched code are out of scope.`);
+	out.push(
+		`- **${findings.length} finding${findings.length === 1 ? "" : "s"}** (${bySeverity.high} high · ${bySeverity.medium} medium · ${bySeverity.low} low) across ${byFile.size} file${byFile.size === 1 ? "" : "s"}`,
+	);
+	out.push(`- Rules successfully predicted (a or b): ${predictedViolations + predictorNegatives} of ${input.rulesTotal}`);
+	out.push(`- Predicted violations (a): ${predictedViolations} (candidates, not confirmed findings)`);
+	out.push(`- Predictor negatives (b): ${predictorNegatives} (not validator-confirmed clean)`);
+	out.push(`- Failed predictions: ${failedPredictions.length}${failedPredictions.length ? " (coverage incomplete, see below)" : ""}`);
+	out.push(
+		`- Rules submitted for grouped validation: ${rulesSubmitted} in ${input.groups.length} group${input.groups.length === 1 ? "" : "s"}${failedGroups.length ? `; **${failedGroups.length} validation group${failedGroups.length === 1 ? "" : "s"} failed** (coverage incomplete, see below)` : ""}`,
+	);
+	if (input.scope.kind === "diff")
+		out.push(`- Only violations in code added by the diff are reported; pre-existing smells in untouched code are out of scope.`);
 	out.push(`- Intermediate results: \`${input.runDir}\``);
 	out.push("");
 
 	out.push("## Findings");
 	out.push("");
 	if (findings.length === 0) {
-		out.push(failed.length ? "No findings from the groups that completed." : "No rule violations detected.");
+		out.push(
+			incomplete
+				? "No validated findings were produced. Coverage is incomplete because some predictions or validation groups failed."
+				: "No validated rule violations detected. Predictor negatives were not submitted for validation.",
+		);
 		out.push("");
 	}
 	for (const [file, list] of byFile) {
@@ -109,46 +128,30 @@ export function buildReport(input: ReportInput): string {
 		}
 	}
 
-	if (failed.length > 0) {
+	if (incomplete) {
 		out.push("## Incomplete coverage");
 		out.push("");
-		for (const g of failed) {
-			out.push(`- \`${g.group}\` (${g.ruleIds.length} rules; routes: ${g.routes.join(", ") || "—"}): ${g.error}`);
+		for (const prediction of failedPredictions) {
+			out.push(
+				`- Prediction failed for ${ruleLabel(prediction.ruleId, input.rulesById)}: ${prediction.error || "No valid a/b prediction returned."}`,
+			);
+		}
+		for (const group of failedGroups) {
+			out.push(`- Validation group \`${group.group}\` (${group.ruleIds.length} rules): ${group.error}`);
 		}
 		out.push("");
 	}
 
-	out.push("## Routing");
-	out.push("");
-	out.push("A route is a batch of rules whose subject the change touches; selecting it means those rules were evaluated, not that they fired.");
-	out.push("");
-	out.push("| Route | Rules | Selected by | Trigger evidence |");
-	out.push("|---|---:|---|---|");
-	for (const r of input.routes) {
-		const sources = [...r.sources].map((s) => SOURCE_LABEL[s]).join(", ");
-		const evidence = r.evidence.slice(0, 3).map((e) => e.replace(/\|/g, "\\|")).join("<br>");
-		out.push(`| \`${r.route}\` | ${r.ruleCount} | ${sources} | ${evidence}${r.evidence.length > 3 ? `<br>… ${r.evidence.length - 3} more` : ""} |`);
-	}
-	out.push("");
-	const unresolved = input.routes.flatMap((r) => r.unresolved.map((u) => `\`${r.route}\`: ${u}`));
-	if (unresolved.length > 0) {
-		out.push("Context the router could not resolve (routes were evaluated anyway; the evaluator read the code directly):");
-		out.push("");
-		for (const u of unresolved) out.push(`- ${u}`);
-		out.push("");
-	}
-	if (input.routerNotes.length > 0) {
-		out.push("Router notes:");
-		out.push("");
-		for (const note of input.routerNotes) out.push(`- ${note}`);
-		out.push("");
-	}
-
-	out.push("## Evaluation groups");
+	out.push("## Validation groups");
 	out.push("");
 	for (const g of input.groups) {
-		const state = g.error ? `failed: ${g.error}` : g.findings.length ? `${g.findings.length} finding${g.findings.length === 1 ? "" : "s"}` : "clean";
-		out.push(`- \`${g.group}\` — ${g.ruleIds.length} rules (${g.routes.join(", ") || "—"}): ${state}`);
+		const state =
+			g.error !== undefined
+				? `failed: ${g.error}`
+				: g.findings.length
+					? `${g.findings.length} finding${g.findings.length === 1 ? "" : "s"}`
+					: "no violations confirmed";
+		out.push(`- \`${g.group}\` — ${g.ruleIds.length} rules: ${state}`);
 	}
 	out.push("");
 	return out.join("\n");
@@ -166,7 +169,9 @@ export function buildFixMessage(findings: Finding[], rulesById: Map<string, Rule
 		lines.push(`## \`${file}\``);
 		for (const f of list) {
 			const rule = rulesById.get(String(f.rule_id));
-			lines.push(`- **Rule ${f.rule_id}${rule ? ` — ${rule.title}` : ""}**${f.lines ? ` (lines ${f.lines})` : ""}${f.severity ? ` [${f.severity}]` : ""}`);
+			lines.push(
+				`- **Rule ${f.rule_id}${rule ? ` — ${rule.title}` : ""}**${f.lines ? ` (lines ${f.lines})` : ""}${f.severity ? ` [${f.severity}]` : ""}`,
+			);
 			if (f.evidence) lines.push(`  - Evidence: ${indent(f.evidence, "    ")}`);
 			lines.push(`  - Change: ${indent(f.suggestion, "    ")}`);
 			if (rule?.fix) lines.push(`  - Rule's fix approach: ${indent(rule.fix, "    ")}`);
