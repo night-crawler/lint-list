@@ -1,0 +1,17 @@
+diff --git a/src/payroll.rs b/src/payroll.rs
+--- a/src/payroll.rs
++++ b/src/payroll.rs
+@@ -1,7 +1,13 @@
+ pub struct HourlyEmployee {
+     pub hours_worked: f64,
+     pub hourly_rate: f64,
+ }
+ 
+ impl HourlyEmployee {
++    pub fn calculate_weekly_pay(&self) -> f64 {
++        let regular_hours = self.hours_worked.min(40.0);
++        let overtime_hours = (self.hours_worked - 40.0).max(0.0);
++        regular_hours * self.hourly_rate
++            + overtime_hours * self.hourly_rate * 1.5
++    }
+ }
