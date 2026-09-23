@@ -12,6 +12,7 @@ extension/                    # the omp extension (lint-audit)
   index.ts                    # command, scope resolution, orchestration
   predictor.ts                # independent binary predictions with a shared cached prefix
   probabilities.ts            # raw and conditional label-token scoring
+  thinking.ts                 # explicit thinking preferences without silent SDK effort promotion
   scope.ts                    # single-pass git diff and full-tree snapshots
   report.ts                   # markdown report and confirmed-findings fix prompt
   types.ts                    # rules, predictions, findings and scope
@@ -84,16 +85,36 @@ omp -p --auto-approve -e /path/to/lints-list/extension "/lint-audit fix=true"
    every file and hunk. One qualifying occurrence is enough; unrelated clean additions cannot cancel it.
    That premise does not force every criterion to be positive: the known violation may concern another lint.
 
+   Predictors request low reasoning effort with a configurable `predictorThinkingTokens` budget (default: 512)
+   on token-budget providers. Override it per run with `predictor_thinking_tokens=N`. A positive budget requests
+   `N + 128` completion tokens, leaving room for the final answer; `0` requests thinking off with a 128-token
+   completion allowance. Provider minimums still apply; effort-only APIs use low effort rather than an exact
+   thinking-token budget. Off is requested explicitly, never silently promoted to low effort. Endpoints that
+   require reasoning reject off requests visibly.
+   For llama.cpp GGUF models, requests explicitly configure template thinking, set `reasoning_budget_tokens`
+   to the selected budget, and request `reasoning_format: "deepseek"` to separate thoughts from answer text.
+   This per-request budget overrides the server's `--reasoning-budget` default.
+   The final answer must still be exactly `a` or `b`; prose followed by a label remains a prediction failure.
+
    Each completed rule immediately updates the below-editor widget with its ID/title, `a`/`b`, raw
    `P(a)`/`P(b)`, and probabilities normalized over the two labels (`P(a|a/b)`/`P(b|a/b)`).
+   OpenRouter predictors use its Chat Completions endpoint because its Responses endpoint rejects the logprob
+   include field. Authentication and model selection still use omp's registry. OpenRouter backend routing can
+   change score availability between calls; missing scores remain unknown.
    OpenAI Chat Completions and Responses predictors request the
    top 20 token logprobs. These are token scores, not calibrated violation probabilities. Missing alternatives
    print as `unknown`, never zero; if either is missing, normalized probabilities are also unknown. Other API
    types, missing logprobs or malformed scores produce an explicit probability-unavailable reason without
    changing a valid binary verdict. Providers that reject the logprobs request fail visibly.
+   Only final-answer token scores are used. If a streaming endpoint omits those scores while reasoning is
+   enabled, probabilities remain `unknown`; `a`/`b` tokens inside the reasoning are never used as verdict scores.
 3. **Validate positives.** Only `a` predictions enter validation. They are sorted by category and source path,
    partitioned into groups of at most `group=`, and independently checked by `validatorModel` in read-only
    sub-sessions (`read`/`grep`/`glob`). Each group gets the same complete snapshot and its candidate criteria.
+   `validator_thinking=true` (the default) requests high effort; `false` explicitly requests off, independently
+   of the predictor budget and the main session's thinking setting. Results are submitted through omp's
+   schema-validated `yield` tool, not parsed from free-text JSON. Missing, aborted or schema-overridden results
+   are failures, never empty findings. `yield` only submits results; file access remains read-only.
    A prediction is not evidence: the validator must supply a file, location and concrete suggestion for confirmed
    violations. If all predictions are `b`, no validation sessions are started.
 4. **Report.** Confirmed findings are grouped by file and severity. Prediction negatives, prediction failures and
@@ -122,9 +143,17 @@ false negatives for less validation work.
 | `dir=PATH` | | bundled `rules/` | Alternate rules directory; every loaded rule is predicted |
 | `timeout=SEC` | | `600` | Per-validation-group watchdog |
 | `predictor_timeout=SEC` | | `120` | Per-prediction watchdog |
+| `predictor_thinking_tokens=N` | `predictorThinkingTokens=` | `512` | Non-negative integer thinking budget on token-budget providers; `0` requests thinking off |
+| `validator_thinking=BOOL` | `validatorThinking=` | `true` | Independent validation-stage thinking: high effort when enabled, explicit off when disabled |
 
 Both model selections use omp's model registry and authentication, including configured custom providers. An
 unresolvable model stops the command rather than silently substituting the other model.
+Larger thinking budgets may need a higher `predictor_timeout`, especially when concurrent requests queue on
+a single-slot llama.cpp server.
+
+Targeted OpenRouter checks exercised `moonshotai/kimi-k3` and `z-ai/glm-5.2` with thinking on and off, and
+`z-ai/glm-5.3` with thinking on. GLM-5.3 rejects genuine off requests in both prediction and validation;
+select a model supporting off for that stage, or leave its thinking enabled.
 
 ### Examples
 
@@ -134,6 +163,15 @@ unresolvable model stops the command rather than silently substituting the other
 
 # Cheap binary screening, stronger independent validation
 /lint-audit predictor_model=@smol validator_model=@slow
+
+# Allow more thinking before each binary verdict
+/lint-audit predictor_thinking_tokens=4096
+
+# Cheap non-thinking predictions, independent thinking-enabled validation
+/lint-audit predictor_model=openrouter/z-ai/glm-5.2 validator_model=openrouter/z-ai/glm-5.3 predictor_thinking_tokens=0 validator_thinking=true
+
+# Disable validation thinking on a model that supports it
+/lint-audit validator_model=openrouter/moonshotai/kimi-k3 validator_thinking=false
 
 # Apply only the validator-confirmed findings
 /lint-audit predictor_model=@smol validator_model=@slow fix=true
@@ -164,7 +202,9 @@ Defaults in `extension/lint-audit.json` are overridden by `<repo>/.omp/lint-audi
   "out": "",
   "rulesDir": "",
   "evalTimeoutSec": 600,
-  "predictorTimeoutSec": 120
+  "predictorTimeoutSec": 120,
+  "predictorThinkingTokens": 512,
+  "validatorThinking": true
 }
 ```
 
@@ -182,7 +222,7 @@ Every nonempty audit writes `<cwd>/.omp/lint-audit/<timestamp>-<unique-id>/`:
 - `snapshot.diff` — the exact immutable diff used by both stages
 - `predictions.json` — one result per loaded rule: `ruleId`, `answer` (`a`/`b`), available raw/conditional token
   probabilities and missing labels, or errors and available raw output
-- `group-N.json` — candidate IDs, confirmed findings, clean/error status and raw output on malformed validation
+- `group-N.json` — candidate IDs, confirmed findings, clean/error status and invalid structured output when available
 - `report.md` — report, unless overridden by `out=`
 - `summary.json` — both resolved provider/model names, config, scope (including the exact base commit), snapshot
   byte/line counts, predicted positive IDs, failure counts and validation group tallies

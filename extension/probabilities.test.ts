@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { labelProbabilities } from "./probabilities";
+import { labelProbabilities, readLogprobEvent } from "./probabilities";
 
 describe("label token probabilities", () => {
 	test("combines casing/whitespace variants and normalizes only the observed a/b masses", () => {
@@ -59,5 +59,34 @@ describe("label token probabilities", () => {
 				},
 			]),
 		).toThrow();
+	});
+
+	test("scores the final answer, not a/b tokens in reasoning", () => {
+		const chunks = [
+			{
+				delta: { reasoning_content: "a" },
+				logprobs: { content: [{ token: "a", logprob: Math.log(0.9), top_logprobs: [{ token: "b", logprob: Math.log(0.1) }] }] },
+			},
+			{
+				delta: { content: "b" },
+				logprobs: { content: [{ token: "b", logprob: Math.log(0.7), top_logprobs: [{ token: "a", logprob: Math.log(0.2) }] }] },
+			},
+		];
+		const positions = chunks.flatMap((choice) => readLogprobEvent(JSON.stringify({ choices: [choice] }))?.positions ?? []);
+		const scores = labelProbabilities(positions);
+		expect(scores.tokenProbabilities).toEqual({ a: 0.2, b: 0.7 });
+		expect(scores.probabilitiesGivenAOrB?.b).toBeCloseTo(7 / 9);
+	});
+
+	test("missing final-answer logprobs do not borrow a score from reasoning", () => {
+		const chunks = [
+			{
+				delta: { reasoning_content: "a", content: "b" },
+				logprobs: { content: [{ token: "a", logprob: -0.1, top_logprobs: [] }] },
+			},
+			{ delta: {}, finish_reason: "stop", logprobs: null },
+		];
+		const positions = chunks.flatMap((choice) => readLogprobEvent(JSON.stringify({ choices: [choice] }))?.positions ?? []);
+		expect(() => labelProbabilities(positions)).toThrow("Provider did not return label token logprobs");
 	});
 });

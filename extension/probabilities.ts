@@ -67,6 +67,9 @@ export function readLogprobEvent(data: string): { positions: unknown[]; final: b
 	if (!event || typeof event !== "object") return undefined;
 	if ("choices" in event && Array.isArray(event.choices)) {
 		const choice = event.choices[0];
+		// Chat endpoints may attach thought-token scores to logprobs.content as well.
+		// Mixed reasoning/text chunks cannot be scored unambiguously either.
+		if (choice?.delta?.reasoning_content || choice?.delta?.reasoning || choice?.delta?.reasoning_text) return undefined;
 		const positions = choice?.logprobs?.content;
 		return Array.isArray(positions) ? { positions, final: false } : undefined;
 	}

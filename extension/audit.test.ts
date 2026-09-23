@@ -5,8 +5,8 @@ import { join } from "node:path";
 import { extractFindings, planGroups } from "./index";
 import { parsePrediction } from "./predictor";
 import { buildReport } from "./report";
-import { resolveDiffScope, resolveFullScope } from "./scope";
 import type { GitExec } from "./scope";
+import { resolveDiffScope, resolveFullScope } from "./scope";
 import type { Rule } from "./types";
 
 const temporaryDirectories: string[] = [];
@@ -125,17 +125,20 @@ describe("prediction and validation boundaries", () => {
 		expect(planGroups([], 2)).toEqual([]);
 	});
 
-	test("findings parse severity and tolerate prose around JSON", () => {
-		const findings = extractFindings(
-			'Done.\n{"findings":[{"rule_id":421,"file":"src/cache.rs","lines":"11-13","severity":"high","evidence":"guard","suggestion":"drop before await"},{"rule_id":1,"file":"x","suggestion":"y","severity":"urgent"}]}',
-		);
+	test("normalizes structured findings and unrecognized severities", () => {
+		const findings = extractFindings({
+			findings: [
+				{ rule_id: 421, file: "src/cache.rs", lines: "11-13", severity: "high", evidence: "guard", suggestion: "drop before await" },
+				{ rule_id: 1, file: "x", suggestion: "y", severity: "urgent" },
+			],
+		});
 		expect(findings?.map((finding) => finding.severity)).toEqual(["high", undefined]);
-		expect(extractFindings("no json here")).toBeUndefined();
+		expect(extractFindings('{"findings":[]}')).toBeUndefined();
 	});
 
 	test("malformed findings are failures, never silently clean", () => {
-		expect(extractFindings('{"findings":[{"rule_id":1,"file":"x.rs"}]}')).toBeUndefined();
-		expect(extractFindings('{"findings":[]}')).toEqual([]);
+		expect(extractFindings({ findings: [{ rule_id: 1, file: "x.rs" }] })).toBeUndefined();
+		expect(extractFindings({ findings: [] })).toEqual([]);
 	});
 
 	test("confirmed findings stay severity-ordered within files", () => {

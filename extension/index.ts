@@ -8,10 +8,12 @@ import { randomUUID } from "node:crypto";
 import { existsSync, realpathSync } from "node:fs";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import type { Model } from "@oh-my-pi/pi-ai";
 import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
 import { createPredictor } from "./predictor";
 import { buildFixMessage, buildReport, describeScope } from "./report";
 import { resolveDiffScope, resolveFullScope } from "./scope";
+import { modelForThinking } from "./thinking";
 import type { AuditScope, Finding, GroupResult, PredictionResult, Rule, Severity } from "./types";
 
 interface AuditConfig {
@@ -23,21 +25,30 @@ interface AuditConfig {
 	rulesDir: string;
 	evalTimeoutSec: number;
 	predictorTimeoutSec: number;
+	predictorThinkingTokens: number;
+	validatorThinking: boolean;
 	scope: "auto" | "diff" | "full";
 	base: string;
 	out: string;
 }
 
 /** Minimal structural view of the injected SDK export bag. */
-interface SdkMessageBlock {
-	type: string;
-	text?: string;
-}
 interface SdkSessionEvent {
 	type: string;
-	message?: { role?: string; content?: SdkMessageBlock[]; stopReason?: string; errorMessage?: string };
+	message?: { role?: string; stopReason?: string; errorMessage?: string };
 	toolName?: string;
 	intent?: string;
+	isError?: boolean;
+	result?: {
+		details?: {
+			data?: unknown;
+			status?: string;
+			error?: string;
+			type?: string | string[];
+			useLastTurn?: boolean;
+			schemaOverridden?: boolean;
+		};
+	};
 }
 interface SdkSession {
 	subscribe(listener: (event: SdkSessionEvent) => void): () => void;
@@ -60,9 +71,35 @@ const DEFAULTS: AuditConfig = {
 	rulesDir: "",
 	evalTimeoutSec: 600,
 	predictorTimeoutSec: 120,
+	predictorThinkingTokens: 512,
+	validatorThinking: true,
 	scope: "auto",
 	base: "",
 	out: "",
+};
+
+const FINDINGS_SCHEMA = {
+	type: "object",
+	properties: {
+		findings: {
+			type: "array",
+			items: {
+				type: "object",
+				properties: {
+					rule_id: { type: ["number", "string"] },
+					file: { type: "string", minLength: 1 },
+					lines: { type: "string" },
+					severity: { type: "string", enum: ["high", "medium", "low"] },
+					evidence: { type: "string" },
+					suggestion: { type: "string", minLength: 1 },
+				},
+				required: ["rule_id", "file", "lines", "severity", "evidence", "suggestion"],
+				additionalProperties: false,
+			},
+		},
+	},
+	required: ["findings"],
+	additionalProperties: false,
 };
 
 export async function loadRules(dir: string): Promise<Rule[]> {
@@ -126,10 +163,10 @@ export function buildGroupPrompt(group: GroupSpec, scope: AuditScope): string {
 		sections.join("\n\n"),
 		"",
 		"## Output",
-		"Your FINAL message must be ONLY a JSON object, no prose, no code fence:",
+		"Submit your final result through the yield tool as result.data. Omit type; submit one complete object, not incremental sections or free-text JSON:",
 		'{"findings":[{"rule_id":<id>,"file":"<relative path>","lines":"<N-M>","severity":"high|medium|low","evidence":"<what you saw>","suggestion":"<concrete change to make>"}]}',
 		"Only use rule IDs from this candidate group. severity: high = correctness/safety/security; medium = maintainability or performance; low = cosmetic/consistency.",
-		'If no candidates are confirmed, output exactly {"findings":[]}.',
+		'If no candidates are confirmed, yield result.data as {"findings":[]}.',
 	].join("\n");
 }
 
@@ -151,27 +188,12 @@ function coerceFinding(value: unknown): Finding | undefined {
 	};
 }
 
-/** Preserve fenced/prose JSON support, but never silently turn malformed findings into a clean group. */
-export function extractFindings(text: string): Finding[] | undefined {
-	const candidates = [text.trim()];
-	const fenced = [...text.matchAll(/```(?:json)?\s*([\s\S]*?)```/g)];
-	if (fenced.length > 0) candidates.push(fenced[fenced.length - 1][1].trim());
-	const first = text.indexOf("{");
-	const last = text.lastIndexOf("}");
-	if (first !== -1 && last > first) candidates.push(text.slice(first, last + 1));
-	for (const candidate of candidates) {
-		let parsed: unknown;
-		try {
-			parsed = JSON.parse(candidate);
-		} catch {
-			continue;
-		}
-		if (!parsed || typeof parsed !== "object" || !("findings" in parsed) || !Array.isArray(parsed.findings)) continue;
-		const findings = parsed.findings.map(coerceFinding);
-		if (findings.some((finding) => finding === undefined)) return undefined;
-		return findings as Finding[];
-	}
-	return undefined;
+/** Validate structured tool output; prose and malformed findings are never clean results. */
+export function extractFindings(value: unknown): Finding[] | undefined {
+	if (!value || typeof value !== "object" || !("findings" in value) || !Array.isArray(value.findings)) return undefined;
+	const findings = value.findings.map(coerceFinding);
+	if (findings.some((finding) => finding === undefined)) return undefined;
+	return findings as Finding[];
 }
 
 async function pool<T, R>(items: T[], limit: number, fn: (item: T, index: number) => Promise<R>): Promise<R[]> {
@@ -207,6 +229,8 @@ function parseArgs(args: string): Partial<AuditConfig> {
 		else if (key === "dir") out.rulesDir = value;
 		else if (key === "timeout") out.evalTimeoutSec = Number(value);
 		else if (key === "predictortimeout") out.predictorTimeoutSec = Number(value);
+		else if (key === "predictorthinkingtokens") out.predictorThinkingTokens = value ? Number(value) : Number.NaN;
+		else if (key === "validatorthinking") out.validatorThinking = parseBool(value);
 		else if (key === "scope" && isScopeMode(value)) out.scope = value;
 		else if (key === "base") out.base = value;
 		else if (key === "out") out.out = value;
@@ -231,6 +255,8 @@ async function readConfigFile(path: string): Promise<Partial<AuditConfig>> {
 	if (typeof record.rulesDir === "string") out.rulesDir = record.rulesDir;
 	if (typeof record.evalTimeoutSec === "number") out.evalTimeoutSec = record.evalTimeoutSec;
 	if (typeof record.predictorTimeoutSec === "number") out.predictorTimeoutSec = record.predictorTimeoutSec;
+	if (typeof record.predictorThinkingTokens === "number") out.predictorThinkingTokens = record.predictorThinkingTokens;
+	if (typeof record.validatorThinking === "boolean") out.validatorThinking = record.validatorThinking;
 	if (isScopeMode(record.scope)) out.scope = record.scope;
 	if (typeof record.base === "string") out.base = record.base;
 	if (typeof record.out === "string") out.out = record.out;
@@ -253,15 +279,16 @@ export function resolveRulesDir(configured: string, cwd: string): string | undef
 
 interface OpenSessionOptions {
 	sdk: SdkExports;
-	model: unknown;
+	model: Model;
 	modelRegistry: unknown;
 	cwd: string;
 	timeoutSec: number;
+	thinking: boolean;
 	onActivity: (action: string) => void;
 }
 
 interface SubSession {
-	ask(prompt: string): Promise<string>;
+	ask(prompt: string): Promise<unknown>;
 	dispose(): Promise<void>;
 }
 
@@ -270,35 +297,42 @@ async function openSession(options: OpenSessionOptions): Promise<SubSession> {
 	const { createAgentSession, SessionManager, AgentRegistry } = options.sdk;
 	const registry = options.modelRegistry as { authStorage?: unknown };
 	const { session } = await createAgentSession({
-		model: options.model,
+		model: modelForThinking(options.model, options.thinking),
+		thinkingLevel: options.thinking ? "high" : "off",
 		modelRegistry: options.modelRegistry,
 		authStorage: registry.authStorage,
 		sessionManager: SessionManager.inMemory(),
 		...(AgentRegistry ? { agentRegistry: new AgentRegistry() } : {}),
-		toolNames: ["read", "grep", "glob"],
+		toolNames: ["read", "grep", "glob", "yield"],
 		restrictToolNames: true,
+		requireYieldTool: true,
+		outputSchema: FINDINGS_SCHEMA,
+		outputSchemaMode: "strict",
 		enableMCP: false,
 		enableLsp: false,
 		disableExtensionDiscovery: true,
 		cwd: options.cwd,
 	});
-	let lastAssistantText = "";
+	const yielded = Promise.withResolvers<unknown>();
 	let lastError: string | undefined;
 	const unsubscribe = session.subscribe((event) => {
 		if (event.type === "tool_execution_start" && event.toolName) {
 			options.onActivity(`${event.toolName}${event.intent ? ` — ${event.intent}` : ""}`);
+		} else if (event.type === "tool_execution_end" && event.toolName === "yield" && !event.isError) {
+			const details = event.result?.details;
+			if (!details || Array.isArray(details.type)) return;
+			if (details.status !== "success") yielded.reject(new Error(details.error || "Validator aborted without findings"));
+			else if (details.useLastTurn || details.schemaOverridden || details.data == null) {
+				yielded.reject(new Error("Validator did not submit schema-valid structured findings"));
+			} else yielded.resolve(details.data);
 		} else if (event.type === "message_end" && event.message?.role === "assistant") {
-			lastAssistantText = (event.message.content ?? [])
-				.filter((block) => block.type === "text")
-				.map((block) => block.text ?? "")
-				.join("\n");
 			const reason = event.message.stopReason;
 			lastError =
 				reason && reason !== "stop" && reason !== "toolUse" ? event.message.errorMessage || `Validation stopped with ${reason}` : undefined;
 		}
 	});
 	return {
-		async ask(prompt: string): Promise<string> {
+		async ask(prompt: string): Promise<unknown> {
 			const watchdog = Promise.withResolvers<never>();
 			const timer = setTimeout(() => {
 				watchdog.reject(new Error(`timed out after ${options.timeoutSec}s`));
@@ -307,15 +341,22 @@ async function openSession(options: OpenSessionOptions): Promise<SubSession> {
 				} catch {}
 			}, options.timeoutSec * 1000);
 			try {
-				await Promise.race([session.prompt(prompt), watchdog.promise]);
-				if (lastError) throw new Error(lastError);
-				return lastAssistantText;
+				return await Promise.race([
+					yielded.promise,
+					session.prompt(prompt).then(() => {
+						throw new Error(lastError || "Validator did not submit structured findings through yield");
+					}),
+					watchdog.promise,
+				]);
 			} finally {
 				clearTimeout(timer);
 			}
 		},
 		async dispose() {
 			unsubscribe();
+			try {
+				await session.abort();
+			} catch {}
 			try {
 				await session.dispose();
 			} catch {}
@@ -352,6 +393,9 @@ export default function lintAudit(pi: ExtensionAPI) {
 				}
 				for (const key of ["predictorTimeoutSec", "evalTimeoutSec"] as const) {
 					if (!Number.isFinite(cfg[key]) || cfg[key] <= 0) throw new Error(`${key} must be finite and positive`);
+				}
+				if (!Number.isSafeInteger(cfg.predictorThinkingTokens) || cfg.predictorThinkingTokens < 0) {
+					throw new Error("predictorThinkingTokens must be a non-negative integer (0 disables thinking)");
 				}
 				const rulesDir = resolveRulesDir(cfg.rulesDir, ctx.cwd);
 				if (!rulesDir) throw new Error("rules directory not found (dir=... or bundle rules/ next to the extension)");
@@ -419,6 +463,7 @@ export default function lintAudit(pi: ExtensionAPI) {
 					diffText: scope.diffText,
 					cacheKey: `lint-audit-${runId}`,
 					timeoutSec: cfg.predictorTimeoutSec,
+					thinkingTokens: cfg.predictorThinkingTokens,
 				});
 				const predictRule = async (rule: Rule): Promise<PredictionResult> => {
 					const label = `rule-${rule.id}`;
@@ -461,6 +506,7 @@ export default function lintAudit(pi: ExtensionAPI) {
 					activity.set(group.label, `starting (${group.rules.length} candidates)`);
 					renderProgress();
 					let session: SubSession | undefined;
+					let output: unknown;
 					try {
 						session = await openSession({
 							sdk: fullSdk,
@@ -468,23 +514,23 @@ export default function lintAudit(pi: ExtensionAPI) {
 							modelRegistry: ctx.modelRegistry,
 							cwd: ctx.cwd,
 							timeoutSec: cfg.evalTimeoutSec,
+							thinking: cfg.validatorThinking,
 							onActivity: (action) => {
 								activity.set(group.label, action);
 								renderProgress();
 							},
 						});
-						const text = await session.ask(buildGroupPrompt(group, scope));
-						result.raw = text.slice(0, 4000);
-						const findings = extractFindings(text);
-						if (findings === undefined) throw new Error("unparseable validation output");
+						output = await session.ask(buildGroupPrompt(group, scope));
+						const findings = extractFindings(output);
+						if (findings === undefined) throw new Error("invalid structured validation output");
 						const allowed = new Set(result.ruleIds.map(String));
 						if (findings.some((finding) => !allowed.has(String(finding.rule_id))))
 							throw new Error("validation returned a rule outside its candidate group");
 						result.findings = findings;
 						result.clean = findings.length === 0;
 						findingsSoFar += findings.length;
-						delete result.raw;
 					} catch (error) {
+						if (output !== undefined) result.raw = JSON.stringify(output).slice(0, 4000);
 						result.error = error instanceof Error ? error.message : String(error);
 					} finally {
 						await session?.dispose();
