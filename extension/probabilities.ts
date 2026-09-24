@@ -12,20 +12,28 @@ function tokenScore(value: unknown): TokenScore {
 	return { token: value.token, logprob: value.logprob };
 }
 
-/** Sum observed casing/whitespace variants in log space; missing labels are unknown, never complements. */
-export function labelProbabilities(positions: unknown[]): LabelProbabilities {
+export const MIN_LABEL_MASS = 0.95;
+const BOOLEAN_TOKEN = /^[ \t\r\n]*(true|false)[ \t\r\n]*$/;
+
+/** Score only a standalone boolean in an already-validated JSON verdict, never its JSON prefix or reasoning. */
+export function labelProbabilities(positions: unknown[], verdictText: string): LabelProbabilities {
+	if (positions.length === 0) throw new Error("Provider did not return final-answer token logprobs");
 	let labelPosition: (TokenScore & { top_logprobs: unknown[] }) | undefined;
+	let offset = 0;
 	for (const position of positions) {
 		const selected = tokenScore(position);
-		const label = selected.token.trim().toLowerCase();
-		if (label !== "a" && label !== "b") continue;
-		if (labelPosition) throw new Error("Expected exactly one label-bearing token");
+		if (!verdictText.startsWith(selected.token, offset)) throw new Error("Final-answer logprobs do not match verdict text");
+		offset += selected.token.length;
+		const label = BOOLEAN_TOKEN.exec(selected.token)?.[1];
+		if (label !== "true" && label !== "false") continue;
+		if (labelPosition) throw new Error("Expected exactly one boolean-bearing token");
 		if (!position || typeof position !== "object" || !("top_logprobs" in position) || !Array.isArray(position.top_logprobs)) {
 			throw new Error("Provider did not return top token logprobs");
 		}
 		labelPosition = { ...selected, top_logprobs: position.top_logprobs };
 	}
-	if (!labelPosition) throw new Error("Provider did not return label token logprobs");
+	if (offset !== verdictText.length) throw new Error("Final-answer logprobs do not cover the complete verdict");
+	if (!labelPosition) throw new Error("Provider did not return a standalone boolean token; split or merged verdicts cannot be scored");
 	const tokens = new Map<string, number>();
 	for (const alternative of labelPosition.top_logprobs) {
 		const score = tokenScore(alternative);
@@ -36,8 +44,9 @@ export function labelProbabilities(positions: unknown[]): LabelProbabilities {
 	if (!tokens.has(labelPosition.token)) tokens.set(labelPosition.token, labelPosition.logprob);
 	const values: Record<"a" | "b", number[]> = { a: [], b: [] };
 	for (const [token, logprob] of tokens) {
-		const label = token.trim().toLowerCase();
-		if (label === "a" || label === "b") values[label].push(logprob);
+		const label = BOOLEAN_TOKEN.exec(token)?.[1];
+		if (label === "true") values.a.push(logprob);
+		else if (label === "false") values.b.push(logprob);
 	}
 	const scores: Record<"a" | "b", number | null> = { a: null, b: null };
 	for (const label of ["a", "b"] as const) {
@@ -46,15 +55,21 @@ export function labelProbabilities(positions: unknown[]): LabelProbabilities {
 		scores[label] = maximum + Math.log(values[label].reduce((sum, value) => sum + Math.exp(value - maximum), 0));
 		if (scores[label] > 1e-12) throw new Error("Label probability exceeds one");
 	}
+	const tokenProbabilities = { a: scores.a === null ? null : Math.exp(scores.a), b: scores.b === null ? null : Math.exp(scores.b) };
+	const observedLabelMass = (tokenProbabilities.a ?? 0) + (tokenProbabilities.b ?? 0);
+	if (observedLabelMass > 1 + 1e-12) throw new Error("Combined label probability exceeds one");
 	let conditional: LabelProbabilities["probabilitiesGivenAOrB"] = null;
-	if (scores.a !== null && scores.b !== null) {
+	// Normalizing a tiny label mass can hide that almost all probability went elsewhere.
+	// A constrained decoder can itself force mass near one; this is not a calibration test.
+	if (scores.a !== null && scores.b !== null && observedLabelMass >= MIN_LABEL_MASS) {
 		const maximum = Math.max(scores.a, scores.b);
 		const a = Math.exp(scores.a - maximum);
 		const b = Math.exp(scores.b - maximum);
 		conditional = { a: a / (a + b), b: b / (a + b) };
 	}
 	return {
-		tokenProbabilities: { a: scores.a === null ? null : Math.exp(scores.a), b: scores.b === null ? null : Math.exp(scores.b) },
+		tokenProbabilities,
+		observedLabelMass,
 		probabilitiesGivenAOrB: conditional,
 		missingLabels: (["a", "b"] as const).filter((label) => scores[label] === null),
 	};

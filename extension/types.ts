@@ -24,6 +24,8 @@ export interface Finding {
 
 export interface LabelProbabilities {
 	tokenProbabilities: { a: number | null; b: number | null };
+	/** Observed true/false mass at the verdict token; a lower bound when top-logprobs are truncated. */
+	observedLabelMass: number;
 	probabilitiesGivenAOrB: { a: number; b: number } | null;
 	missingLabels: ("a" | "b")[];
 }

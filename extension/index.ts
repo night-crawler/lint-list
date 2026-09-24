@@ -480,6 +480,7 @@ export default function lintAudit(pi: ExtensionAPI) {
 					const resultDetails =
 						`${verdict}; ` +
 						`P(a)=${probability(scores?.tokenProbabilities.a)} P(b)=${probability(scores?.tokenProbabilities.b)}; ` +
+						`label mass=${probability(scores?.observedLabelMass)}; ` +
 						`P(a|a/b)=${probability(conditional?.a)} P(b|a/b)=${probability(conditional?.b)}` +
 						(result.probabilityError ? `; ${result.probabilityError}` : "");
 					if (ctx.hasUI) {

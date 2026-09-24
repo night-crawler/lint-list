@@ -63,16 +63,15 @@ omp -p --auto-approve -e /path/to/lints-list/extension "/lint-audit fix=true"
    pinned and recorded. Before any model request, the command prints the byte/KiB size, line count, file count
    and selected base. An empty diff stops without model calls. `scope=full`, or `auto` when no base is resolvable,
    creates an all-additions snapshot of the working tree instead, including untracked text files.
-2. **Predict every rule.** The configured `predictorModel` receives one independent, tool-free binary request per
-   loaded rule. There is no routing or heuristic prefilter. Request order is:
+2. **Predict every rule.** The configured `predictorModel` receives one independent, tool-free structured
+   classification request per loaded rule. There is no routing or heuristic prefilter. Request order is:
 
    ```
-   fixed system instructions
+   fixed system instructions and boolean verdict meanings
    complete diff snapshot (shared system block, explicitly untrusted data)
    complete lint criterion (including counterexample and fix)
-   options:
-   a: violates
-   b: doesn't violate
+   repeat the verdict contract:
+   {"violates":true} or {"violates":false}
    ```
 
    The system/diff prefix is built once and remains identical across requests; no previous criteria or answers
@@ -81,9 +80,10 @@ omp -p --auto-approve -e /path/to/lints-list/extension "/lint-audit fix=true"
    system-block caching. The first request finishes before the remaining requests run with concurrency `c=`,
    allowing the prefix cache to warm. Actual cache hits depend on provider support, minimum prefix size and retention.
 
-   The system prompt states that the diff contains a violation somewhere and tells the predictor to inspect
-   every file and hunk. One qualifying occurrence is enough; unrelated clean additions cannot cancel it.
-   That premise does not force every criterion to be positive: the known violation may concern another lint.
+   The predictor inspects every file and hunk without assuming a violation exists. One qualifying added
+   occurrence is enough; unrelated clean additions cannot cancel it. Removed lines and unchanged context
+   do not count, and the criterion's counterexample must be respected. Label meanings precede the diff;
+   the varying criterion remains after it to preserve the shared prefix cache.
 
    Predictors request low reasoning effort with a configurable `predictorThinkingTokens` budget (default: 512)
    on token-budget providers. Override it per run with `predictor_thinking_tokens=N`. A positive budget requests
@@ -94,20 +94,37 @@ omp -p --auto-approve -e /path/to/lints-list/extension "/lint-audit fix=true"
    For llama.cpp GGUF models, requests explicitly configure template thinking, set `reasoning_budget_tokens`
    to the selected budget, and request `reasoning_format: "deepseek"` to separate thoughts from answer text.
    This per-request budget overrides the server's `--reasoning-budget` default.
-   The final answer must still be exactly `a` or `b`; prose followed by a label remains a prediction failure.
+   The final answer must be exactly one JSON object with the literal `violates` key and a boolean value.
+   Prose, string booleans, duplicate verdicts, extra fields and truncated responses are prediction failures,
+   never clean results. Internal results retain `a` = true/violates and `b` = false/doesn't violate.
 
-   Each completed rule immediately updates the below-editor widget with its ID/title, `a`/`b`, raw
-   `P(a)`/`P(b)`, and probabilities normalized over the two labels (`P(a|a/b)`/`P(b|a/b)`).
-   OpenRouter predictors use its Chat Completions endpoint because its Responses endpoint rejects the logprob
-   include field. Authentication and model selection still use omp's registry. OpenRouter backend routing can
-   change score availability between calls; missing scores remain unknown.
-   OpenAI Chat Completions and Responses predictors request the
-   top 20 token logprobs. These are token scores, not calibrated violation probabilities. Missing alternatives
-   print as `unknown`, never zero; if either is missing, normalized probabilities are also unknown. Other API
-   types, missing logprobs or malformed scores produce an explicit probability-unavailable reason without
-   changing a valid binary verdict. Providers that reject the logprobs request fail visibly.
-   Only final-answer token scores are used. If a streaming endpoint omits those scores while reasoning is
-   enabled, probabilities remain `unknown`; `a`/`b` tokens inside the reasoning are never used as verdict scores.
+   OpenAI Chat Completions and Responses requests use a closed, strict JSON Schema for this object.
+   OpenRouter uses Chat Completions because its Responses endpoint rejects the logprob include field;
+   `provider.require_parameters=true` prevents routing to endpoints advertising no support for the requested
+   schema/logprob parameters. Other SDK APIs receive the same JSON instructions and strict local validation,
+   but no provider-native schema is claimed for those transports. Unsupported request parameters fail visibly;
+   there is no silent fallback to unconstrained letter output.
+
+   Each completed rule updates the below-editor widget with its ID/title, verdict, raw `P(a)`/`P(b)`,
+   observed label mass and conditional scores (`P(a|a/b)`/`P(b|a/b)`). The scores now refer to the standalone
+   `true`/`false` value token, not a letter or the opening JSON punctuation. OpenAI-compatible requests ask for
+   the top 20 alternatives. Only valid JSON-whitespace variants are combined; missing labels remain unknown,
+   not zero or the other label's complement. Scores must match the complete final-answer text. Split or
+   punctuation-merged booleans, missing/mismatched scores and reasoning-only scores remain unavailable
+   without invalidating a valid verdict.
+
+   Conditional scores require both labels and at least **95% observed boolean-token mass**. Lower mass keeps
+   the raw scores visible but withholds normalization. This is a diagnostic heuristic, not an accuracy threshold.
+   The mass is a lower bound when top-logprobs omit variants, and constrained decoding can itself push it near
+   one. **Neither these token scores nor model-written confidence values are calibrated violation probabilities.**
+   Calibration would require representative labeled data and held-out evaluation, not a different output format.
+   See the [HN discussion](https://news.ycombinator.com/item?id=49812769) and
+   [On Calibration of Modern Neural Networks](https://arxiv.org/abs/1706.04599).
+
+   Score availability remains backend-dependent even when endpoints advertise the parameters. Targeted
+   OpenRouter GLM-5.2 checks returned valid schema-constrained verdicts but `logprobs: null` in both thinking
+   modes; those verdicts work, but their scores are unknown. Kimi K3 and GLM-5.3 checks returned usable scores
+   on some requests; this is not a guarantee for every backend route.
 3. **Validate positives.** Only `a` predictions enter validation. They are sorted by category and source path,
    partitioned into groups of at most `group=`, and independently checked by `validatorModel` in read-only
    sub-sessions (`read`/`grep`/`glob`). Each group gets the same complete snapshot and its candidate criteria.
@@ -221,7 +238,7 @@ Every nonempty audit writes `<cwd>/.omp/lint-audit/<timestamp>-<unique-id>/`:
 
 - `snapshot.diff` — the exact immutable diff used by both stages
 - `predictions.json` — one result per loaded rule: `ruleId`, `answer` (`a`/`b`), available raw/conditional token
-  probabilities and missing labels, or errors and available raw output
+  scores, `observedLabelMass` and missing labels, or errors and available raw output
 - `group-N.json` — candidate IDs, confirmed findings, clean/error status and invalid structured output when available
 - `report.md` — report, unless overridden by `out=`
 - `summary.json` — both resolved provider/model names, config, scope (including the exact base commit), snapshot
@@ -254,18 +271,20 @@ python3 classify_lint.py --model my-model --base-url http://localhost:8000/v1 \
 otherwise `https://api.openai.com/v1`. `--api-key` overrides `OPENAI_API_KEY`; authentication may be omitted for
 local servers. No private address, Qwen chat template or llama-server-only endpoint is assumed.
 
-The fixed system prompt and shared diff precede the varying complete criterion and `a`/`b` options. The diff is
-read once; its byte/line count is printed to stderr before the request. Stdout remains JSON with `model`, `answer`
-(`a` = violates, `b` = doesn't violate), `violates`, and rule metadata.
-Uppercase single-letter responses are accepted and normalized. Non-binary replies, refusals, truncation and API
-errors fail explicitly. A modest output budget permits reasoning before the answer; provider-specific unsupported
-parameters are reported as API errors rather than retried with silently different semantics.
+The fixed system prompt defines the structured verdict before the shared diff and varying complete criterion.
+The diff is read once; its byte/line count is printed to stderr before the request. The request includes the
+same closed JSON Schema used by the extension: `{"violates":true}` or `{"violates":false}`. Stdout remains JSON
+with `model`, `answer` (`a` = violates, `b` = doesn't violate), `violates`, and rule metadata.
+Prose, non-boolean or duplicate verdicts, refusals, truncation and API errors fail explicitly. A modest output
+budget permits reasoning before the answer. Unsupported schema parameters fail rather than silently falling
+back to letter output; OpenRouter requests require advertised support for the requested parameters.
 
 Probability scoring is optional: `--n-probs N` requests `logprobs`/`top_logprobs` from endpoints that support them
-(default `0`, disabled). Output then includes `token_probabilities`, `probabilities_given_a_or_b`, and
-`missing_labels`. Whitespace/case variants of the labels in the returned alternatives are combined; missing labels
-are unknown (`null`), not zero, and conditional probabilities require both labels. These are model token scores,
-not calibrated probabilities of a code smell.
+(default `0`, disabled). Available output includes `token_probabilities`, `observed_label_mass`,
+`probabilities_given_a_or_b`, and `missing_labels`. The same boolean-token alignment and 95% mass guard apply
+as in the extension. Missing alternatives are unknown (`null`), not zero; unavailable or malformed scores add
+`probability_error` without discarding a valid verdict. These are model token scores, not calibrated probabilities
+of a code smell.
 
 Successful classification exits zero for either answer; request or classification errors exit nonzero.
 
@@ -280,8 +299,8 @@ bun test
 ```
 
 The regression suite covers single-pass base-tip diff capture (including diverged branches, renames and unusual
-paths), immutable/full-tree snapshots, strict binary labels, missing/underflowing/invalid probabilities, bounded
-candidate groups, malformed validation output and finding order.
+paths), immutable/full-tree snapshots, strict structured boolean verdicts, low-mass/missing/invalid probabilities,
+token alignment and reasoning separation, bounded candidate groups, malformed validation output and finding order.
 
 ## Rule format
 

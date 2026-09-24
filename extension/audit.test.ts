@@ -111,10 +111,18 @@ describe("snapshot boundaries", () => {
 });
 
 describe("prediction and validation boundaries", () => {
-	test("accepts only one binary label, not explanations or ambiguous replies", () => {
-		expect(parsePrediction(" A\n")).toBe("a");
-		expect(parsePrediction("b")).toBe("b");
-		for (const text of ["", "a or b", "a: violates", "doesn't violate", "```b```", "a\nb"]) {
+	test("accepts one structured boolean verdict, not prose, coercions or contradictory fields", () => {
+		expect(parsePrediction(' \n{ "violates": true }\n')).toBe("a");
+		expect(parsePrediction('{"violates":false}')).toBe("b");
+		for (const text of [
+			"a",
+			'A violation seems likely, so {"violates":true}',
+			'{"violates":"false"}',
+			'{"violates":true,"violates":false}',
+			'{"violates":false,"confidence":1}',
+			"{}",
+			'{"violates":true',
+		]) {
 			expect(() => parsePrediction(text)).toThrow();
 		}
 	});
