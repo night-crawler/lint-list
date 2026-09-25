@@ -1,0 +1,13 @@
+{
+  "id": 1017,
+  "title": "Coarse Time-Window Means Masking Transient Stalls",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\nfn aggregate_5min_metrics(samples: &[u64]) -> u64 {\n    samples.iter().sum::<u64>() / samples.len() as u64 // 10-second freeze vanishes\n}\n```",
+  "pattern": "Latency for health monitoring or performance reports is aggregated into multi-minute arithmetic means, without finer-grained intervals, per-interval maxima or percentiles.",
+  "why_bad": "A 10-second freeze, a GC pause or a burst of saturation is diluted across 300 seconds of normal requests and disappears from the reported number. Alerts and SLO reports built on it miss short outages that users certainly noticed.",
+  "detection": "A metric reporting function or query computing a plain mean over windows of 60 seconds or longer as the only latency signal, with no per-second (or finer) percentile or maximum reported for the same window.",
+  "counterexample": "Long-term capacity-planning or trend dashboards that are explicitly complemented by fine-grained peak/percentile views.",
+  "fix": "Record per-second (or finer) histograms and report percentiles and maxima per interval; if a long-window value is needed, compute it from merged histograms and keep the window maximum.",
+  "strength": "Contextual",
+  "source": "Brendan Gregg, *Systems Performance* (2013), Ch. 2, §2.8.2, p. 68; Richard L. Sites, *Understanding Software Dynamics* (2021), Ch. 9, §9.2, p. 143."
+}

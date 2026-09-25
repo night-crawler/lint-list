@@ -1,0 +1,13 @@
+{
+  "id": 1023,
+  "title": "Retry Attempts Aggregated into One Latency Sample",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\nlet start = Instant::now();\nlet mut res = client.send(&req);\nwhile res.is_err() && retries < 3 {\n    res = client.send(&req); // retries inside the timed block\n    retries += 1;\n}\nhistogram.record(start.elapsed().as_nanos() as u64);\n```",
+  "pattern": "A retry loop runs inside the same timing block used to record per-request latency, so multiple attempts are recorded as one sample and the failures are not counted anywhere.",
+  "why_bad": "A request that failed twice and succeeded on the third attempt looks like one slow request. Failure rate disappears into the latency distribution, and per-attempt latency (what the downstream actually delivers) cannot be recovered.",
+  "detection": "A retry loop (`while res.is_err()`, `for attempt in 0..n`, retry combinators) nested between an `Instant::now()` and the `elapsed()` that feeds a per-request latency metric, with no per-attempt latency or retry counter recorded.",
+  "counterexample": "User-facing transaction latency where total time including retries is the declared SLO metric, recorded alongside a retry/attempt counter.",
+  "fix": "Time and record each attempt separately and count retries in their own metric; if end-to-end time is also needed, record it under a distinct name.\n```rust\nlet res = loop {\n    let t = Instant::now();\n    let r = client.send(&req);\n    attempt_latency.record(t.elapsed().as_nanos() as u64);\n    if r.is_ok() || retries == 3 { break r; }\n    retry_counter.increment();\n    retries += 1;\n};\n```",
+  "strength": "Strong",
+  "source": "Michael T. Nygard, *Release It!* (2007), Ch. 4, §4.10, p. 48; Brendan Gregg, *Systems Performance* (2013), Ch. 2, §2.5, p. 34."
+}

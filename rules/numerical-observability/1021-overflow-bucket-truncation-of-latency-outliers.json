@@ -1,0 +1,13 @@
+{
+  "id": 1021,
+  "title": "Overflow-Bucket Truncation of Latency Outliers",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\nfn record_latency(bins: &mut [u64; 100], duration_ms: usize) {\n    if duration_ms >= 100 {\n        bins[99] += 1; // a 30 s timeout counts the same as a 100 ms blip\n    } else {\n        bins[duration_ms] += 1;\n    }\n}\n```",
+  "pattern": "A latency histogram with a fixed linear range clamps every value above its maximum into one overflow bin, and percentiles are computed from those bins.",
+  "why_bad": "The tail is the part of the distribution that matters, and it is exactly what the overflow bin erases: 2-second GC stalls and 30-second timeouts become indistinguishable from values just over the limit, so p99.9 and max are wrong and stall severity is hidden.",
+  "detection": "Histogram recording code of the form `if v >= MAX { bins[LAST] += 1 }` (or `min(v, MAX)` used as a bucket index) where MAX is below the largest latency the system can produce (e.g. below the request timeout), and quantiles or max are derived from the bins.",
+  "counterexample": "Memory-constrained telemetry whose fixed (typically logarithmic) buckets already span the full physical range up to the timeout, or histograms that also track the exact maximum and overflow count and report the overflow explicitly.",
+  "fix": "Use logarithmic/exponential buckets or an HdrHistogram-style structure whose range extends to at least the maximum timeout, and track the exact maximum.\n```rust\nlet mut hist = hdrhistogram::Histogram::<u64>::new_with_bounds(1, 60_000_000, 3)?; // 1 µs .. 60 s\nhist.record(duration_us)?;\n```",
+  "strength": "Strong",
+  "source": "Richard L. Sites, *Understanding Software Dynamics* (2021), Ch. 13, §13.3, p. 201; Brendan Gregg, *Systems Performance* (2013), Ch. 8, §8.5.2, p. 355."
+}

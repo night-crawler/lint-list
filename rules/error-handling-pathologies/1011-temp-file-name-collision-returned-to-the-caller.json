@@ -1,0 +1,13 @@
+{
+  "id": 1011,
+  "title": "Temp File Name Collision Returned to the Caller",
+  "category": "Error Handling Pathologies",
+  "damaged_code": "```rust\nfn create_temp_file(dir: &Path, name: &str) -> io::Result<File> {\n    let path = dir.join(name);\n    if path.exists() {\n        return Err(io::Error::new(io::ErrorKind::AlreadyExists, \"File exists\"));\n    }\n    File::create(path)\n}\n```",
+  "pattern": "A temporary-file helper takes or derives a fixed name and returns `AlreadyExists` on collision, instead of generating unique names itself until creation succeeds.",
+  "why_bad": "The caller wants a fresh unique file, not a specific name. Surfacing the collision pushes a retry-with-new-name loop onto every caller, and the typical `exists()` then `create()` sequence races with other processes: it can also silently truncate a file created in between.",
+  "detection": "A temp or scratch file creation helper that returns an error when the path exists and contains no loop generating alternative random names with atomic `create_new(true)` (or `O_EXCL`), and does not delegate to a temp-file facility such as the `tempfile` crate or `mkstemp`.",
+  "counterexample": "Creation at a deterministic path the caller specifically requires, such as a lock file, a PID file or a content-addressed artifact, where a collision is meaningful.",
+  "fix": "Delegate to a temp-file facility, or loop over random suffixes with atomic exclusive creation.\n```rust\nfn create_temp_file(dir: &Path, prefix: &str) -> io::Result<tempfile::NamedTempFile> {\n    tempfile::Builder::new().prefix(prefix).tempfile_in(dir)\n}\n```",
+  "strength": "Strong",
+  "source": "Steve McConnell, *Code Complete*, Chapter 8; John Ousterhout, *A Philosophy of Software Design*, Chapter 10."
+}

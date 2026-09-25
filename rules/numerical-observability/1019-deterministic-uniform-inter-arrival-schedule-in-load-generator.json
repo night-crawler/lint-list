@@ -1,0 +1,13 @@
+{
+  "id": 1019,
+  "title": "Deterministic Uniform Inter-Arrival Schedule in Load Generator",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\nlet interval = Duration::from_millis(10);\nlet t0 = Instant::now();\nfor i in 0.. {\n    sleep_until(t0 + interval * i); // perfectly even spacing\n    spawn_request();\n}\n```",
+  "pattern": "A load generator issues requests at perfectly uniform intervals (`t0, t0 + dt, t0 + 2dt, ...`) when modelling production traffic.",
+  "why_bad": "Real arrivals are bursty (Poisson or heavier-tailed). Evenly spaced requests rarely overlap, so queueing contention that production bursts create never happens in the test, and latency at a given utilization looks far better than it will be.",
+  "detection": "A load schedule computed with a constant `Duration` between arrivals, with no sampling from a random inter-arrival distribution (exponential, Pareto) or replay of recorded traffic, in a benchmark whose results are used to predict production latency.",
+  "counterexample": "Micro-benchmarks isolating a single component's service time where deterministic spacing is deliberate, and tests reproducing a known periodic producer.",
+  "fix": "Sample inter-arrival times from a distribution fitted to production (e.g. exponential for a Poisson process) or replay recorded arrival timestamps.\n```rust\nlet exp = rand_distr::Exp::new(rate_per_sec)?;\nlet mut next = Instant::now();\nloop {\n    next += Duration::from_secs_f64(exp.sample(&mut rng));\n    sleep_until(next);\n    spawn_request();\n}\n```",
+  "strength": "Contextual",
+  "source": "Brendan Gregg, *Systems Performance* (2013), Ch. 8, §8.7, p. 385; Ch. 12, §12.3, p. 593."
+}

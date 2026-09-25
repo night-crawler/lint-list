@@ -1,0 +1,13 @@
+{
+  "id": 1012,
+  "title": "Symlink Removal Validating the Link Target",
+  "category": "Error Handling Pathologies",
+  "damaged_code": "```rust\nfn remove_symlink(link_path: &Path) -> io::Result<()> {\n    if let Ok(target) = fs::read_link(link_path) {\n        if !target.exists() {\n            return Err(io::Error::new(io::ErrorKind::NotFound, \"Target missing\"));\n        }\n    }\n    fs::remove_file(link_path)\n}\n```",
+  "pattern": "A symlink unlink operation resolves the link and returns an error or throws when the target it points to does not exist (a dangling link).",
+  "why_bad": "Removing a symlink operates on the link itself, not on its target. Checking the target conflates link removal with target validation, and it makes the operation fail in the most common reason to remove a link: it is dangling.",
+  "detection": "Symlink deletion code calling `read_link`/`canonicalize`/`metadata` (which follows links) and `target.exists()` before `remove_file` on the link path, returning `Err` when the target is missing.",
+  "counterexample": "Integrity or migration tools whose explicit purpose is to verify link targets before removing links.",
+  "fix": "Unlink the link path directly; use `symlink_metadata` if the code must confirm it is a link.\n```rust\nfn remove_symlink(link_path: &Path) -> io::Result<()> {\n    fs::remove_file(link_path)\n}\n```",
+  "strength": "Strong",
+  "source": "John Ousterhout, *A Philosophy of Software Design*, Section 10.4; Marianne Bellotti, *Kill It with Fire*, Chapter 3."
+}

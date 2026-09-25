@@ -1,0 +1,13 @@
+{
+  "id": 1006,
+  "title": "Lower-Bound Subtraction Returning Err Instead of Saturating",
+  "category": "Error Handling Pathologies",
+  "damaged_code": "```rust\nfn pred(n: u32) -> Result<u32, ArithmeticError> {\n    if n == 0 {\n        return Err(ArithmeticError::Underflow);\n    }\n    Ok(n - 1)\n}\n\nfn elapsed(now: Instant, start: Instant) -> Result<Duration, TimeError> {\n    if now < start {\n        return Err(TimeError::NegativeDuration);\n    }\n    Ok(now - start)\n}\n```",
+  "pattern": "A decrement, predecessor, remaining-budget or elapsed-time computation on an unsigned or non-negative quantity returns `Err` or throws when the result would drop below zero, where the domain meaning of that boundary is simply zero (`pred(0) = 0`, a negative elapsed time from clock skew is no elapsed time).",
+  "why_bad": "Every caller has to handle an underflow error for a boundary that has one obvious answer. For timestamps, slight clock skew or out-of-order thread observation makes `now < start` routine, so an error on every duration calculation spreads defensive handling through timing, retry and metrics code.",
+  "detection": "A subtraction on unsigned integers, `Instant`, `SystemTime` or `Duration` preceded by an `n == 0` / `a < b` guard that returns `Err`/throws, where the function's callers treat zero as the natural result (they map the error to 0 or ignore it), and no `saturating_sub`, `checked_duration_since(..).unwrap_or(Duration::ZERO)` or `saturating_duration_since` is used.",
+  "counterexample": "Quantities where going below zero is an invalid domain transition that must be reported: inventory stock, account balances, reference counts, exact arithmetic, or high-precision monotonic benchmarks where a negative delta indicates a timer fault.",
+  "fix": "Saturate at the lower bound.\n```rust\nfn pred(n: u32) -> u32 {\n    n.saturating_sub(1)\n}\n\nfn elapsed(now: Instant, start: Instant) -> Duration {\n    now.saturating_duration_since(start)\n}\n```",
+  "strength": "Strong",
+  "source": "Benjamin C. Pierce, *Types and Programming Languages*, Section 3.5; Steve McConnell, *Code Complete*, Chapter 8; Richard L. Sites, *Understanding Software Dynamics*, Chapter 11."
+}

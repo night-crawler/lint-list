@@ -1,0 +1,13 @@
+{
+  "id": 1009,
+  "title": "Per-Endpoint Parameter Extraction Error Handling",
+  "category": "Error Handling Pathologies",
+  "damaged_code": "```rust\nfn parse_request(req: &Request) -> Result<Params, ParamError> {\n    let id = req.get(\"id\").ok_or(ParamError::MissingId)?;\n    let qty = req.get(\"qty\").ok_or(ParamError::MissingQty)?;\n    Ok(Params { id, qty })\n}\n```",
+  "pattern": "Request handlers each define their own per-parameter error variants and hand-code missing- or malformed-parameter handling inside individual endpoints, instead of a single dispatcher-level extraction layer that reports parameter errors uniformly.",
+  "why_bad": "Parameter error handling is scattered and duplicated across every endpoint, each with slightly different variants, messages and status codes. Handling the missing-parameter case once at the dispatcher (or in a typed extractor) removes these errors from service methods entirely: handlers receive already-validated parameters.",
+  "detection": "Multiple endpoint or service methods that each look up raw request parameters by name and wrap each failed lookup in an endpoint-specific error variant (`MissingId`, `MissingQty`, ...), rather than declaring typed parameters extracted by the framework or a shared dispatcher.",
+  "counterexample": "Endpoints where a missing parameter triggers fallback behavior rather than rejection, and single one-off handlers with genuinely endpoint-specific validation.",
+  "fix": "Declare parameters as a typed struct extracted centrally (framework extractor or dispatcher) that produces one uniform bad-request error naming the missing field.\n```rust\n#[derive(Deserialize)]\nstruct Params { id: u64, qty: u32 }\n\nasync fn handler(Query(params): Query<Params>) -> Response { /* params are present */ }\n```",
+  "strength": "Context-dependent",
+  "source": "John Ousterhout, *A Philosophy of Software Design*, Section 10.7, pp. 82–83."
+}
