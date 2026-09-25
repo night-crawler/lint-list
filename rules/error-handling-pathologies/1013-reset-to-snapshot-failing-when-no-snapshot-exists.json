@@ -1,0 +1,13 @@
+{
+  "id": 1013,
+  "title": "Reset-to-Snapshot Failing When No Snapshot Exists",
+  "category": "Error Handling Pathologies",
+  "damaged_code": "```rust\nfn restore_snapshot(snapshot: Option<&State>) -> Result<State, SnapshotError> {\n    if snapshot.is_none() {\n        return Err(SnapshotError::NoSnapshot);\n    }\n    Ok(snapshot.unwrap().clone())\n}\n```",
+  "pattern": "A reset or restore-to-baseline operation returns an error or throws when no snapshot, checkpoint or saved baseline has been taken, even though the system has a well-defined initial or default state to fall back to.",
+  "why_bad": "The caller wants the system back at its baseline. When no snapshot was taken, the baseline is the initial state, so the error can only be handled one way, by every caller constructing the default state itself.",
+  "detection": "A `restore`/`reset`/`rollback_to_checkpoint` function over in-process state that checks for a missing snapshot and returns `Err`/throws without falling back to `Default::default()` or the documented initial state.",
+  "counterexample": "Backup and disaster-recovery tooling, persistent-storage restores, or any case where silently resetting to defaults would discard data or hide a missing backup that operators must be alerted about.",
+  "fix": "Fall back to the initial state.\n```rust\nfn restore_snapshot(snapshot: Option<&State>) -> State {\n    snapshot.cloned().unwrap_or_default()\n}\n```",
+  "strength": "Context-dependent",
+  "source": "Michael T. Nygard, *Release It!*, Chapter 2; Martin Kleppmann, *Designing Data-Intensive Applications*, Chapter 11."
+}

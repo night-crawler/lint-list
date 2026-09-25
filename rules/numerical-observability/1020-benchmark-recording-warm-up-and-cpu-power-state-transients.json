@@ -1,0 +1,13 @@
+{
+  "id": 1020,
+  "title": "Benchmark Recording Warm-Up and CPU Power-State Transients",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\n// No warm-up; CPU governor unchecked\nfor _ in 0..1000 {\n    let start = Instant::now();\n    execute_target_operation(); // early samples: C-state exit, cold caches, 800 MHz clock\n    histogram.record(start.elapsed().as_nanos() as u64);\n}\n```",
+  "pattern": "A steady-state latency benchmark records samples from the first iteration, without untimed warm-up iterations and without fixing or verifying the CPU frequency governor, so measurements include cold caches, lazy initialization, C-state exits and dynamic frequency ramp-up.",
+  "why_bad": "Early iterations measure power-state wake-up (~100 µs), instruction and data cache misses, page faults and first-time allocation rather than the operation. Dynamic frequency scaling can change clock speed several-fold mid-run, so short benchmarks vary run to run and comparisons between variants measure the governor, not the code.",
+  "detection": "A measurement loop that records into its result histogram/statistics from index 0 with no preceding untimed warm-up phase, in a benchmark reporting steady-state numbers; or a benchmark harness or script with no step that sets or checks the CPU governor (`performance` mode) or validates cycle-counter/frequency consistency. Harnesses that warm up internally (e.g. Criterion) are not flagged.",
+  "counterexample": "Benchmarks whose explicit subject is cold-start latency (process or serverless startup, first-request latency) or power-management behavior and energy efficiency.",
+  "fix": "Run untimed warm-up iterations until timings stabilize, pin the CPU governor to `performance` (or record frequency and discard runs that vary), and only then start recording; prefer a harness that does this.\n```rust\nfor _ in 0..warmup_iters {\n    std::hint::black_box(execute_target_operation());\n}\nfor _ in 0..iters {\n    let start = Instant::now();\n    std::hint::black_box(execute_target_operation());\n    histogram.record(start.elapsed().as_nanos() as u64)?;\n}\n```",
+  "strength": "Strong",
+  "source": "Richard L. Sites, *Understanding Software Dynamics* (2021), Ch. 10, §10.3, p. 161; Ch. 22, p. 281; Ch. 29, §29.11, p. 370; Brendan Gregg, *Systems Performance* (2013), Ch. 12, §12.3, p. 593."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 1015,
+  "title": "Amortized Average Latency via a Single Loop Timer",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\nlet start = Instant::now();\nfor _ in 0..iters {\n    do_operation();\n}\nlet avg_latency = start.elapsed() / iters as u32;\n```",
+  "pattern": "Operation latency is reported by timing a whole multi-iteration loop once and dividing the total elapsed time by the iteration count.",
+  "why_bad": "The division yields a single mean and discards every per-operation sample, so variance, multi-modal behavior and tail stalls (p99, p99.9) become invisible. One 50 ms stall in 10,000 iterations of 5 µs work shows up as a 10 µs \"latency\" nobody experienced.",
+  "detection": "An `Instant::now()` (or equivalent) delta taken around a loop of operations and divided by the iteration count, where the result is labelled or reported as latency or per-operation time rather than throughput.",
+  "counterexample": "Throughput benchmarks that report operations per second and make no latency claim; operations too short to time individually without the timer dominating (a few nanoseconds), where the harness times fixed-size batches and records the per-batch durations in a histogram.",
+  "fix": "Record each operation's duration (or each small batch's) into a percentile-capable histogram and report the distribution.\n```rust\nlet mut hist = hdrhistogram::Histogram::<u64>::new(3)?;\nfor _ in 0..iters {\n    let t = Instant::now();\n    do_operation();\n    hist.record(t.elapsed().as_nanos() as u64)?;\n}\n```",
+  "strength": "Strong",
+  "source": "Paul E. McKenney, *Is Parallel Programming Hard, And, If So, What Can You Do About It?* (2020), Ch. 11, §11.7.4, p. 312; Brendan Gregg, *Systems Performance* (2013), Ch. 2, §2.6.5, p. 57."
+}

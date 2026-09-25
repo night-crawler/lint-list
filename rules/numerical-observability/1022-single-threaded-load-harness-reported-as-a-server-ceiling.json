@@ -1,0 +1,13 @@
+{
+  "id": 1022,
+  "title": "Single-Threaded Load Harness Reported as a Server Ceiling",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\nfn main() {\n    let client = Client::connect(\"127.0.0.1:8080\").unwrap();\n    loop {\n        let _ = client.send_request(); // one core at 100%: the client is the bottleneck\n    }\n}\n```",
+  "pattern": "A high-throughput server is benchmarked with a single-threaded (or otherwise fixed, small) client whose own CPU or connection capacity is never measured, and the plateau reached is reported as the server's limit.",
+  "why_bad": "The client saturates its one core first and throughput levels off there. The resulting \"scalability ceiling\" is a property of the harness, leading to wrong capacity plans and wasted server-side tuning.",
+  "detection": "A benchmark driver whose load loop runs on a single thread or connection with no option to scale client threads/processes, and no measurement of client CPU utilization, while results are reported as maximum server throughput.",
+  "counterexample": "Latency micro-benchmarks of a single connection's protocol handling, where one client is the intended configuration and no throughput ceiling is claimed.",
+  "fix": "Scale load generation across threads, processes or machines until adding client capacity no longer raises throughput, and record client CPU utilization to show the client stayed below saturation.",
+  "strength": "Contextual",
+  "source": "Brendan Gregg, *Systems Performance* (2013), Ch. 1, §1.9, p. 12."
+}

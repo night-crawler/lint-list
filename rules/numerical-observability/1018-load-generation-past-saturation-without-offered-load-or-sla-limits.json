@@ -1,0 +1,13 @@
+{
+  "id": 1018,
+  "title": "Load Generation Past Saturation Without Offered-Load or SLA Limits",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\nwhile benchmark_active {\n    client.send_async_fire_and_forget(&req); // no rate, no in-flight cap, no latency check\n}\n```",
+  "pattern": "A load test drives requests as fast as possible without a target offered-load rate, an in-flight limit, or a latency SLA check, and reports the peak throughput reached.",
+  "why_bad": "Beyond saturation, queues grow without bound and throughput numbers come with unusable tail latency (1M IOPS at 50 ms is worse than 990k IOPS within a 5 ms SLA). The headline number describes a state the system can never be operated in, and the run can exhaust client memory with unsent requests.",
+  "detection": "A benchmark loop that submits async or fire-and-forget requests continuously without a rate limiter, without bounding outstanding requests, and without computing or checking a latency percentile against a threshold before reporting throughput.",
+  "counterexample": "Stress tests whose stated goal is finding crash or overload-behavior thresholds, where throughput at the SLA is not being reported.",
+  "fix": "Sweep offered load in steps with a rate limiter and bounded in-flight requests, and report the highest throughput at which the latency percentile still meets the SLA.",
+  "strength": "Contextual",
+  "source": "Richard L. Sites, *Understanding Software Dynamics* (2021), Ch. 11, p. 190; Brendan Gregg, *Systems Performance* (2013), Ch. 12, §12.3.7, p. 610."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 1007,
+  "title": "Floating-Point Division by Zero Rejected Instead of IEEE 754 Semantics",
+  "category": "Error Handling Pathologies",
+  "damaged_code": "```rust\nfn divide_floats(a: f64, b: f64) -> Result<f64, MathError> {\n    if b == 0.0 {\n        return Err(MathError::DivisionByZero);\n    }\n    Ok(a / b)\n}\n```",
+  "pattern": "A floating-point arithmetic helper returns `Result::Err` or throws on division by zero (or other IEEE-defined edge cases) instead of returning the IEEE 754 result (`INFINITY`, `-INFINITY`, `NaN`).",
+  "why_bad": "IEEE 754 already defines these results, and `inf`/`NaN` propagate through subsequent operations without handling at every step. Wrapping each division in a `Result` forces error plumbing through numeric pipelines and hides the standard semantics numeric code relies on, such as `is_finite()` checks at the end of a computation.",
+  "detection": "A function over `f32`/`f64` that checks `b == 0.0` (or `b.abs() < EPS` used as an equality test) and returns `Err`/throws before performing `a / b`.",
+  "counterexample": "Integer division, where no IEEE sentinel exists; domain boundaries where a non-finite value must not escape (currency, serialization to formats without `NaN`, control outputs to actuators), which should validate and reject there; and code that needs to tell the caller which input caused the non-finite value.",
+  "fix": "Return the IEEE result and check `is_finite()` where a finite value is actually required.\n```rust\nfn divide_floats(a: f64, b: f64) -> f64 {\n    a / b // f64::INFINITY, f64::NEG_INFINITY or f64::NAN at the boundary\n}\n```",
+  "strength": "Context-dependent",
+  "source": "Martin Fowler, *Patterns of Enterprise Application Architecture*, p. 350; Andrew Hunt & David Thomas, *The Pragmatic Programmer*, p. 308."
+}

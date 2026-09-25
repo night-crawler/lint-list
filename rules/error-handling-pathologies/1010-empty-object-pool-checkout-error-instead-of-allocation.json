@@ -1,0 +1,13 @@
+{
+  "id": 1010,
+  "title": "Empty Object Pool Checkout Error Instead of Allocation",
+  "category": "Error Handling Pathologies",
+  "damaged_code": "```rust\nfn get_resource(pool: &mut ResourcePool) -> Result<Resource, PoolError> {\n    if pool.available.is_empty() {\n        return Err(PoolError::Exhausted);\n    }\n    Ok(pool.available.pop().unwrap())\n}\n```",
+  "pattern": "A reuse cache or object pool whose items are ordinary, cheaply constructible values returns an error or throws when no cached item is available, instead of constructing a new one.",
+  "why_bad": "Cache depletion is an expected state, not a failure. Returning `Exhausted` forces every caller to catch the error and construct the resource manually, duplicating the pool's own construction logic and defeating the point of the abstraction.",
+  "detection": "A pool/cache getter that checks `available.is_empty()` (or equivalent) and returns `Err`/throws without attempting to construct a new item, where the item type has a plain constructor and the pool's size is not a capacity limit.",
+  "counterexample": "Pools whose bound is a capacity control: database connections, threads, file descriptors, GPU buffers, or fixed hardware resources. There, exhaustion must block with a timeout or fail fast, and silently growing the pool is a resource-capacity bug.",
+  "fix": "Construct a new item when the pool is empty.\n```rust\nfn get_resource(pool: &mut ResourcePool) -> Resource {\n    pool.available.pop().unwrap_or_else(Resource::new)\n}\n```",
+  "strength": "Context-dependent",
+  "source": "Martin Fowler, *Refactoring*, \"Replace Exception with Test\", pp. 620–622."
+}

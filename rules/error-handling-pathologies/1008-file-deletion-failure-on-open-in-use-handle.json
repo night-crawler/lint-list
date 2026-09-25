@@ -1,0 +1,13 @@
+{
+  "id": 1008,
+  "title": "File Deletion Failure on Open/In-Use Handle",
+  "category": "Error Handling Pathologies",
+  "damaged_code": "```rust\nfn remove_file_or_fail(path: &Path) -> Result<(), IoError> {\n    if is_file_open_by_any_process(path) {\n        return Err(IoError::ResourceBusy);\n    }\n    fs::remove_file(path)\n}\n```",
+  "pattern": "A file deletion API returns an error, retries or blocks because the target file is currently open in this or another process, instead of unlinking the directory entry and letting existing handles finish.",
+  "why_bad": "It couples namespace management to the lifecycle of every open file descriptor. On POSIX filesystems, unlinking removes the name immediately while open handles keep reading and writing, and storage is reclaimed when the last descriptor closes. Refusing the delete creates spurious `ResourceBusy` failures, retry loops, and leaked files.",
+  "detection": "Deletion logic that inspects open handles or reference counts (lsof-style scans, `/proc/*/fd` walks, custom in-use registries) and aborts with a busy/in-use error or waits before calling `remove_file`/`unlink`.",
+  "counterexample": "Exclusive file locks deliberately used for inter-process synchronization, and platforms such as Windows where open files cannot be unlinked without `FILE_SHARE_DELETE`; there the in-use condition is real and must be reported.",
+  "fix": "Unlink the directory entry immediately and let storage be reclaimed when the last file descriptor closes.\n```rust\nfn remove_file(path: &Path) -> io::Result<()> {\n    fs::remove_file(path)\n}\n```",
+  "strength": "Strong",
+  "source": "John Ousterhout, *A Philosophy of Software Design*, Section 10.4, pp. 79–80."
+}

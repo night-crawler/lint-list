@@ -1,0 +1,13 @@
+{
+  "id": 1024,
+  "title": "Latency Start Timestamp Misplaced Around Serialization and Send",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\n// Too early: client CPU work counted as network/server latency\nlet start = Instant::now();\nlet json_bytes = serde_json::to_vec(&large_struct)?;\nsocket.write_all(&json_bytes)?;\nsocket.read_exact(&mut buf)?;\nlet latency = start.elapsed();\n\n// Too late: time blocked in write_all / send-buffer queueing excluded\nsocket.write_all(&payload)?;\nlet start = Instant::now();\nsocket.read_exact(&mut buf)?;\nlet latency = start.elapsed();\n```",
+  "pattern": "The start timestamp of a request-latency measurement is placed on the wrong side of the send: before CPU-heavy client work such as serialization, formatting or large allocations, or after `write`/`send` returns, so the measured interval does not match the network/server round trip it is reported as.",
+  "why_bad": "Starting too early mixes client CPU and allocator noise into the server/network latency distribution. Starting after the write excludes time spent blocked in `write_all` when socket send buffers are full, which is exactly the queueing that grows under load, so latency looks flat while the system saturates.",
+  "detection": "Between `Instant::now()` and the socket write: serialization (`serde_json::to_vec`, `format!`, encoding) or large buffer construction. Or an `Instant::now()` placed after a `write`/`write_all`/`send` call and before the matching `read`/`recv`, with the result reported as request latency.",
+  "counterexample": "End-to-end client SDK benchmarks where serialization is part of the declared client-overhead budget, and benchmarks explicitly isolating server turnaround on established connections (`T3 - T2`), labelled as such.",
+  "fix": "Prepare the request buffer first, take the start timestamp immediately before the write/send call, and stop it when the response is received. In an open-loop load generator, start from the request's intended send time instead, which precedes the write.\n```rust\nlet json_bytes = serde_json::to_vec(&large_struct)?;\nlet start = Instant::now();\nsocket.write_all(&json_bytes)?;\nsocket.read_exact(&mut buf)?;\nhist.record(start.elapsed().as_nanos() as u64)?;\n```",
+  "strength": "Strong",
+  "source": "Richard L. Sites, *Understanding Software Dynamics* (2021), Ch. 1, §1.4, p. 7; Ch. 13, §13.7, p. 215; Ch. 26, §26.5, p. 323."
+}

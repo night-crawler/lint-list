@@ -1,0 +1,13 @@
+{
+  "id": 1005,
+  "title": "Empty Input Rejected Despite a Well-Defined Identity Result",
+  "category": "Error Handling Pathologies",
+  "damaged_code": "```rust\nfn intersect_sets<T: Ord + Clone>(a: &BTreeSet<T>, b: &BTreeSet<T>) -> Result<BTreeSet<T>, SetError> {\n    if a.is_disjoint(b) {\n        return Err(SetError::NoCommonElements);\n    }\n    Ok(a.intersection(b).cloned().collect())\n}\n\nfn format_items(items: &[Item]) -> Result<String, FormatError> {\n    if items.is_empty() {\n        return Err(FormatError::EmptyCollection);\n    }\n    Ok(items.iter().map(|i| i.to_string()).collect::<Vec<_>>().join(\", \"))\n}\n```",
+  "pattern": "A non-destructive computation over collections (set algebra, formatting/joining, concatenation, sum/count, filtering, mapping, bulk read) returns an error or throws when an input is empty or the inputs are disjoint, even though the operation has a natural identity result: the empty set, the empty string, zero, or an empty collection.",
+  "why_bad": "The empty case is a lawful member of the operation's domain; intersection of disjoint sets is the empty set and joining zero items is \"\". Rejecting it breaks algebraic composition (results can no longer be fed back in), and pushes `is_empty()` / `is_disjoint()` guards into every caller, for a case that needs no special handling.",
+  "detection": "An `is_empty()`, `len() == 0` or `is_disjoint()` guard that returns `Err` (or throws) at the top of a function whose remaining body would already produce the identity value for that input without the guard. Do not flag aggregates that are undefined for empty input (mean, min, max, first), which should return `Option`, or deletions of an empty ID list, which fall under removal idempotency.",
+  "counterexample": "Contexts where empty input violates a business rule that must be surfaced: an audit report that may not be generated for an empty dataset, a relational join that must match at least one key, or a UI bulk action where an empty selection indicates a misclick.",
+  "fix": "Remove the guard and return the identity result.\n```rust\nfn intersect_sets<T: Ord + Clone>(a: &BTreeSet<T>, b: &BTreeSet<T>) -> BTreeSet<T> {\n    a.intersection(b).cloned().collect()\n}\n\nfn format_items(items: &[Item]) -> String {\n    items.iter().map(|i| i.to_string()).collect::<Vec<_>>().join(\", \")\n}\n```",
+  "strength": "Strong",
+  "source": "Harold Abelson & Gerald Jay Sussman, *Structure and Interpretation of Computer Programs*, Section 2.3.3; Martin Fowler, *Refactoring*, \"Introduce Null Object\"; Robert C. Martin, *Clean Code*, Chapter 7."
+}

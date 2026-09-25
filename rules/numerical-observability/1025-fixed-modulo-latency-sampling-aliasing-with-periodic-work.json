@@ -1,0 +1,13 @@
+{
+  "id": 1025,
+  "title": "Fixed-Modulo Latency Sampling Aliasing with Periodic Work",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\nrequest_count += 1;\nif request_count % 100 == 0 {\n    let start = Instant::now();\n    client.send(&req);\n    histogram.record(start.elapsed().as_nanos() as u64);\n}\n```",
+  "pattern": "Latency is sampled on a fixed deterministic period (every Nth request, every Nth tick) with no randomization.",
+  "why_bad": "Systems do periodic work (buffer flushes, batch commits, key rotation, GC) every so many requests or milliseconds. A fixed sampling period can lock onto that cycle and systematically hit or miss the stalls (aliasing), so sampled percentiles are biased in an unknown direction.",
+  "detection": "Latency or timing measurement guarded by `count % CONSTANT == 0` (or an equivalent fixed-stride condition) with no random offset, jitter or probabilistic sampling.",
+  "counterexample": "Probabilistic sampling (`rng.gen::<f64>() < rate`), reservoir sampling, Poisson-timed sampling, or instrumentation that records every request.",
+  "fix": "Sample randomly at the desired rate, or record every request with a low-overhead histogram.\n```rust\nif rng.gen::<f64>() < SAMPLE_RATE {\n    let start = Instant::now();\n    client.send(&req);\n    histogram.record(start.elapsed().as_nanos() as u64);\n}\n```",
+  "strength": "Strong",
+  "source": "Richard L. Sites, *Understanding Software Dynamics* (2021), Ch. 12, p. 202."
+}

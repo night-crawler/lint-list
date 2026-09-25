@@ -1,0 +1,13 @@
+{
+  "id": 1016,
+  "title": "Server-Handler Timing Reported as End-to-End Latency",
+  "category": "Numerical Observability",
+  "damaged_code": "```rust\nfn handle_request(req: Request) -> Response {\n    let start = Instant::now(); // T2: handler entry\n    let res = process_payload(req);\n    metrics.record(\"request_latency\", start.elapsed()); // T3 - T2\n    res\n}\n```",
+  "pattern": "Request latency is measured only between handler entry and exit on the server (`T3 - T2`) and reported as the system's request latency, omitting accept/socket queueing, network transit and response transmission (`T1 → T2`, `T3 → T4`).",
+  "why_bad": "Queueing before the handler runs is where overload shows up first. A saturated server can report 1 ms handler latency while clients wait 500 ms in the kernel backlog or the runtime's accept queue, so dashboards and benchmarks stay green through the outage.",
+  "detection": "A duration measured from handler entry to handler exit that is published or asserted as the overall request/response latency (metric names like `request_latency`, benchmark output labelled as latency), with no client-side (`T4 - T1`) measurement or queue-wait metric alongside it.",
+  "counterexample": "Metrics explicitly named and used as service/processing time (e.g. `handler_cpu_time`) to isolate application execution from transport, reported next to client-observed latency.",
+  "fix": "Measure latency at the client (`T4 - T1`), or propagate the client send timestamp and record queue wait separately from processing time.\n```rust\nlet start = Instant::now();\nlet resp = client.send(&req).await?;\nhist.record(start.elapsed().as_nanos() as u64)?; // client-observed latency\n```",
+  "strength": "Contextual",
+  "source": "Richard L. Sites, *Understanding Software Dynamics* (2021), Ch. 1, §1.4, p. 7; Ch. 6, §6.6, p. 92; Ch. 10, §10.3, p. 161."
+}
