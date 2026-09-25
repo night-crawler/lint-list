@@ -1,0 +1,13 @@
+{
+  "id": 1028,
+  "title": "Application-Level Replication by Writing to Every Replica",
+  "category": "Distributed Systems Fallacies",
+  "damaged_code": "```rust\nasync fn add_comment(primary_db: &Db, replica_db: &Db, comment: &Comment) -> Result<(), Error> {\n    primary_db.insert_comment(comment).await?;\n    replica_db.insert_comment(comment).await?; // replica also receives this row via replication\n    Ok(())\n}\n\nasync fn update_inventory(node_a: &GridNode, node_b: &GridNode, item_id: u64, qty: u32) -> Result<(), Error> {\n    node_a.update_cache(item_id, qty).await?;\n    node_b.update_cache(item_id, qty).await?; // active/active peers replicate to each other too\n    Ok(())\n}\n```",
+  "pattern": "Application code replicates data itself by issuing the same write to several nodes of one logical store (primary and read replica, master and DR clone, active/active cache or grid peers) instead of writing to the single owner and letting the store's replication propagate it.",
+  "why_bad": "The store already replicates, so application writes collide with the replication stream: duplicate-key errors, broken sequences, or updates applied twice. Where the store does not replicate, the application has become the replication protocol without sequence numbers, catch-up or conflict resolution. A crash or partition between the writes leaves replicas silently missing data, and concurrent writers can apply updates to peers in opposite orders so the nodes diverge.",
+  "detection": "Two or more handles to nodes of the same logical database, cache or grid (`primary`/`replica`, `master`/`clone`, `node_a`/`node_b`) and the same insert/update/put issued to each for the same record, outside the store's own replication or consensus client.",
+  "counterexample": "Writes routed only to the primary or partition owner with reads served from replicas; client libraries that implement the store's own quorum protocol (e.g. Cassandra/Dynamo-style coordinators); deliberate fan-out to independent stores, which is the general dual-write problem rather than replication.",
+  "fix": "Write only to the primary or the node that owns the key's partition; let the store replicate to followers, clones and peers.\n```rust\nasync fn add_comment(primary_db: &Db, comment: &Comment) -> Result<(), Error> {\n    primary_db.insert_comment(comment).await // replicas follow via the replication stream\n}\n```",
+  "strength": "Strong",
+  "source": "Martin Kleppmann, *Designing Data-Intensive Applications* (2017), Ch. 5, pp. 152–156; Vaughn Vernon, *Implementing Domain-Driven Design* (2013), App. A, Fig. A.7, p. 641; Mark Richards & Neal Ford, *Fundamentals of Software Architecture* (2020), Ch. 15, pp. 216–217."
+}

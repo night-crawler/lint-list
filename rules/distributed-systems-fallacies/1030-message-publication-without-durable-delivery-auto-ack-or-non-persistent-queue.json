@@ -1,0 +1,13 @@
+{
+  "id": 1030,
+  "title": "Message Publication Without Durable Delivery (Auto-Ack or Non-Persistent Queue)",
+  "category": "Distributed Systems Fallacies",
+  "damaged_code": "```rust\nasync fn publish_event_and_cache(cache: &Cache, mq: &MessageQueue, event: &Event) -> Result<(), Error> {\n    cache.set(&event.id, event).await?;\n    mq.publish_auto_ack(\"events_topic\", event).await?; // lost if the consumer dies mid-handling\n    Ok(())\n}\n```",
+  "pattern": "Events that other components must act on are published to a non-persistent queue, without publisher confirms, or consumed in auto-acknowledge mode, while local state has already been changed on the assumption that the event will be processed.",
+  "why_bad": "Auto-ack removes the message as soon as it is delivered, so a consumer crash during handling loses it; non-persistent queues lose everything in flight on a broker restart; publishing without confirms loses messages the broker never accepted. The local side (cache, database) keeps the change while downstream consumers never see it, and nothing records that the event was lost.",
+  "detection": "Publish or consume calls configured with auto-acknowledge (`auto_ack: true`, `no_ack`, `AUTO_ACKNOWLEDGE`), non-persistent delivery mode or non-durable queues, or without awaiting publisher confirms, for events that drive state changes in other components.",
+  "counterexample": "Best-effort telemetry or notifications where loss is explicitly acceptable; durable queues with manual acknowledgement after processing and publisher confirms; log-based brokers (Kafka) with offsets committed after processing.",
+  "fix": "Use durable queues and persistent messages, await publisher confirms, and acknowledge only after the consumer has finished processing.\n```rust\nlet props = BasicProperties::default().with_delivery_mode(2); // persistent\nchannel.basic_publish(\"\", \"events_topic\", BasicPublishOptions::default(), &payload, props).await?.await?; // confirm\n// consumer: process, then\ndelivery.ack(BasicAckOptions::default()).await?;\n```",
+  "strength": "Strong",
+  "source": "Mark Richards & Neal Ford, *Fundamentals of Software Architecture* (2020), Ch. 14, p. 201; Martin Kleppmann, *Designing Data-Intensive Applications* (2017), Ch. 11, p. 431."
+}

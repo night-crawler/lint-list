@@ -1,0 +1,13 @@
+{
+  "id": 1029,
+  "title": "State Applied Before Its Write-Ahead Log Record Is Durable",
+  "category": "Essential Complexity Denial Patterns",
+  "damaged_code": "```rust\n// In-memory state mutated before the log append that should make it durable\nfn update_state(state: &mut State, log: &mut File, key: &str, val: &str) -> io::Result<()> {\n    state.insert(key.to_string(), val.to_string());\n    writeln!(log, \"{key}={val}\")?; // may fail; memory already changed\n    Ok(())\n}\n\n// Data page overwritten on disk before the WAL record is written and synced\nfn update_page(page_file: &mut File, wal: &mut File, off: u64, data: &[u8], rec: &[u8]) -> io::Result<()> {\n    page_file.seek(SeekFrom::Start(off))?;\n    page_file.write_all(data)?;\n    wal.write_all(rec)?;\n    wal.sync_all()?;\n    Ok(())\n}\n```",
+  "pattern": "Code that maintains a log for durability or recovery applies a change to in-memory state or to on-disk data pages before the corresponding log record has been appended and synced.",
+  "why_bad": "The write-ahead invariant is that the log is the source of truth: nothing may reflect a change the log does not yet durably contain. If the log append fails, memory reports a state that will vanish on restart and may already have been served to readers. If the process crashes after a page write but before the WAL sync, recovery cannot redo or undo the change, leaving torn or unrecoverable pages.",
+  "detection": "In a storage engine, state machine, or persistence layer: a mutation of the in-memory structure (`insert`, `push`, field assignment) or a data-file write/flush that precedes, on the same path, the append and `sync_all`/`sync_data`/`fsync` of the log record describing that change; or an error path after the log write fails that does not revert the already-applied state.",
+  "counterexample": "Log-then-apply ordering (append, fsync, then mutate memory or write pages); steal/no-force buffer managers whose page flushes are gated on the page LSN being durable in the WAL; purely volatile caches with no durability claim.",
+  "fix": "Append and sync the log record first; apply the change to memory or pages only after the log write succeeds.\n```rust\nfn update_state(state: &mut State, log: &mut File, key: &str, val: &str) -> io::Result<()> {\n    writeln!(log, \"{key}={val}\")?;\n    log.sync_data()?;\n    state.insert(key.to_string(), val.to_string());\n    Ok(())\n}\n```",
+  "strength": "Strong",
+  "source": "Alex Petrov, *Database Internals* (2019), Ch. 5, p. 83; Martin Kleppmann, *Designing Data-Intensive Applications* (2017), Ch. 3, p. 80; Brendan Gregg, *Systems Performance* (2013), Ch. 13, p. 632."
+}

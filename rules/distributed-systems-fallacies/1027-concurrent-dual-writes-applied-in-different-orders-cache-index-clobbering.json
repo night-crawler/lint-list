@@ -1,0 +1,13 @@
+{
+  "id": 1027,
+  "title": "Concurrent Dual Writes Applied in Different Orders (Cache/Index Clobbering)",
+  "category": "Distributed Systems Fallacies",
+  "damaged_code": "```rust\nasync fn update_user_profile(db: &Db, cache: &Cache, user: &UserProfile) -> Result<(), Error> {\n    db.save_user(user).await?;\n    cache.put(user.id, user).await?; // writes the new VALUE into the second store\n    Ok(())\n}\n\n// Request A: db.save(v1) ........................ cache.put(v1)\n// Request B:          db.save(v2) cache.put(v2)\n// Result: db = v2, cache = v1 until the key expires (or forever)\n```",
+  "pattern": "Request handlers write a new value to the source of truth and then write the same value (`cache.put`/`SET`, `index.update_document`, `grid.put`) to a derived store, so concurrent requests for the same key can apply their writes to the two stores in different orders.",
+  "why_bad": "Even when every write succeeds, there is no shared order across the two stores. Two concurrent updates can commit to the database as A then B but reach the cache or search index as B then A, leaving the derived store permanently holding the older value. Error handling, retries or compensation do not help, because nothing failed. Readers are then served stale data indefinitely (cache without TTL, search index) with no signal that anything diverged.",
+  "detection": "A write path that updates a database row and then writes the new value itself (not an invalidation) for the same entity key to a cache, search index, data grid or other derived store, with no version/compare-and-set on the second write, no single ordered pipeline (CDC or log consumer) applying the second write, and concurrent requests able to update the same key.",
+  "counterexample": "Invalidating the derived entry (`cache.delete`, Redis `DEL`) after the commit so the next read repopulates it; updating the derived store from a single ordered consumer of the database's change log (CDC); versioned writes that reject older versions (compare-and-set on a version column); keys with a single writer.",
+  "fix": "Invalidate instead of writing the value, or derive the second store from the database's commit order.\n```rust\nasync fn update_user_profile(db: &Db, cache: &Cache, user: &UserProfile) -> Result<(), Error> {\n    db.save_user(user).await?;\n    cache.delete(user.id).await?; // next read repopulates from the source of truth\n    Ok(())\n}\n```",
+  "strength": "Strong",
+  "source": "Martin Kleppmann, *Designing Data-Intensive Applications* (2017), Ch. 11 \"Keeping Systems in Sync\", pp. 436–438, Fig. 11-4; Marianne Bellotti, *Kill It with Fire* (2021), Ch. 3, p. 50."
+}

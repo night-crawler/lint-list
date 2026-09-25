@@ -1,0 +1,13 @@
+{
+  "id": 1031,
+  "title": "Derived Log Formats Written Synchronously Alongside the Source Log",
+  "category": "Observability Operability Smells",
+  "damaged_code": "```rust\nfn log_request(full_log: &mut File, summary_log: &mut File, req: &Request) -> io::Result<()> {\n    writeln!(full_log, \"{:?}\", req)?;\n    writeln!(summary_log, \"{} {}\", req.method, req.path)?; // derivable from full_log\n    Ok(())\n}\n```",
+  "pattern": "The request path writes several representations of the same log data (full-fidelity and summary, raw and aggregated) to separate files or sinks synchronously, instead of writing one authoritative log and deriving the others downstream.",
+  "why_bad": "Each request pays for every derived format in disk I/O and latency. The copies can disagree: a full disk or crash between writes leaves one log with the entry and the other without it, and a later change to the summary format cannot be backfilled because the summary was never derived from a replayable source.",
+  "detection": "A logging function on the request path that receives two or more file handles or log sinks and writes different renderings of the same event to each in sequence, where one rendering is computable from the other.",
+  "counterexample": "Separate sinks with different retention or access-control requirements that must be written independently (e.g. a security audit log), and asynchronous fan-out from a single buffered log pipeline.",
+  "fix": "Write one full-fidelity log and generate summaries asynchronously (log processor, rotation/compaction job, stream consumer).\n```rust\nfn log_request(full_log: &mut impl Write, req: &Request) -> io::Result<()> {\n    writeln!(full_log, \"{:?}\", req) // summaries derived later from this log\n}\n```",
+  "strength": "Contextual",
+  "source": "Heather Adkins et al., *Building Secure and Reliable Systems* (2020), Ch. 12, p. 129; Martin Kleppmann, *Designing Data-Intensive Applications* (2017), Ch. 11, p. 436."
+}
