@@ -1,0 +1,13 @@
+{
+  "id": 311,
+  "title": "Universal Domain Entities Conflating Distinct Bounded Contexts",
+  "category": "Dry Abuse",
+  "damaged_code": "```rust\nstruct Student {\n    id: u64,\n    name: String,\n    // Admissions Context fields\n    high_school_gpa: f64,\n    sat_score: u32,\n    // Alumni Affairs Context fields\n    donation_history: Vec<Donation>,\n    membership_level: String,\n}\n```",
+  "pattern": "Different bounded contexts are forced to use one universal or monolithic domain entity because they refer to the same physical subject or use similar terminology, despite owning different meanings, rules, and data.",
+  "why_bad": "A shared physical subject is mistaken for a shared domain concept (a \"false cognate\"). Changes cross semantic boundaries, teams step on each other's code, irrelevant optional fields proliferate, and each context must accommodate another's rules and representation.",
+  "detection": "Identify structs/classes with domain-specific field clusters that are only ever accessed together by distinct, non-overlapping application services, or large records combining clearly different business vocabularies (e.g. shipping logistics vs. retail billing). Establish actual differences in model meaning or ownership rather than treating team boundaries, size, or field clusters alone as proof; distinct contexts can exist under one team.",
+  "counterexample": "A deliberately shared identity mapping or narrow stable key contract (e.g. standard key structures) is legitimate. Explicitly separate context models joined through boundary mappings already preserve the distinction. Shared basic authentication identity belongs only where it is an intentional common contract, not a reason to share all business data.\n```rust\nstruct BookingContext { cargo: Cargo }\nstruct BillingContext { payment: Payment }\n```",
+  "fix": "Create context-owned representations with names, fields, and invariants appropriate to each vocabulary. Correlate them using the agreed identity and translate explicitly at integration boundaries; do not recreate a universal entity in the mapping layer. Preserve each context's required data and behavior during the split.\n```rust\n// Admissions Bounded Context\nstruct Prospect {\n    id: u64,\n    name: String,\n    high_school_gpa: f64,\n}\n\n// Alumni Bounded Context\nstruct Alumnus {\n    id: u64,\n    donation_history: Vec<Donation>,\n}\n```",
+  "strength": "Strong",
+  "source": "*Domain-Driven Design* (Evans), Chapter 14: \"duplicate concepts and false cognates\", p. 410; *Domain-Driven Design* by Eric Evans (Chapter 14, p. 96)."
+}

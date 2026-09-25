@@ -1,0 +1,13 @@
+{
+  "id": 47,
+  "title": "Discarded Failures and Swallowed Errors",
+  "category": "Error Handling Pathologies",
+  "damaged_code": "```rust\n// Silently swallowing a filesystem error\nlet _ = std::fs::remove_file(\"temp.dat\");\n\n// Discarding the status of a write and continuing as if it succeeded\nlet _ = file.write(&buffer);\n```",
+  "pattern": "A fallible operation's `Result`, status code, error component, or exception is ignored, leaving the failure unreported or allowing execution to proceed as though it succeeded.",
+  "why_bad": "Failures such as out-of-disk, access denied, or a closed connection become impossible to diagnose, incomplete side effects are mistaken for success, and invalid or uninitialized resources may be used, causing later corruption or crashes [28:433; 28, Section 8.3 & 8.4].",
+  "detection": "Find (a) system or standard-library calls whose returned status or `Result` is never assigned, mapped, or checked; (b) `let _ = ...` on I/O or database `Result`s; (c) error components assigned to `_` in multi-return APIs (e.g. `conn, _ := net.Dial(...)` in Go); and (d) empty `catch` blocks or empty `Err(_)` branches. Follow use of the purported success value to determine whether the code proceeds without establishing success. Suppressing a must-use warning is not handling the error.",
+  "counterexample": "An error branch that meaningfully reports, handles, or propagates the failure, such as logging a failed best-effort temporary-file cleanup. Merely logging is not sufficient when subsequent work requires the failed operation to have succeeded.\n```rust\nif let Err(e) = std::fs::remove_file(\"temp.dat\") {\n    log::error!(\"Failed to clean up temp file: {:?}\", e);\n}\n```",
+  "fix": "Inspect the result or status, then recover, report, or propagate as appropriate; never let failures pass silently. Use success values only after checking the corresponding error. Respect the API's complete success contract: for write-like APIs, handling a negative return alone does not establish that all requested bytes were written.\n```go\nconn, err := net.Dial(\"tcp\", \"golang.org:80\")\nif err != nil {\n    log.Fatalf(\"Connection failed: %v\", err)\n}\n```",
+  "strength": "Strong",
+  "source": "*Code Complete* (McConnell), Chapter 8 [28:433]; *The Pragmatic Programmer* (Hunt & Thomas) [32:456]; *Steve McConnell - Code Complete*, Section 8.3 & 8.4 (\"not checking system calls\") [28]; *Steve McConnell - Code Complete*, Section 8.3 [28]"
+}

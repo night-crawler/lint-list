@@ -1,0 +1,685 @@
+diff --git a/.changes/unreleased/1789828341-Internal-ui.yaml b/.changes/unreleased/1789828341-Internal-ui.yaml
+new file mode 100644
+index 000000000..debfcc187
+--- /dev/null
++++ b/.changes/unreleased/1789828341-Internal-ui.yaml
+@@ -0,0 +1,5 @@
++kind: Internal
++body: ht ui
++time: 2026-09-19T15:32:21+01:00
++custom:
++    Component: ui
+diff --git a/ui/apps/web/src/features/hot-traces/components/hot-trace-card.tsx b/ui/apps/web/src/features/hot-traces/components/hot-trace-card.tsx
+new file mode 100644
+index 000000000..a7257f28d
+--- /dev/null
++++ b/ui/apps/web/src/features/hot-traces/components/hot-trace-card.tsx
+@@ -0,0 +1,282 @@
++import {
++  StackTraceFrameList,
++  symbolizedFrameToStackTraceFrame
++} from "@/components/flamegraph/stack-trace";
++import { WasmFlamegraph } from "@/components/flamegraph/wasm-flamegraph";
++import { formatCores } from "@/components/millicores-cell";
++import {
++  ENTITY_FIELDS,
++  getDisplayValue,
++  getFieldItems,
++  getFieldTotalCount
++} from "@/features/recommendations/entity-fields";
++import { formatTraceDuration } from "@/features/recommendations/utils/get-recommendation-trace-metric";
++import type {
++  CelSupport,
++  HotTrace,
++  SymbolizedFrame
++} from "@/generated/ts-client";
++import {
++  PROFILE_TYPES,
++  profileTypeEventKind,
++  profileTypeInfo,
++  type ProfileType
++} from "@/utils/profile-type-resolution";
++import { formatBytes } from "@/utils/unit";
++import {
++  Badge,
++  Card,
++  cn,
++  CopyButton,
++  Text,
++  Tooltip,
++  TooltipContent,
++  TooltipTrigger
++} from "@repo/component-library";
++import * as React from "react";
++
++interface HotTraceCardProps {
++  trace: HotTrace;
++  rank: number;
++  projectId: string;
++  filterFacets: CelSupport;
++  timeRange: { start_ts: number; end_ts: number };
++  suffixColumnLimit?: number;
++}
++
++function formatTraceCost(value: number, profileType: ProfileType | undefined) {
++  if (profileType === "alloc") {
++    return formatBytes(value);
++  }
++  return profileType ? formatTraceDuration(value) : value.toLocaleString();
++}
++
++function TraceFrames({ frames }: { frames: SymbolizedFrame[] }) {
++  const stackFrames = React.useMemo(
++    () =>
++      frames.map((frame, index) => {
++        const stackFrame = symbolizedFrameToStackTraceFrame(frame, index);
++        if (frame.file_name) {
++          stackFrame.name += ` (${frame.file_name}${frame.line ? `:${frame.line}` : ""})`;
++        }
++        return stackFrame;
++      }),
++    [frames]
++  );
++
++  return (
++    <StackTraceFrameList frames={stackFrames} className="max-h-64 min-w-0" />
++  );
++}
++
++function MetadataBadges({ trace }: { trace: HotTrace }) {
++  return (
++    <div className="gap-sm flex min-w-0 flex-wrap">
++      {ENTITY_FIELDS.map(({ key, label }) => {
++        const items = getFieldItems(trace, key);
++        if (items.length === 0) {
++          return null;
++        }
++        const totalCount = Math.max(
++          getFieldTotalCount(trace, key),
++          items.length
++        );
++
++        return (
++          <Tooltip key={key}>
++            <TooltipTrigger asChild>
++              <div className="min-w-0 max-w-full">
++                <Badge size="sm" type="neutral" className="max-w-full">
++                  <span className="truncate leading-normal">
++                    {label}: {getDisplayValue(items[0])}
++                  </span>
++                  {totalCount > 1 && (
++                    <span className="shrink-0">+{totalCount - 1}</span>
++                  )}
++                </Badge>
++              </div>
++            </TooltipTrigger>
++            <TooltipContent className="max-h-64 max-w-xs overflow-y-auto break-all">
++              <div className="space-y-1">
++                {items.map((item, index) => (
++                  <div key={index}>{getDisplayValue(item)}</div>
++                ))}
++                {totalCount > items.length && (
++                  <div>{totalCount - items.length} more not included</div>
++                )}
++              </div>
++            </TooltipContent>
++          </Tooltip>
++        );
++      })}
++      <Badge size="sm" type="neutral" className="max-w-full">
++        <span className="truncate leading-normal">
++          Event: {trace.event_kind}
++        </span>
++      </Badge>
++    </div>
++  );
++}
++
++export function HotTraceCard({
++  trace,
++  rank,
++  projectId,
++  filterFacets,
++  timeRange,
++  suffixColumnLimit = 3
++}: HotTraceCardProps) {
++  const prefixCount = trace.prefix?.length ?? 0;
++  const suffixCount = trace.suffixes?.length ?? 0;
++  const flamegraphContainerRef = React.useRef<HTMLDivElement>(null);
++  const [isVisible, setIsVisible] = React.useState(false);
++  const profileType = PROFILE_TYPES.find(
++    type => profileTypeEventKind(type) === trace.event_kind
++  );
++  const showFlamegraph =
++    suffixCount >= suffixColumnLimit &&
++    profileType !== undefined &&
++    (trace.wire?.length ?? 0) > 0;
++  const profileData = React.useMemo(
++    () =>
++      showFlamegraph && isVisible && trace.wire
++        ? new Uint8Array(trace.wire)
++        : undefined,
++    [showFlamegraph, isVisible, trace.wire]
++  );
++  const costLabel = profileType
++    ? profileTypeInfo(profileType).metricLabel
++    : "Cost";
++
++  React.useEffect(() => {
++    const container = flamegraphContainerRef.current;
++    if (!showFlamegraph || !container) {
++      return;
++    }
++
++    // Browsers limit active WebGL contexts; unmount offscreen flamegraphs so visible ones keep rendering.
++    const observer = new IntersectionObserver(
++      ([entry]) => setIsVisible(entry.isIntersecting),
++      { rootMargin: "256px" }
++    );
++    observer.observe(container);
++    return () => observer.disconnect();
++  }, [showFlamegraph]);
++
++  return (
++    <Card className="min-w-0 max-w-full">
++      <div className="gap-md border-border-secondary flex min-w-0 flex-wrap items-start justify-between border-b px-4 py-3">
++        <div className="gap-md flex min-w-0 flex-wrap items-center">
++          <div className="bg-bg-tertiary flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
++            <Text type="sm" semibold state="secondary">
++              #{rank}
++            </Text>
++          </div>
++          <div className="min-w-0">
++            <Text type="md" semibold state="primary" className="break-all">
++              {formatTraceCost(trace.total_secs, profileType)}
++            </Text>
++            <Text type="xs" state="tertiary">
++              {costLabel}
++            </Text>
++          </div>
++          <div className="min-w-0">
++            <Text type="md" semibold state="primary">
++              {formatCores(trace.cores)}
++            </Text>
++            <Text type="xs" state="tertiary">
++              Cores (selected period)
++            </Text>
++          </div>
++        </div>
++        <div className="gap-md flex min-w-0 basis-full items-start sm:flex-1 sm:basis-auto sm:justify-end">
++          <MetadataBadges trace={trace} />
++          <CopyButton
++            getTextToCopy={() => JSON.stringify(trace, null, 2)}
++            tooltipText="Copy hot trace JSON to clipboard"
++            successMessage="Hot trace copied to clipboard"
++            buttonStyle="button"
++            className="shrink-0"
++          />
++        </div>
++      </div>
++      <div
++        className={cn(
++          "grid max-h-[48rem] min-w-0 overflow-y-auto",
++          showFlamegraph
++            ? "grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,7fr)]"
++            : "grid-cols-[repeat(auto-fit,minmax(min(100%,20rem),1fr))]"
++        )}
++      >
++        <div className="border-border-secondary min-w-0 border-b lg:border-r">
++          <div className="border-border-secondary border-b px-4 py-2">
++            <div className="gap-sm flex flex-wrap items-center">
++              <Text type="sm" semibold state="primary">
++                Common Prefix
++              </Text>
++              <Badge size="sm" type="highlight">
++                {prefixCount} frame{prefixCount !== 1 ? "s" : ""}
++              </Badge>
++              <Badge size="sm" type="neutral">
++                {suffixCount} suffix{suffixCount !== 1 ? "es" : ""}
++              </Badge>
++            </div>
++          </div>
++          <div className="min-w-0 p-4">
++            {trace.prefix && prefixCount > 0 ? (
++              <TraceFrames frames={trace.prefix} />
++            ) : (
++              <Text type="sm" state="tertiary" className="italic">
++                No common prefix frames
++              </Text>
++            )}
++          </div>
++        </div>
++        {showFlamegraph ? (
++          <div
++            ref={flamegraphContainerRef}
++            className="h-80 min-w-0 overflow-hidden"
++          >
++            {isVisible && (
++              <WasmFlamegraph
++                name={`hot-trace-${trace.event_kind}-${trace.prefix_hash}`}
++                profileData={profileData}
++                type={profileType}
++                groupBy={[]}
++                projectId={projectId}
++                filterFacets={filterFacets}
++                timeRange={timeRange}
++                hideLegend
++              />
++            )}
++          </div>
++        ) : (
++          trace.suffixes?.map((suffix, index) => (
++            <div
++              key={index}
++              className="border-border-secondary min-w-0 border-b lg:border-r"
++            >
++              <div className="border-border-secondary border-b px-4 py-2">
++                <Text type="sm" semibold state="primary">
++                  {formatTraceCost(suffix.count, profileType)}
++                </Text>
++                <Text type="xs" state="tertiary">
++                  Suffix {index + 1} · {costLabel}
++                </Text>
++              </div>
++              <div className="min-w-0 p-4">
++                {suffix.frames.length > 0 ? (
++                  <TraceFrames frames={suffix.frames} />
++                ) : (
++                  <Text type="sm" state="tertiary" className="italic">
++                    No frames
++                  </Text>
++                )}
++              </div>
++            </div>
++          ))
++        )}
++      </div>
++    </Card>
++  );
++}
+diff --git a/ui/apps/web/src/features/hot-traces/views/hot-traces-view.tsx b/ui/apps/web/src/features/hot-traces/views/hot-traces-view.tsx
+new file mode 100644
+index 000000000..27a384a13
+--- /dev/null
++++ b/ui/apps/web/src/features/hot-traces/views/hot-traces-view.tsx
+@@ -0,0 +1,204 @@
++import { PageHeader } from "@/components/page-header";
++import { HotTraceCard } from "@/features/hot-traces/components/hot-trace-card";
++import {
++  type CelSupport,
++  type EventKind,
++  TableSortDirection
++} from "@/generated/ts-client";
++import { useGetHotTraces } from "@/queries/hot-traces";
++import {
++  Card,
++  EmptyState,
++  PaginationControls,
++  BaseSelect,
++  Spinner,
++  Text
++} from "@repo/component-library";
++import * as React from "react";
++
++interface HotTracesViewProps {
++  projectId: string;
++  startTs: number;
++  endTs: number;
++  query?: string;
++  filterFacets: CelSupport;
++}
++
++const DEFAULT_PAGE_SIZE = 20;
++const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
++
++const EVENT_KIND_OPTIONS: { value: EventKind; label: string }[] = [
++  { value: "on_cpu", label: "On-CPU" },
++  { value: "off_cpu", label: "Off-CPU" },
++  { value: "alloc", label: "Allocations" },
++  { value: "cuda", label: "CUDA" },
++  { value: "pc_sample", label: "PC Sample" }
++];
++
++export function HotTracesView({
++  projectId,
++  startTs,
++  endTs,
++  query,
++  filterFacets
++}: HotTracesViewProps) {
++  const [pageSize, setPageSize] = React.useState(DEFAULT_PAGE_SIZE);
++  const [sortDirection, setSortDirection] = React.useState<TableSortDirection>(
++    TableSortDirection.Desc
++  );
++  const [eventKind, setEventKind] = React.useState<EventKind>("on_cpu");
++  const sortMetric =
++    eventKind === "alloc"
++      ? "Allocated Bytes"
++      : eventKind === "pc_sample"
++        ? "total_secs"
++        : "Total Time";
++  const sortOptions = [
++    { value: TableSortDirection.Desc, label: `${sortMetric} (High to Low)` },
++    { value: TableSortDirection.Asc, label: `${sortMetric} (Low to High)` }
++  ];
++  const scopeKey = JSON.stringify([
++    projectId,
++    startTs,
++    endTs,
++    query,
++    eventKind,
++    sortDirection,
++    pageSize
++  ]);
++  const [pageState, setPageState] = React.useState({
++    scopeKey,
++    page: 1
++  });
++  const currentPage = pageState.scopeKey === scopeKey ? pageState.page : 1;
++
++  if (pageState.scopeKey !== scopeKey) {
++    setPageState({ scopeKey, page: 1 });
++  }
++
++  const { data, isLoading, isError, error } = useGetHotTraces(
++    projectId,
++    {
++      filter: {
++        start_ts: startTs,
++        end_ts: endTs,
++        query,
++        event_kind: eventKind
++      },
++      pagination: {
++        sort: [{ field: "total_secs", direction: sortDirection }],
++        page: { page: currentPage, page_size: pageSize },
++        filter_text: null
++      }
++    },
++    { enabled: Boolean(projectId) }
++  );
++
++  const traces = data?.traces ?? [];
++  const itemCount = data?.pagination.item_count ?? undefined;
++  const nextPage = data?.pagination.next_page;
++  const hasNextPage =
++    !isError &&
++    traces.length > 0 &&
++    (itemCount !== undefined
++      ? currentPage * pageSize < itemCount
++      : nextPage !== undefined
++        ? nextPage !== null && nextPage > currentPage
++        : traces.length === pageSize);
++  const totalPages = hasNextPage
++    ? itemCount !== undefined
++      ? Math.ceil(itemCount / pageSize)
++      : currentPage + 1
++    : currentPage;
++
++  return (
++    <div className="gap-2xl px-4xl py-2xl flex h-full min-h-0 w-full flex-col">
++      <PageHeader
++        title="Hot Traces"
++        adornmentStart={
++          itemCount !== undefined ? (
++            <Text type="sm" state="tertiary">
++              {itemCount.toLocaleString()} trace{itemCount !== 1 ? "s" : ""}
++            </Text>
++          ) : undefined
++        }
++        adornment={
++          <div className="gap-md flex flex-wrap items-center">
++            <label htmlFor="hot-traces-event-kind" className="sr-only">
++              Event kind
++            </label>
++            <BaseSelect
++              id="hot-traces-event-kind"
++              size="sm"
++              value={eventKind}
++              options={EVENT_KIND_OPTIONS}
++              onChange={setEventKind}
++              className="w-36"
++            />
++            <label htmlFor="hot-traces-sort">
++              <Text type="sm" state="secondary">
++                Sort by:
++              </Text>
++            </label>
++            <BaseSelect
++              id="hot-traces-sort"
++              size="sm"
++              value={sortDirection}
++              options={sortOptions}
++              onChange={value => setSortDirection(value as TableSortDirection)}
++              className="w-56"
++            />
++          </div>
++        }
++      />
++
++      <div className="flex min-h-0 flex-1 flex-col overflow-auto">
++        {isLoading ? (
++          <div className="gap-md flex h-64 items-center justify-center">
++            <Spinner size="lg" />
++            <Text type="md" state="secondary">
++              Loading hot traces...
++            </Text>
++          </div>
++        ) : isError ? (
++          <EmptyState
++            title="Failed to load hot traces"
++            description={
++              error instanceof Error ? error.message : "An error occurred"
++            }
++          />
++        ) : traces.length === 0 ? (
++          <EmptyState
++            title="No hot traces found"
++            description="Try adjusting your filters or time range."
++          />
++        ) : (
++          <div className="gap-md flex flex-col">
++            {traces.map((trace, index) => (
++              <HotTraceCard
++                key={`${trace.event_kind}:${trace.prefix_hash}`}
++                trace={trace}
++                rank={(currentPage - 1) * pageSize + index + 1}
++                projectId={projectId}
++                filterFacets={filterFacets}
++                timeRange={{ start_ts: startTs, end_ts: endTs }}
++              />
++            ))}
++          </div>
++        )}
++      </div>
++
++      <Card className="p-lg shrink-0">
++        <PaginationControls
++          currentPage={currentPage}
++          totalPages={totalPages}
++          onPageChange={page => setPageState({ scopeKey, page })}
++          pageSize={pageSize}
++          pageSizeOptions={PAGE_SIZE_OPTIONS}
++          onPageSizeChange={setPageSize}
++          unknownPageCount={itemCount === undefined}
++        />
++      </Card>
++    </div>
++  );
++}
+diff --git a/ui/apps/web/src/queries/hot-traces.ts b/ui/apps/web/src/queries/hot-traces.ts
+index 10ed64a80..fe076e0f5 100644
+--- a/ui/apps/web/src/queries/hot-traces.ts
++++ b/ui/apps/web/src/queries/hot-traces.ts
+@@ -7,6 +7,7 @@ import {
+   type HotTraceMetric,
+   type HotTraceMetricRequest,
+   type HotTraceSample,
++  type HotTracesRequest,
+   type ListRecommendationsRequest,
+   RecommendationStatus,
+   type SortedPage,
+@@ -20,6 +21,20 @@ import {
+   useQueryClient
+ } from "@tanstack/react-query";
+ 
++export const useGetHotTraces = (
++  projectId: string,
++  params: HotTracesRequest,
++  options?: { enabled?: boolean }
++) => {
++  const request: HotTracesRequest = { ...params, include_wire: true };
++
++  return useQuery({
++    queryKey: ["projectScope", "hot-traces", projectId, request],
++    queryFn: () => api.getHotTraces(projectId, request),
++    enabled: options?.enabled ?? true
++  });
++};
++
+ export const RECOMMENDATIONS_PAGE_SIZE = 20;
+ 
+ export function buildRecommendationsPagination(
+diff --git a/ui/apps/web/src/routeTree.gen.ts b/ui/apps/web/src/routeTree.gen.ts
+index 09fceb4d2..688b33ee3 100644
+--- a/ui/apps/web/src/routeTree.gen.ts
++++ b/ui/apps/web/src/routeTree.gen.ts
+@@ -56,6 +56,7 @@ import { Route as AuthenticatedExternal_layoutSettingsSettingsLayoutAiConfigRout
+ import { Route as AuthenticatedExternal_layoutSettingsSettingsLayoutAgentConfigRouteImport } from './routes/_authenticated/_external_layout/settings/_settingsLayout/agent-config'
+ import { Route as AuthenticatedProjectProjectIdLayoutInternalZymtraceRouteImport } from './routes/_authenticated/project/$projectId/_layout/internal/zymtrace'
+ import { Route as AuthenticatedProjectProjectIdLayoutInternalLlmRouteImport } from './routes/_authenticated/project/$projectId/_layout/internal/llm'
++import { Route as AuthenticatedProjectProjectIdLayoutInternalHotTracesRouteImport } from './routes/_authenticated/project/$projectId/_layout/internal/hot-traces'
+ import { Route as AuthenticatedProjectProjectIdLayoutInternalAgentRouteImport } from './routes/_authenticated/project/$projectId/_layout/internal/agent'
+ import { Route as AuthenticatedProjectProjectIdLayoutDashboardsVllmRouteImport } from './routes/_authenticated/project/$projectId/_layout/dashboards/vllm'
+ import { Route as AuthenticatedProjectProjectIdLayoutDashboardsTritonRouteImport } from './routes/_authenticated/project/$projectId/_layout/dashboards/triton'
+@@ -390,6 +391,12 @@ const AuthenticatedProjectProjectIdLayoutInternalLlmRoute =
+     path: '/internal/llm',
+     getParentRoute: () => AuthenticatedProjectProjectIdLayoutRoute,
+   } as any)
++const AuthenticatedProjectProjectIdLayoutInternalHotTracesRoute =
++  AuthenticatedProjectProjectIdLayoutInternalHotTracesRouteImport.update({
++    id: '/internal/hot-traces',
++    path: '/internal/hot-traces',
++    getParentRoute: () => AuthenticatedProjectProjectIdLayoutRoute,
++  } as any)
+ const AuthenticatedProjectProjectIdLayoutInternalAgentRoute =
+   AuthenticatedProjectProjectIdLayoutInternalAgentRouteImport.update({
+     id: '/internal/agent',
+@@ -679,6 +686,7 @@ export interface FileRoutesByFullPath {
+   '/project/$projectId/dashboards/triton': typeof AuthenticatedProjectProjectIdLayoutDashboardsTritonRoute
+   '/project/$projectId/dashboards/vllm': typeof AuthenticatedProjectProjectIdLayoutDashboardsVllmRoute
+   '/project/$projectId/internal/agent': typeof AuthenticatedProjectProjectIdLayoutInternalAgentRoute
++  '/project/$projectId/internal/hot-traces': typeof AuthenticatedProjectProjectIdLayoutInternalHotTracesRoute
+   '/project/$projectId/internal/llm': typeof AuthenticatedProjectProjectIdLayoutInternalLlmRoute
+   '/project/$projectId/internal/zymtrace': typeof AuthenticatedProjectProjectIdLayoutInternalZymtraceRoute
+   '/project/$projectId/profiles/alloc/diff-functions': typeof AuthenticatedProjectProjectIdLayoutProfilesAllocDiffFunctionsRoute
+@@ -754,6 +762,7 @@ export interface FileRoutesByTo {
+   '/project/$projectId/dashboards/triton': typeof AuthenticatedProjectProjectIdLayoutDashboardsTritonRoute
+   '/project/$projectId/dashboards/vllm': typeof AuthenticatedProjectProjectIdLayoutDashboardsVllmRoute
+   '/project/$projectId/internal/agent': typeof AuthenticatedProjectProjectIdLayoutInternalAgentRoute
++  '/project/$projectId/internal/hot-traces': typeof AuthenticatedProjectProjectIdLayoutInternalHotTracesRoute
+   '/project/$projectId/internal/llm': typeof AuthenticatedProjectProjectIdLayoutInternalLlmRoute
+   '/project/$projectId/internal/zymtrace': typeof AuthenticatedProjectProjectIdLayoutInternalZymtraceRoute
+   '/project/$projectId/profiles/alloc/diff-functions': typeof AuthenticatedProjectProjectIdLayoutProfilesAllocDiffFunctionsRoute
+@@ -838,6 +847,7 @@ export interface FileRoutesById {
+   '/_authenticated/project/$projectId/_layout/dashboards/triton': typeof AuthenticatedProjectProjectIdLayoutDashboardsTritonRoute
+   '/_authenticated/project/$projectId/_layout/dashboards/vllm': typeof AuthenticatedProjectProjectIdLayoutDashboardsVllmRoute
+   '/_authenticated/project/$projectId/_layout/internal/agent': typeof AuthenticatedProjectProjectIdLayoutInternalAgentRoute
++  '/_authenticated/project/$projectId/_layout/internal/hot-traces': typeof AuthenticatedProjectProjectIdLayoutInternalHotTracesRoute
+   '/_authenticated/project/$projectId/_layout/internal/llm': typeof AuthenticatedProjectProjectIdLayoutInternalLlmRoute
+   '/_authenticated/project/$projectId/_layout/internal/zymtrace': typeof AuthenticatedProjectProjectIdLayoutInternalZymtraceRoute
+   '/_authenticated/project/$projectId/_layout/profiles/alloc/diff-functions': typeof AuthenticatedProjectProjectIdLayoutProfilesAllocDiffFunctionsRoute
+@@ -918,6 +928,7 @@ export interface FileRouteTypes {
+     | '/project/$projectId/dashboards/triton'
+     | '/project/$projectId/dashboards/vllm'
+     | '/project/$projectId/internal/agent'
++    | '/project/$projectId/internal/hot-traces'
+     | '/project/$projectId/internal/llm'
+     | '/project/$projectId/internal/zymtrace'
+     | '/project/$projectId/profiles/alloc/diff-functions'
+@@ -993,6 +1004,7 @@ export interface FileRouteTypes {
+     | '/project/$projectId/dashboards/triton'
+     | '/project/$projectId/dashboards/vllm'
+     | '/project/$projectId/internal/agent'
++    | '/project/$projectId/internal/hot-traces'
+     | '/project/$projectId/internal/llm'
+     | '/project/$projectId/internal/zymtrace'
+     | '/project/$projectId/profiles/alloc/diff-functions'
+@@ -1076,6 +1088,7 @@ export interface FileRouteTypes {
+     | '/_authenticated/project/$projectId/_layout/dashboards/triton'
+     | '/_authenticated/project/$projectId/_layout/dashboards/vllm'
+     | '/_authenticated/project/$projectId/_layout/internal/agent'
++    | '/_authenticated/project/$projectId/_layout/internal/hot-traces'
+     | '/_authenticated/project/$projectId/_layout/internal/llm'
+     | '/_authenticated/project/$projectId/_layout/internal/zymtrace'
+     | '/_authenticated/project/$projectId/_layout/profiles/alloc/diff-functions'
+@@ -1442,6 +1455,13 @@ declare module '@tanstack/react-router' {
+       preLoaderRoute: typeof AuthenticatedProjectProjectIdLayoutInternalLlmRouteImport
+       parentRoute: typeof AuthenticatedProjectProjectIdLayoutRoute
+     }
++    '/_authenticated/project/$projectId/_layout/internal/hot-traces': {
++      id: '/_authenticated/project/$projectId/_layout/internal/hot-traces'
++      path: '/internal/hot-traces'
++      fullPath: '/project/$projectId/internal/hot-traces'
++      preLoaderRoute: typeof AuthenticatedProjectProjectIdLayoutInternalHotTracesRouteImport
++      parentRoute: typeof AuthenticatedProjectProjectIdLayoutRoute
++    }
+     '/_authenticated/project/$projectId/_layout/internal/agent': {
+       id: '/_authenticated/project/$projectId/_layout/internal/agent'
+       path: '/internal/agent'
+@@ -1793,6 +1813,7 @@ interface AuthenticatedProjectProjectIdLayoutRouteChildren {
+   AuthenticatedProjectProjectIdLayoutDashboardsTritonRoute: typeof AuthenticatedProjectProjectIdLayoutDashboardsTritonRoute
+   AuthenticatedProjectProjectIdLayoutDashboardsVllmRoute: typeof AuthenticatedProjectProjectIdLayoutDashboardsVllmRoute
+   AuthenticatedProjectProjectIdLayoutInternalAgentRoute: typeof AuthenticatedProjectProjectIdLayoutInternalAgentRoute
++  AuthenticatedProjectProjectIdLayoutInternalHotTracesRoute: typeof AuthenticatedProjectProjectIdLayoutInternalHotTracesRoute
+   AuthenticatedProjectProjectIdLayoutInternalLlmRoute: typeof AuthenticatedProjectProjectIdLayoutInternalLlmRoute
+   AuthenticatedProjectProjectIdLayoutInternalZymtraceRoute: typeof AuthenticatedProjectProjectIdLayoutInternalZymtraceRoute
+   AuthenticatedProjectProjectIdLayoutProfilesAllocDiffFunctionsRoute: typeof AuthenticatedProjectProjectIdLayoutProfilesAllocDiffFunctionsRoute
+@@ -1872,6 +1893,8 @@ const AuthenticatedProjectProjectIdLayoutRouteChildren: AuthenticatedProjectProj
+       AuthenticatedProjectProjectIdLayoutDashboardsVllmRoute,
+     AuthenticatedProjectProjectIdLayoutInternalAgentRoute:
+       AuthenticatedProjectProjectIdLayoutInternalAgentRoute,
++    AuthenticatedProjectProjectIdLayoutInternalHotTracesRoute:
++      AuthenticatedProjectProjectIdLayoutInternalHotTracesRoute,
+     AuthenticatedProjectProjectIdLayoutInternalLlmRoute:
+       AuthenticatedProjectProjectIdLayoutInternalLlmRoute,
+     AuthenticatedProjectProjectIdLayoutInternalZymtraceRoute:
+diff --git a/ui/apps/web/src/routes/_authenticated/project/$projectId/_layout/internal/hot-traces.tsx b/ui/apps/web/src/routes/_authenticated/project/$projectId/_layout/internal/hot-traces.tsx
+new file mode 100644
+index 000000000..143948a50
+--- /dev/null
++++ b/ui/apps/web/src/routes/_authenticated/project/$projectId/_layout/internal/hot-traces.tsx
+@@ -0,0 +1,33 @@
++import { HotTracesView } from "@/features/hot-traces/views/hot-traces-view";
++import { useTimeRange } from "@/hooks/use-timerange";
++import { createFileRoute, getRouteApi } from "@tanstack/react-router";
++
++const rootRouteApi = getRouteApi("__root__");
++
++export const Route = createFileRoute(
++  "/_authenticated/project/$projectId/_layout/internal/hot-traces"
++)({
++  staticData: { command: null },
++  component: HotTraces,
++  beforeLoad: () => ({
++    facetsEnabled: true,
++    pageTitle: "Hot Traces (Internal)"
++  })
++});
++
++function HotTraces() {
++  const { projectId } = Route.useParams();
++  const { query } = Route.useSearch();
++  const { bootstrapInfo } = rootRouteApi.useRouteContext();
++  const { start_ts, end_ts } = useTimeRange();
++
++  return (
++    <HotTracesView
++      projectId={projectId}
++      startTs={start_ts}
++      endTs={end_ts}
++      query={query ?? undefined}
++      filterFacets={bootstrapInfo.cel}
++    />
++  );
++}

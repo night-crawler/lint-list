@@ -1,0 +1,13 @@
+{
+  "id": 97,
+  "title": "Single-Implementation Traits Without a Present Abstraction Purpose",
+  "category": "Speculative Generality",
+  "damaged_code": "```rust\ntrait DataService {\n    fn fetch_data(&self) -> String;\n}\nstruct MyDataService;\nimpl DataService for MyDataService {\n    fn fetch_data(&self) -> String { \"data\".to_string() }\n}\n// The only consumer:\nfn run(svc: &MyDataService) { println!(\"{}\", svc.fetch_data()); }\n```",
+  "pattern": "A trait and its only concrete implementer duplicate an interface without a current polymorphic, decoupling, or testing purpose, creating a just-in-case abstraction.",
+  "why_bad": "An unnecessary extra interface adds indirection that complicates navigation, compilation, and coordinated changes without buying interchangeable behavior or isolation. It directly violates YAGNI.",
+  "detection": "Count implementations in production and test code and inspect usage. A trait declaration with exactly one `impl` block across production and test code is the candidate signal; a trait whose method surface exactly matches its single implementer, with no polymorphic usage (no `dyn Trait`, no generic bound on it), is the narrower confirmed case. Confirm that no present package boundary, consumer extension contract, or required abstraction purpose justifies the trait before recommending removal.",
+  "counterexample": "Explicit boundaries between packages to isolate unstable third-party code; complex or nondeterministic I/O boundaries (email or SMS gateways, external systems) where a fake/mock is required in tests; and an actual abstraction or external implementation contract even when only one implementation is visible locally.",
+  "fix": "When the trait has no present purpose beyond the concrete type, apply Collapse Hierarchy: move behavior to the concrete struct as needed, migrate consumers to depend on it directly, and remove the redundant trait. Retain purposeful boundaries instead of inferring obsolescence from a local implementation count.",
+  "strength": "Contextual",
+  "source": "Fowler, *Refactoring*, Chapter 3 (\"Speculative Generality - Collapse Hierarchy\"); Martin Fowler, *Patterns of Enterprise Application Architecture* (2002), p. 245; Steve McConnell, *Code Complete* (2004), Chapter 24."
+}

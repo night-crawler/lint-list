@@ -1,0 +1,13 @@
+{
+  "id": 78,
+  "title": "Comments That Merely Narrate the Code",
+  "category": "Comment Smells",
+  "damaged_code": "```rust\n// Establish an empty list of records\nlet mut items = Vec::new();\n// Read the socket address configuration\nlet addr = get_socket_addr();\n// Connect to the TCP stream address\nlet stream = TcpStream::connect(addr)?;\nself.counter += 1; // Increment counter\n```",
+  "pattern": "A comment translates the adjacent identifiers or operations into prose without contributing intent, context, or otherwise non-obvious information.",
+  "why_bad": "Redundant prose obscures the executable logic, adds maintenance and alignment work, and can drift into misleading descriptions after code changes.",
+  "detection": "Compare comment content with nearby active code. Include a single redundant preceding comment whose prose matches the identifiers or operator semantics of the adjacent line; a trailing `//` comment on the same line as a statement that only restates it; and a run of three or more consecutive statements or blocks each immediately preceded by a single-line comment translating the code. Placement or comment density alone is not enough when the text adds information.",
+  "counterexample": "Comments explaining a subtle domain-specific invariant, a hardware-level quirk, or other intent not apparent from the code alone; short endline annotations carrying non-obvious data such as units or protocol field names on packed struct fields; and statements grouped into logical paragraphs with blank lines and at most one intent comment per paragraph.",
+  "fix": "Delete only the redundant narration. For long narrated runs, organize statements with blank lines into paragraphs of logical intent, retaining useful intent or invariant comments.",
+  "strength": "Strong",
+  "source": "Kent Beck, *Tidy First* (2023), Chapter 15 (\"Delete Redundant Comments\"), pp. 29-31; Robert C. Martin, *Clean Code* (2008), Chapter 4, p. 61; Steve McConnell, *Code Complete* (2004), Chapter 32 (\"Endline Comments and Their Problems\"); Steve McConnell, *Code Complete* (2004), Chapter 32.2 (\"Optimum Number of Comments\"); John K. Ousterhout, *A Philosophy of Software Design* (2018), Chapter 13.2 (\"Red Flag: Comment Repeats Code\")."
+}

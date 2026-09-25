@@ -1,0 +1,13 @@
+{
+  "id": 785,
+  "title": "Deprecation without an Executable Retirement Plan",
+  "category": "Rewrite Migration Pathologies",
+  "damaged_code": "```rust\n// Successor API shipped; predecessor deprecated with the hope callers migrate on their own\n#[deprecated(since = \"1.2.0\", note = \"Please use `v2::secure_hash` when you have time\")]\npub fn legacy_hash(data: &[u8]) -> u64 {\n    // Left active indefinitely: no removal deadline, no owner, no lint blocking new callers\n    hash_bytes(data)\n}\n```",
+  "pattern": "An API or service is marked deprecated (compiler annotations, warning logs) while callers can continue or add usage indefinitely, because migration and retirement are advisory only: no resources, tooling, enforcement policy, or decommissioning deadline backs the deprecation.",
+  "why_bad": "Migration is repeatedly deferred as teams prioritize features, warnings lose force and become \"alert fatigue\", and both the obsolete and successor implementations must be maintained indefinitely in \"dual-system purgatory\", doubling operational cost and dragging down system evolution [292, 721, 723, 728].",
+  "detection": "Long-standing deprecated entry points (e.g. `#[deprecated]` older than a major version, or a superseded service) that lack (a) an enforced no-new-use policy such as build-time or commit-time blocks on new invocations, (b) a staffed migration path for existing callers, or (c) documentation specifying a concrete turndown/decommissioning date. Warnings alone do not establish a cutover [297, 727].",
+  "counterexample": "Valid for public open-source libraries with stable ABI guarantees (e.g., standard libraries) where code must be preserved forever, and for public-facing SDKs where backward compatibility is promised indefinitely to retain user goodwill [738]. Mark as `Context-dependent`.",
+  "fix": "Move deprecation to a compulsory model: assign migration ownership and resources, publish the replacement and a strict retirement date, add backsliding linters that reject new usages, and actively run automated migrations of existing callers [297, 724, 725, 733, 734]. For services with unknown consumers, use controlled dependency-discovery exercises (e.g. temporary planned outages) only where the service contract and safety requirements permit them; retire once dependencies are handled.",
+  "strength": "Strong",
+  "source": "Software Engineering at Google, Chapter 15, \"Types of Deprecation - Advisory Deprecation\" [292, 297, 721, 723, 727, 728]"
+}

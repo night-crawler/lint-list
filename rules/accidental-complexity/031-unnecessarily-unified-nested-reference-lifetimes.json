@@ -1,0 +1,13 @@
+{
+  "id": 31,
+  "title": "Unnecessarily Unified Nested Reference Lifetimes",
+  "category": "Accidental Complexity",
+  "damaged_code": "```rust\nstruct StrContainer<'a> {\n    outer: &'a mut &'a str,\n}\n```",
+  "pattern": "A type uses one lifetime parameter for independently lived nested references, especially an outer mutable borrow and an inner stored reference, imposing unnecessary borrowing constraints.",
+  "why_bad": "Tying independent lifetimes reduces valid uses. Invariance of `&mut T` in `T`, or of `Cell<T>`, prevents freely shortening the stored reference type, so a single parameter can prolong borrows and reject otherwise representable borrowing patterns. The rejection reflects the chosen type's constraints, not an unsound borrow checker.",
+  "detection": "Inspect struct fields with nested references sharing one lifetime, such as `&'a mut &'a str`, and nested reference types under `Cell` or other invariant containers. Determine whether outer access and inner referent lifetimes need to vary independently; sharing a lifetime is a candidate, not an error by itself, and multiple references alone do not require multiple lifetime parameters.",
+  "counterexample": "Flat reference structs with intentionally compatible lifetimes where no nested mutable borrows are performed; genuinely equal lifetime requirements; and invariance itself, which is essential to prevent writing a short-lived reference into a longer-lived mutable location.",
+  "fix": "Give independent nested borrows distinct lifetime parameters, for example `struct StrContainer<'a, 'b> { outer: &'a mut &'b str }`, retaining required outlives relationships. Do not remove mutability safeguards or attempt to bypass invariance.",
+  "strength": "Strong",
+  "source": "Jon Gjengset, *Rust for Rustaceans* (2021), Chapter 2 (\"Foundations - Borrowing and Lifetimes\"), pp. 531-532, 538.; Jon Gjengset, *Rust for Rustaceans* (2021), Chapter 2 (\"Foundations - Borrowing and Lifetimes - Lifetime Variance\"), pp. 536-541."
+}

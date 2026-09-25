@@ -1,0 +1,13 @@
+{
+  "id": 104,
+  "title": "Redundant Derived Fields Requiring Manual Synchronization",
+  "category": "Duplication",
+  "damaged_code": "```rust\nstruct Line {\n    start: Point,\n    end: Point,\n    length: f64, // derivable from start and end, stored redundantly\n}\n\nimpl Line {\n    fn set_start(&mut self, new_start: Point) {\n        self.start = new_start;\n        // If the developer forgets to recalculate self.length here, an invariant breaks.\n    }\n}\n```",
+  "pattern": "A struct stores both primary inputs and a deterministically derived value as independent state, requiring updates to be kept synchronized.",
+  "why_bad": "Updating a source field without its derivative violates the single source of truth and leaves internally inconsistent state that can silently affect later behavior.",
+  "detection": "Identify a field computed entirely from other fields in the same struct, such as diameter from rim/tire or length from endpoints. Inspect mutation paths to determine whether storing the derivative creates independent synchronization obligations rather than a justified, coherently maintained cache.",
+  "counterexample": "Caching an expensive computation for a demonstrated performance requirement when mutation and cache invalidation/recomputation are encapsulated (e.g., via interior mutability) so the cached value remains coherent. Expense alone does not excuse stale values.",
+  "fix": "Remove unnecessary derived storage and expose an on-demand calculation method. If expensive caching is justified, keep it behind the same encapsulation boundary as all relevant mutations and maintain its coherence rather than requiring callers to update both representations.\n```rust\nstruct Line {\n    start: Point,\n    end: Point,\n}\n\nimpl Line {\n    fn length(&self) -> f64 {\n        self.start.distance_to(&self.end)\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Sandi Metz, *Practical Object-Oriented Design* (2019), Chapter 2 (\"Designing Classes with a Single Responsibility\"), pp. 177-178; *The Pragmatic Programmer* (20th Anniversary Edition), Topic 9: \"DRY—The Evils of Duplication\", p. 202-203."
+}

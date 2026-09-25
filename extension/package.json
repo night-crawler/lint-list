@@ -2,8 +2,17 @@
 	"name": "lint-audit-extension",
 	"version": "0.1.0",
 	"type": "module",
-	"description": "omp extension: seeded random rule audit with parallel sub-agent evaluation and apply phase",
+	"description": "omp extension: predict lint violations against one diff snapshot, validate positive groups read-only, report (fix=true to apply)",
 	"omp": {
-		"extensions": ["./index.ts"]
+		"extensions": [
+			"./index.ts"
+		]
+	},
+	"peerDependencies": {
+		"@oh-my-pi/pi-ai": ">=17.2.6",
+		"@oh-my-pi/pi-coding-agent": ">=17.2.6"
+	},
+	"scripts": {
+		"test": "bun test"
 	}
 }

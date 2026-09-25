@@ -1,0 +1,13 @@
+{
+  "id": 243,
+  "title": "One Mutable Binding Reused for Different Semantic Values",
+  "category": "State Mutation",
+  "damaged_code": "```rust\nfn calculate_physics(mass: f64, primary_force: f64, secondary_force: f64) {\n    let mut acc = primary_force / mass; // Initial acceleration\n    println!(\"Primary acceleration: {}\", acc);\n\n    // Reassigned to hold a different physical quantity under the same name\n    acc = (primary_force + secondary_force) / mass;\n    println!(\"Secondary acceleration: {}\", acc);\n}\n\nfn calculate_total(mut value: f64) -> f64 {\n    value = value * 1.08; // `value` is no longer the raw input\n    value\n}\n```",
+  "pattern": "A local variable or input parameter is reassigned to hold a computed value with a different semantic role from its original value, making the binding's meaning change within the routine.",
+  "why_bad": "The name becomes ambiguous, unrelated calculations become coupled through one binding, and later code may accidentally use a transformed value as though it were the original input, introducing silent logic regressions.",
+  "detection": "Trace assignments and reads of mutable locals and `mut` parameters. Report reassignments that change the value's conceptual role: a raw input becoming a tax-inclusive result, or one phase's acceleration becoming another's. A mathematically different expression or a self-derived reassignment alone does not prove a semantic change.",
+  "counterexample": "Loop counters, accumulators, and ongoing state updates whose semantic role remains constant are legitimate mutable bindings:\n```rust\nlet mut total_revenue = 0;\nfor item in transactions {\n    total_revenue += item.amount;\n}\n```",
+  "fix": "Introduce separately named immutable values for the distinct concepts and update each consumer to use the intended one. Leave input parameters intact when later code may need the original values; retain mutation only for true accumulators or evolving values with one stable meaning.\n```rust\nfn calculate_physics(mass: f64, primary_force: f64, secondary_force: f64) {\n    let primary_acc = primary_force / mass;\n    println!(\"Primary acceleration: {}\", primary_acc);\n\n    let combined_acc = (primary_force + secondary_force) / mass;\n    println!(\"Secondary acceleration: {}\", combined_acc);\n}\n\nfn calculate_total(input_value: f64) -> f64 {\n    let price_with_tax = input_value * 1.08;\n    price_with_tax\n}\n```",
+  "strength": "Strong",
+  "source": "*Refactoring* by Martin Fowler (p. 184, \"Split Temporary Variable\"); *Code Complete* by Steve McConnell (p. 188)."
+}

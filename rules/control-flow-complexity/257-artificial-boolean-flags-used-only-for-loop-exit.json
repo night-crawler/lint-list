@@ -1,0 +1,13 @@
+{
+  "id": 257,
+  "title": "Artificial Boolean Flags Used Only for Loop Exit",
+  "category": "Control Flow Complexity",
+  "damaged_code": "```rust\nlet mut done = false;\nwhile !done && has_next() {\n    let item = next();\n    if item.is_target() {\n        process(item);\n        done = true;\n    }\n}\n```",
+  "pattern": "A local mutable boolean is tested in a loop condition and changed inside the loop solely to arrange termination on a later condition check.",
+  "why_bad": "Artificial mutable state obscures exit points and requires readers to follow flag propagation through branches rather than reading direct structured control flow.",
+  "detection": "Follow a local boolean from initialization through loop-header checks and assignments, including nested branches. Confirm that it conveys no program result or persistent state and is used only to govern loop termination.",
+  "counterexample": "A flag representing actual program data needed after the loop is not merely an exit device. Direct break/return is already explicit. Shared cancellation flags and other externally meaningful state are not this local artificial-flag pattern.",
+  "fix": "Replace the flag with a break, labeled break, or return at the equivalent exit point. Use return only if exiting the whole function is intended. Preserve work, cleanup, and condition side effects that originally occurred after the assignment or at the next loop test rather than blindly exiting immediately at the assignment:\n```rust\nwhile has_next() {\n    let item = next();\n    if item.is_target() {\n        process(item);\n        break;\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Martin Fowler, *Refactoring*, \"Remove Control Flag\"; Trevor Foucher & Dustin Boswell, *The Art of Readable Code*, Chapter 9; Martin Fowler, Refactoring, p. 483-484 [483-484]."
+}

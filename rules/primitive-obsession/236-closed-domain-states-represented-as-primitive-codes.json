@@ -1,0 +1,13 @@
+{
+  "id": 236,
+  "title": "Closed Domain States Represented as Primitive Codes",
+  "category": "Primitive Obsession",
+  "damaged_code": "```rust\nstruct Product {\n    status: String, // Expects \"NEW_RELEASE\" or \"REGULAR\"\n}\n\nif product.status == \"NEW_RELEASE\" {\n    charge = days * 3;\n} else if product.status == \"REGULAR\" {\n    charge = days * 2;\n}\n```",
+  "pattern": "An internal closed set of states, categories, or options is stored as raw text, including heap-allocated status tags, or raw string/integer codes drive repeated state-specific business branching.",
+  "why_bad": "Primitive codes admit invalid values and spelling mistakes (e.g., `\"REQEUSTED\"` compiles and fails at runtime), and repeated dispatch scatters behavior changes across every inline conditional, violating the Open-Closed Principle. Heap-owned text tags can also introduce avoidable allocation and comparison work, depending on representation and workload.",
+  "detection": "Subcase A: fields or values representing a known finite set of alternatives remain `String`/`&str` rather than a checked variant type; names such as `status`, `kind`, `category`, `state`, `role`, or `type` are leads, not proof. Subcase B: repeated `if`/`match` dispatch compares raw string or integer codes to domain literals to select behavior. Establish the set's closed nature before recommending exhaustive variants.",
+  "counterexample": "Open text such as display names, or dynamically user-configured categories loaded at runtime that cannot be known at compile time, need not be compile-time enums. Merely logging or forwarding an external status code at a boundary is not internal state dispatch.\n```rust\nstruct UserProfile {\n    display_name: String,\n}\n```",
+  "fix": "Represent a closed state set as an `enum` and convert explicitly at protocol boundaries. Use exhaustive matches where behavior belongs with the variants, or a strategy/polymorphic design when independently extensible behavior warrants it.\n```rust\nenum ProductStatus {\n    NewRelease,\n    Regular,\n}\n\nstruct Product {\n    status: ProductStatus,\n}\n```",
+  "strength": "Strong",
+  "source": "*Refactoring* by Martin Fowler (p. 286); *Refactoring to Patterns* (p. 166); *Refactoring to Patterns* by Joshua Kerievsky (p. 165); *A Philosophy of Software Design*, Chapter 20 (p. 317); *Code Complete*, Section 25.3 (p. 350)."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 412,
+  "title": "Unfenced Writes Under Expiring Leases",
+  "category": "Resilience Cargo Cult",
+  "damaged_code": "```rust\nif lease.is_valid() {\n    // Process pause (GC stop-the-world, thread scheduling, VM migration) happens here!\n    // Lease expires and another client becomes the holder/leader.\n    write_to_shared_storage(data); // BUG: resumes and writes with no fencing; corrupts storage!\n}\n```",
+  "pattern": "A client relies on a lease or leader-validity check to authorize a later shared-resource write without receiver-side fencing.",
+  "why_bad": "A process may pause after the check (garbage collection, hypervisor scheduling, VM suspension), lose its lease, and resume after a new holder has taken over. The earlier check cannot authorize the later write, so the stale client corrupts the shared resource [342, 343].",
+  "detection": "A write or external leader side effect follows a client-side lease check, but the receiver does not atomically validate the operation against a fencing generation. Look for writes to shared storage or databases that rely on lease validation without passing an incrementing token checked by the receiving subsystem.",
+  "counterexample": "The receiver atomically enforces an authoritative current generation or monotonically increasing fencing tokens on every protected write.\n```rust\nwrite_to_shared_storage(data, lease.fencing_token); // Storage rejects if token < current\n```",
+  "fix": "Allocate monotonically increasing fencing tokens with leases, pass them on every write, and have storage atomically reject tokens older than its accepted generation. If the requirement is to reject every expired lease even before a newer write arrives, also enforce the authoritative current lease/generation at storage; a remembered maximum token alone does not detect expiry.\n```sql\nUPDATE database SET value = x WHERE leader_generation = current_generation;\n```",
+  "strength": "Contextual",
+  "source": "Martin Kleppmann, *Designing Data-Intensive Applications*, page 287-290 / passage [342, 343]; Martin Kleppmann (DDIA) Ch 8 (p. 287)"
+}

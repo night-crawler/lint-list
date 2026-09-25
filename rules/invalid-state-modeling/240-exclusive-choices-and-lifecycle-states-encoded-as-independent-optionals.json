@@ -1,0 +1,13 @@
+{
+  "id": 240,
+  "title": "Exclusive Choices and Lifecycle States Encoded as Independent Optionals",
+  "category": "Invalid State Modeling",
+  "damaged_code": "```rust\nstruct Payment {\n    card_number: Option<String>,\n    paypal_email: Option<String>,\n}\n\nstruct Task {\n    id: u64,\n    assigned_worker: Option<String>,\n    completion_date: Option<DateTime<Utc>>,\n    rejection_reason: Option<String>,\n}\n```",
+  "pattern": "Multiple optional (`Option<T>`) fields encode a business choice that requires exactly one alternative to be present, or fields for disjoint lifecycle states coexist independently, so the type admits forbidden combinations.",
+  "why_bad": "The representation admits missing required choices, contradictory phases (e.g., both a `completion_date` and a `rejection_reason`), and payload combinations that every consumer must recheck at runtime with redundant assertions, fallback error handling, or complex match patterns.",
+  "detection": "For choice records, verify that multiple optional fields represent mutually exclusive required alternatives. For lifecycle records, inspect structs with three or more `Option` fields tied to disjoint lifecycle phases and verify the actual legal combinations and required payloads. Do not flag unrelated optional fields solely because several exist.",
+  "counterexample": "Independent, non-exclusive optional fields are valid. A lifecycle may also legitimately preserve historical assignment or completion data across phases; those fields are not automatically exclusive simply because they relate to different events.\n```rust\nstruct UserSettings {\n    theme: Option<Theme>,\n    timezone: Option<TimeZone>,\n}\n```",
+  "fix": "Use a data-carrying enum for the exclusive alternatives, with exactly the payload each legal state requires, making illegal states unrepresentable. Preserve common identity and genuinely shared or historical data outside the enum. Include every valid lifecycle state, including an initial/unassigned state if the domain permits it, and move state changes through operations that preserve the transition rules.\n```rust\nenum PaymentMethod {\n    Card { card_number: String },\n    PayPal { email: String },\n}\n\nenum TaskState {\n    Unassigned,\n    Assigned { worker: String },\n    Completed { date: DateTime<Utc> },\n    Rejected { reason: String },\n}\n\nstruct Task {\n    id: u64,\n    state: TaskState,\n}\n```",
+  "strength": "Contextual",
+  "source": "Refactoring to Patterns, Chapter 4 (Primitive Obsession); *Domain Modeling made Functional* by Scott Wlaschin (p. 108)."
+}
