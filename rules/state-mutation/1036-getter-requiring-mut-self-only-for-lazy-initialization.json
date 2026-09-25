@@ -1,0 +1,13 @@
+{
+  "id": 1036,
+  "title": "Getter Requiring &mut self Only for Lazy Initialization",
+  "category": "State Mutation",
+  "damaged_code": "```rust\nimpl ServiceRegistry {\n    pub fn get_instance(&mut self) -> String {\n        if self.instance.is_none() {\n            self.instance = Some(\"Initialized\".to_string());\n        }\n        self.instance.clone().unwrap()\n    }\n}\n```",
+  "pattern": "A logically read-only accessor takes `&mut self` solely so it can lazily initialize or cache a field on first use.",
+  "why_bad": "The implementation detail leaks into the signature: callers need exclusive access to perform a read, so the value cannot be read through a shared reference, from several places at once, or across threads, and borrow-checker friction spreads `&mut` through code that never changes anything observable.",
+  "detection": "A `get_*`/accessor method with a `&mut self` receiver whose only mutation is filling an `Option`/cache field (`if self.x.is_none() { self.x = Some(..) }`, `get_or_insert_with`) before returning it.",
+  "counterexample": "Accessors whose initialization has observable effects or can fail and must be sequenced by the caller; types that are only ever used through unique ownership where `&mut` imposes no cost; interior mutability already in use (`OnceCell`, `OnceLock`, `LazyLock`, `RefCell`).",
+  "fix": "Use `OnceCell` (single-threaded) or `OnceLock` (thread-safe) so the accessor takes `&self`.\n```rust\nuse std::cell::OnceCell;\n\npub struct ServiceRegistry { instance: OnceCell<String> }\n\nimpl ServiceRegistry {\n    pub fn instance(&self) -> &str {\n        self.instance.get_or_init(|| \"Initialized\".to_string())\n    }\n}\n```",
+  "strength": "Strong",
+  "source": "Michael Feathers, *Working Effectively with Legacy Code* (2004), Ch. 25; Jon Gjengset, *Rust for Rustaceans* (2021), Ch. 3."
+}

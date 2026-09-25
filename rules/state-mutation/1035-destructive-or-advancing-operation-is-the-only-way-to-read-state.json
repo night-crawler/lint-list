@@ -1,0 +1,13 @@
+{
+  "id": 1035,
+  "title": "Destructive or Advancing Operation Is the Only Way to Read State",
+  "category": "State Mutation",
+  "damaged_code": "```rust\nimpl<T> Stack<T> {\n    pub fn pop(&mut self) -> Option<T> { self.elements.pop() } // no peek\n}\n\nimpl Lexer {\n    pub fn parse_token(&mut self) -> String { /* advances position */ } // no lookahead\n}\n\nimpl StatCounter {\n    pub fn reset_counter(&mut self) -> usize {\n        let n = self.value;\n        self.value = 0;\n        n // reading the count destroys it; there is no getter\n    }\n}\n```",
+  "pattern": "A custom type offers only a consuming or advancing operation (`pop`, `next`, `parse_token`, `reset`/`take`) to observe a value, with no non-destructive query (`peek`, `current`, `last`, `get`) on `&self`.",
+  "why_bad": "Every inspection changes state. Parsers cannot look ahead without position-restoring hacks, callers who want to examine the top of a stack must pop and push back, and metrics can only be read by resetting them, so two readers (a dashboard and an alert) corrupt each other's counts.",
+  "detection": "A type's public API where each accessor for some piece of state takes `&mut self` and removes, advances past or resets that state, and no `&self` method returns the same value; include `reset_*`/`take_*` methods that return the previous value when no plain getter exists.",
+  "counterexample": "Types where a non-destructive read is impossible or unsafe: channels, sockets, one-shot readers, concurrent queues where a separate peek would race with other consumers, and atomic snapshot-and-reset primitives used for interval metrics. Types that already offer the read side (`Vec::last`, `Iterator::peekable`, a separate getter).",
+  "fix": "Add a `&self` query alongside the consuming operation.\n```rust\nimpl<T> Stack<T> {\n    pub fn peek(&self) -> Option<&T> { self.elements.last() }\n    pub fn pop(&mut self) -> Option<T> { self.elements.pop() }\n}\n\nimpl StatCounter {\n    pub fn count(&self) -> usize { self.value }\n    pub fn reset(&mut self) { self.value = 0; }\n}\n```",
+  "strength": "Contextual",
+  "source": "Michael Feathers, *Working Effectively with Legacy Code* (2004), Ch. 14; Erich Gamma et al., *Design Patterns* (1994), \"Iterator\"; Steve McConnell, *Code Complete* (2004), Ch. 18; Richard L. Sites, *Understanding Software Dynamics* (2021), Ch. 5."
+}
