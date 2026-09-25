@@ -1,0 +1,13 @@
+{
+  "id": 1038,
+  "title": "Reference-Count Decrement Returning a Should-Free Flag to the Caller",
+  "category": "Correctness By Convention",
+  "damaged_code": "```rust\nimpl RefCounter {\n    pub fn kref_sub(&mut self) -> bool {\n        self.count -= 1;\n        self.count == 0 // caller must remember to free when true\n    }\n}\n```",
+  "pattern": "A hand-rolled reference-count release decrements the count and returns a boolean telling the caller to destroy the object, instead of performing the release itself.",
+  "why_bad": "Correct destruction depends on every call site checking and acting on the flag. A caller that ignores it leaks the object; one that frees on the wrong condition, or after another thread has taken a new reference, causes use-after-free or double free.",
+  "detection": "A method that decrements a reference or usage count and returns `bool` (or the new count) that callers compare against zero to decide whether to free, drop or recycle the object, with no release callback or `Drop` implementation doing it.",
+  "counterexample": "`Arc`/`Rc` and other types that release in `Drop`; kernel-style `kref_put(&kref, release_fn)` APIs that take the release function and invoke it themselves; lock-free algorithms where the return value is consumed by the same primitive that performs reclamation.",
+  "fix": "Use `Arc`/`Rc`, or make the decrement perform the release itself (release callback or `Drop`).\n```rust\nlet shared = Arc::new(Resource::new());\nlet other = Arc::clone(&shared);\ndrop(other);  // count decremented\ndrop(shared); // last reference: Resource is freed by Drop, no caller decision\n\n// hand-rolled: take the release action instead of returning a flag\nfn kref_put(k: &AtomicUsize, release: impl FnOnce()) {\n    if k.fetch_sub(1, Ordering::AcqRel) == 1 { release(); }\n}\n```",
+  "strength": "Contextual",
+  "source": "Paul E. McKenney, *Is Parallel Programming Hard, And, If So, What Can You Do About It?* (2020), Ch. 13 \"Reference Counting\"."
+}

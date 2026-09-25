@@ -1,0 +1,13 @@
+{
+  "id": 1037,
+  "title": "Output Argument Mutated by a Method of Another Object",
+  "category": "State Mutation",
+  "damaged_code": "```rust\nimpl Document {\n    pub fn append_footer(&self, report: &mut String) {\n        report.push_str(\"\\nFooter\");\n    }\n}\n// call site: doc.append_footer(&mut report); // which object changes?\n```",
+  "pattern": "A method on one object exists to modify a different object passed as a `&mut` parameter (an output argument), rather than being a method of the modified object or returning a new value.",
+  "why_bad": "Readers must inspect the signature to learn which argument is input and which is output, and behavior that belongs to the modified type is scattered across other types. The receiver is often unused or barely used, a sign the method is attached to the wrong type.",
+  "detection": "A method taking `&self` (or a free function) plus a `&mut` parameter of a domain type, whose body mutates that parameter and makes little or no use of `self`.",
+  "counterexample": "Buffer and sink reuse for performance or streaming (`Read::read(&mut buf)`, `fmt::Write`, `Extend`, `serialize(&self, out: &mut impl Write)`), visitor/collector patterns, and trait methods whose contract is to write into a caller-provided sink.",
+  "fix": "Move the behavior to the modified type, or return a transformed value.\n```rust\nimpl Report {\n    pub fn append_footer(&mut self) { self.body.push_str(\"\\nFooter\"); }\n}\n\nfn with_footer(mut report: String) -> String { report.push_str(\"\\nFooter\"); report }\n```",
+  "strength": "Contextual",
+  "source": "Robert C. Martin, *Clean Code* (2008), Ch. 3 \"Output Arguments\"."
+}

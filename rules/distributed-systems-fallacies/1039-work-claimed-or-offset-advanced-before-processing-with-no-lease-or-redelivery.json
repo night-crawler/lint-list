@@ -1,0 +1,13 @@
+{
+  "id": 1039,
+  "title": "Work Claimed or Offset Advanced Before Processing, With No Lease or Redelivery",
+  "category": "Distributed Systems Fallacies",
+  "damaged_code": "```rust\nimpl TaskQueue {\n    pub fn claim_next_task(&mut self) -> Option<Task> {\n        let task = self.store.find_unclaimed()?;\n        self.store.set_claimed(task.id, true); // permanent claim, no expiry\n        Some(task)\n    }\n}\n\nimpl MessageConsumer {\n    pub fn read_next_message(&mut self) -> Option<Message> {\n        let msg = self.log.read_at(self.offset)?;\n        self.offset += 1;\n        self.store_offset(self.offset); // committed before the message is processed\n        Some(msg)\n    }\n}\n```",
+  "pattern": "A hand-written consumer marks a job claimed/processed, or commits a stream offset, in the same call that hands the work to the worker, before processing has completed, with no lease expiry, visibility timeout or redelivery if the worker dies.",
+  "why_bad": "If the worker crashes, hangs or fails after the claim or offset commit, the job stays claimed forever or the message is skipped: delivery is silently at-most-once. Nothing distinguishes \"in progress\" from \"abandoned\", so lost work is only discovered by reconciliation.",
+  "detection": "Queue or stream consumer code that persists a `claimed`/`processed`/`done` flag or a consumer offset before or at the moment it returns the work item, with no claim timestamp/lease that expires, no later ack/commit after processing, and no sweeper that re-queues stale claims.",
+  "counterexample": "Leased claims (`claimed_until`, visibility timeouts, `SELECT ... FOR UPDATE SKIP LOCKED` inside a transaction that also records completion); offsets committed after processing; work whose loss is explicitly acceptable (best-effort telemetry). Broker auto-acknowledge settings are a separate criterion.",
+  "fix": "Claim with a lease and complete explicitly after processing; commit offsets only after the message is handled.\n```rust\nlet task = store.claim_next(worker_id, Duration::from_secs(60))?; // claimed_until = now + 60s\nprocess(&task)?;\nstore.complete(task.id, worker_id)?; // expired leases are re-queued by a sweeper\n```",
+  "strength": "Strong",
+  "source": "Alex Petrov, *Database Internals* (2019), Ch. 8; Martin Kleppmann, *Designing Data-Intensive Applications* (2017), Ch. 11 \"Stream Processing\"."
+}
