@@ -6,7 +6,7 @@ import { extractFindings, planGroups } from "./index";
 import { parsePrediction } from "./predictor";
 import { buildReport } from "./report";
 import type { GitExec } from "./scope";
-import { resolveDiffScope, resolveFullScope } from "./scope";
+import { resolveAuditScope, resolveDiffScope, resolveFullScope } from "./scope";
 import type { Rule } from "./types";
 
 const temporaryDirectories: string[] = [];
@@ -41,6 +41,42 @@ const rules: Rule[] = [
 ];
 
 describe("snapshot boundaries", () => {
+	test.each(["main", "master"])("auto audits unchanged and untracked code on %s; explicit diff still wins", async (branch) => {
+		const dir = await repository();
+		await exec("git", ["branch", "-m", branch], { cwd: dir });
+		await writeFile(join(dir, "unchanged.rs"), "fn unchanged() {}\n");
+		await exec("git", ["add", "."], { cwd: dir });
+		await exec("git", ["commit", "-qm", "base"], { cwd: dir });
+		await writeFile(join(dir, "untracked.rs"), "fn untracked() {}\n");
+
+		const scope = await resolveAuditScope(exec, dir, "auto", branch);
+		expect(scope.kind).toBe("full");
+		expect(scope.files).toEqual(["unchanged.rs", "untracked.rs"]);
+		expect(scope.diffText).toContain("+fn unchanged() {}");
+		expect(scope.diffText).toContain("+fn untracked() {}");
+		const diff = await resolveAuditScope(exec, dir, "diff", branch);
+		expect(diff.kind).toBe("diff");
+		expect(diff.diffText).toBe("");
+	});
+
+	test.each(["feature", "detached"])("auto keeps diff scope on %s HEAD", async (head) => {
+		const dir = await repository();
+		await writeFile(join(dir, "unchanged.rs"), "fn unchanged() {}\n");
+		await writeFile(join(dir, "changed.rs"), "fn before() {}\n");
+		await exec("git", ["add", "."], { cwd: dir });
+		await exec("git", ["commit", "-qm", "base"], { cwd: dir });
+		await exec("git", head === "detached" ? ["checkout", "-q", "--detach"] : ["checkout", "-qb", head], { cwd: dir });
+		await writeFile(join(dir, "changed.rs"), "fn after() {}\n");
+		await writeFile(join(dir, "untracked.rs"), "fn untracked() {}\n");
+
+		const scope = await resolveAuditScope(exec, dir, "auto", "");
+		expect(scope.kind).toBe("diff");
+		expect(scope.files).toEqual(["changed.rs"]);
+		expect(scope.diffText).toContain("+fn after() {}");
+		expect(scope.diffText).not.toContain("fn unchanged()");
+		expect(scope.diffText).not.toContain("fn untracked()");
+	});
+
 	test("captures staged, unstaged, renamed and deleted tracked files in one diff without losing unusual paths", async () => {
 		const dir = await repository();
 		await writeFile(join(dir, "old.rs"), "fn old() {}\n");
