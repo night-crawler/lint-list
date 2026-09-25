@@ -56,13 +56,16 @@ omp -p --auto-approve -e /path/to/lints-list/extension "/lint-audit fix=true"
 
 ### Pipeline
 
-1. **Capture once.** Default `auto`: the tracked working-tree diff against the selected base branch's **tip**,
-   preferring local `main`. This matches `git diff main` when `main` is selected: committed, staged and unstaged
-   changes are included, but untracked files are not. There is no merge-base substitution. One
-   `git diff --patch-with-raw` invocation captures both the file inventory and patch. The base commit SHA is
-   pinned and recorded. Before any model request, the command prints the byte/KiB size, line count, file count
-   and selected base. An empty diff stops without model calls. `scope=full`, or `auto` when no base is resolvable,
-   creates an all-additions snapshot of the working tree instead, including untracked text files.
+1. **Capture once.** Default `auto`: on `main` or `master`, capture a full-tree snapshot, including unchanged
+   code and untracked text files. On other branches (or detached HEAD), capture the tracked working-tree diff
+   against the selected base branch's **tip**, preferring local `main`. This matches `git diff main` when `main`
+   is selected: committed, staged and unstaged changes are included, but untracked files are not. There is no
+   merge-base substitution. One `git diff --patch-with-raw` invocation captures both the file inventory and
+   patch. The base commit SHA is pinned and recorded. Before any model request, the command prints the byte/KiB
+   size, line count, file count and selected scope. An empty snapshot stops without model calls.
+   `scope=full`, or `auto` when no base is resolvable, also creates an all-additions snapshot of the working tree.
+   Full-tree snapshots retain the existing binary, generated-directory and Git-ignore exclusions.
+   `scope=diff` forces diff behavior even on `main`/`master`; `base=` only selects the base when using diff scope.
 2. **Predict every rule.** The configured `predictorModel` receives one independent, tool-free structured
    classification request per loaded rule. There is no routing or heuristic prefilter. Request order is:
 
@@ -153,7 +156,7 @@ false negatives for less validation work.
 | `validator_model=SPEC` | `validatorModel=` | current session model | Independent grouped-validation model |
 | `group=N` | `groupsize=`, `n=` | `24` | Maximum positive rules per validation group |
 | `c=N` | `concurrency=` | `4` | Concurrent predictions after cache warmup, then concurrent validation groups |
-| `scope=MODE` | | `auto` | `auto` = tracked base-tip diff when a base resolves, otherwise full tree; `diff` = require a base; `full` = whole tree |
+| `scope=MODE` | | `auto` | `auto` = full tree on `main`/`master`, otherwise tracked base-tip diff (full tree if no base resolves); `diff` = require a base, even on `main`/`master`; `full` = whole tree |
 | `base=REF` | | auto-detect | Diff against the ref's tip (`main` → `master` → `origin/HEAD` → `origin/main` → `origin/master`) |
 | `fix=BOOL` | | `false` | Ask the main session to apply confirmed findings |
 | `out=PATH` | | `<run dir>/report.md` | Report destination |

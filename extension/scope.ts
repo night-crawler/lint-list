@@ -34,6 +34,25 @@ const BINARY_EXTENSIONS =
 const isSourcePath = (file: string): boolean =>
 	!BINARY_EXTENSIONS.test(file) && !file.split("/").some((part) => SKIPPED_DIRS[part] === true);
 
+export async function resolveAuditScope(
+	exec: GitExec,
+	cwd: string,
+	mode: "auto" | "diff" | "full",
+	base: string,
+): Promise<AuditScope> {
+	if (mode === "full") return resolveFullScope(exec, cwd);
+	if (mode === "auto") {
+		const branch = await exec("git", ["symbolic-ref", "--quiet", "--short", "HEAD"], { cwd, timeout: 15_000 });
+		if (branch.code === 0 && (branch.stdout.trim() === "main" || branch.stdout.trim() === "master")) {
+			return resolveFullScope(exec, cwd);
+		}
+	}
+	const scope = await resolveDiffScope(exec, cwd, base);
+	if (scope) return scope;
+	if (mode === "diff") throw new Error("scope=diff but no base could be resolved (not a git repo or no base ref)");
+	return resolveFullScope(exec, cwd);
+}
+
 /** A full-tree file represented as additions; diff mode never synthesizes untracked changes. */
 function addedFileDiff(file: string, content: string): string {
 	const lines = content.split("\n");

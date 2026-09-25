@@ -12,7 +12,7 @@ import type { Model } from "@oh-my-pi/pi-ai";
 import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
 import { createPredictor } from "./predictor";
 import { buildFixMessage, buildReport, describeScope } from "./report";
-import { resolveDiffScope, resolveFullScope } from "./scope";
+import { resolveAuditScope } from "./scope";
 import { modelForThinking } from "./thinking";
 import type { AuditScope, Finding, GroupResult, PredictionResult, Rule, Severity } from "./types";
 
@@ -410,13 +410,8 @@ export default function lintAudit(pi: ExtensionAPI) {
 				const validatorName = `${validatorModel.provider}/${validatorModel.id}`;
 
 				const exec = pi.exec.bind(pi);
-				let scope: AuditScope | undefined;
-				if (cfg.scope !== "full") {
-					scope = await resolveDiffScope(exec, ctx.cwd, cfg.base);
-					if (!scope && cfg.scope === "diff") throw new Error("scope=diff but no base could be resolved (not a git repo or no base ref)");
-					if (!scope) announce("lint-audit: no diff base detected; falling back to a full-tree snapshot");
-				}
-				if (!scope) scope = await resolveFullScope(exec, ctx.cwd);
+				const scope = await resolveAuditScope(exec, ctx.cwd, cfg.scope, cfg.base);
+				if (scope.kind === "full" && cfg.scope === "auto") announce("lint-audit: auto selected a full-tree snapshot");
 				const diffBytes = Buffer.byteLength(scope.diffText, "utf8");
 				let diffLines = scope.diffText && !scope.diffText.endsWith("\n") ? 1 : 0;
 				for (let i = 0; i < scope.diffText.length; i++) if (scope.diffText.charCodeAt(i) === 10) diffLines++;
