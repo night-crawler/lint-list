@@ -1,0 +1,13 @@
+{
+  "id": 285,
+  "title": "Serving Requests Before Essential Bootstrap Is Ready",
+  "category": "Temporal Coupling Lifecycle Bugs",
+  "damaged_code": "```rust\nfn main() {\n    let listener = TcpListener::bind(\"0.0.0.0:8080\").unwrap();\n    spawn(accept_and_dispatch_requests(listener)); // Serving application traffic already!\n    load_config();                 // Config keys not yet validated\n    initialize_database_pool();    // Pool is not ready yet\n    verify_schema_and_assets();    // Missing schema/files not yet detected\n}\n```",
+  "pattern": "A server admits ordinary application requests before required dependencies have completed initialization and essential configuration, files/assets, database connectivity, and schema prerequisites have been validated.",
+  "why_bad": "Clients can reach a partially initialized application and receive crashes, hangs, or transaction failures caused by missing resources rather than legitimate request errors, creating a storm of failed transactions and cascading downstream alerts.",
+  "detection": "Trace startup ordering from configuration parsing and dependency initialization/validation (DI, database pools, schema and asset checks) to listener activation, request acceptance, and dispatch. Flag paths that can execute application work requiring resources that are not yet available; an early socket bind alone is insufficient if a reliable readiness gate prevents unsafe dispatch.",
+  "counterexample": "A gateway server that safely buffers incoming connections in a queue until the worker pool signals readiness is legitimate. Binding early without processing application traffic is acceptable when the gate is effective. A server that validates essential prerequisites before enabling traffic is already ordered correctly:\n\n```rust\nfn main() {\n    verify_system_environment_and_db().expect(\"Bootstrap sanity check failed\");\n    start_http_server(\"0.0.0.0:8080\");\n}\n```",
+  "fix": "Finish initialization and validate the resources essential to the offered application operations before enabling their request processing. On bootstrap failure, do not advertise those operations as ready. If early binding/buffering is intentional, enforce the readiness gate through every dispatch path rather than relying solely on startup code order.",
+  "strength": "Strong",
+  "source": "Michael Nygard, *Release It!*, Section 14.3 / passage [280, 587]; *Release It!*, page 266 [266, 686]."
+}

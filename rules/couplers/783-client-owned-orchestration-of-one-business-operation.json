@@ -1,0 +1,13 @@
+{
+  "id": 783,
+  "title": "Client-Owned Orchestration of One Business Operation",
+  "category": "Couplers",
+  "damaged_code": "```rust\n// Code running on the client (mobile app, web front end, CLI) drives the whole use case,\n// and every other client reimplements the same sequence.\nfn checkout_flow(order_svc: &OrderSvc, payment_svc: &PaymentSvc, ship_svc: &ShipSvc, order: Order) {\n    order_svc.create_order(&order);\n    payment_svc.charge(order.total);\n    ship_svc.schedule_shipment(order.id); // client coupled to the internal service layout\n}\n```",
+  "pattern": "Client applications (mobile, web, CLI) coordinate a single business operation by issuing multiple mutations against separate backend services themselves, rather than calling one server-side operation. This couples every client to the internal service layout and, when several clients exist, duplicates the same workflow knowledge in each of them.",
+  "why_bad": "Clients become tightly coupled to the internal backend structure: any change to the workflow or to a backend service requires coordinated updates and releases across all client codebases, which makes service rewrites and migrations risky. A client that loses connectivity or fails mid-sequence leaves the operation partially executed, exposing inconsistent state.",
+  "detection": "Client-facing code that performs several sequential write mutations across separate downstream service endpoints to complete one use case. Subcases: (a) a single client importing and coordinating multiple disjoint services instead of consuming a unified use-case endpoint; (b) multiple client applications (web, iOS, Android) each reproducing the same fine-grained call sequence for the same use case.",
+  "counterexample": "A simple system with a single client and stable backend services, where the indirection buys little. Highly custom admin panels or developer tools that intentionally require low-level, independent control of separate subsystems.",
+  "fix": "Introduce a server-side Coordinator/Manager operation (a coarse-grained API facade) that owns the orchestration sequence and returns the use-case result through one endpoint. Give that operation the failure and consistency semantics the workflow needs (explicit compensation or recovery across independent services); rely on a local transaction only when its resource boundary actually allows one, since a facade does not by itself make cross-service mutations atomic.",
+  "strength": "Strong",
+  "source": "Righting Software, Chapter 2, \"Decomposition - Clients Bloat and Coupling\" [54, 55, 541]; *Righting Software* by Juval Löwy (2019), p. 21, 493."
+}

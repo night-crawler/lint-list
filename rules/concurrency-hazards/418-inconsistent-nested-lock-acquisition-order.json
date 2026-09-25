@@ -1,0 +1,13 @@
+{
+  "id": 418,
+  "title": "Inconsistent Nested Lock Acquisition Order",
+  "category": "Concurrency Hazards",
+  "damaged_code": "```rust\n// Thread 1\n{\n    let _g1 = lock_a.lock().unwrap();\n    let _g2 = lock_b.lock().unwrap();\n}\n// Thread 2\n{\n    let _g1 = lock_b.lock().unwrap();\n    let _g2 = lock_a.lock().unwrap();\n}\n\n// Same defect via traversal: Thread A walks node_a -> node_b, Thread B walks node_b -> node_a,\n// each holding the current node's lock while acquiring the next.\n```",
+  "pattern": "Concurrent paths acquire overlapping sets of locks in inconsistent order, including opposite-direction traversal of a linked data structure (such as a list or tree) while locking nodes incrementally.",
+  "why_bad": "It violates the global partial-order invariant required for deadlock-free lock acquisition: each thread can hold a lock the other needs, creating a cyclic wait. When traversal direction determines locking order, the cycle arises dynamically from opposite-direction walks.",
+  "detection": "Look for nested lock acquisitions across different threads or functions where the sequence of lock identifiers is reversed or inconsistent. Also flag multi-node traversals that retain a node lock while acquiring the next node's lock along opposite node references across different threads; two traversals in different directions without overlapping held locks are not a hit.",
+  "counterexample": "All nested acquisitions obey a strict acyclic global hierarchy (e.g., always locking in alphabetical or address order); hand-over-hand traversals where all threads consistently follow that hierarchy from root/head to leaf/tail.",
+  "fix": "Define and enforce a common lock ordering on every acquisition path. For traversal-based locking, use one consistent direction or decouple traversal from acquisition so the same hierarchy is respected.\n```rust\n// Both threads\n{\n    let _g1 = lock_a.lock().unwrap();\n    let _g2 = lock_b.lock().unwrap();\n}\n```",
+  "strength": "Strong",
+  "source": "Herlihy 9.4, Paul McKenney 7.1.1, Clean Code Ch 13; Herlihy Figure 9.10"
+}

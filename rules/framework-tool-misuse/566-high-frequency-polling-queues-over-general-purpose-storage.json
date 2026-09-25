@@ -1,0 +1,13 @@
+{
+  "id": 566,
+  "title": "High-Frequency Polling Queues over General-Purpose Storage",
+  "category": "Framework Tool Misuse",
+  "damaged_code": "```rust\n// Using the database as a high-frequency polling queue\nloop {\n    let job = sqlx::query(\n        \"SELECT * FROM tasks WHERE status = 'PENDING' LIMIT 1 FOR UPDATE SKIP LOCKED\"\n    )\n    .fetch_optional(&pool).await?;\n    if let Some(task) = job {\n        sqlx::query(\"UPDATE tasks SET status = 'DONE' WHERE id = $1\")\n            .bind(task.get::<i64, _>(\"id\"))\n            .execute(&pool).await?;\n    }\n}\n```",
+  "pattern": "Services use relational tables or shared disk files as a high-frequency polling message queue, repeatedly scanning and updating state to distribute work among application instances.",
+  "why_bad": "The polling and state churn create unnecessary database contention, CPU load, index churn, and disk I/O. High-frequency updates and row locking (`FOR UPDATE`) cause lock contention, lock escalation, and deadlocks, and as the table grows, query performance drops off a cliff, leading to thread blocking and cascading failures [273, 274, 565, 566].",
+  "detection": "Tight or unbounded polling loops that query a queue/status table, frequently locking rows (`FOR UPDATE`) and flipping status columns (e.g., `PENDING`, `DONE`); or loops that repeatedly poll shared files for inter-service work.",
+  "counterexample": "Ordinary ACID transactional row locking that is transient and not a background-job distribution mechanism; event-driven Change Data Capture logs; dedicated message queues (RabbitMQ, Kafka); deliberately bounded low-throughput database queues whose measured load and transactional requirements justify them.",
+  "fix": "For the high-frequency contention case, move dispatch to event-driven messaging middleware (e.g., RabbitMQ, Kafka) or suitable CDC-driven delivery, preserving the work's required durability and transaction semantics [530, 562].",
+  "strength": "Strong",
+  "source": "*Pragmatic Programmers - Release It! (Nygard), p. 177-178 [273, 274, 565, 566]*  \n*Implementing Domain-Driven Design (Vernon), p. 312 [530]*; *Clean Architecture (Martin), Appendix A, p. 326 [732]*"
+}

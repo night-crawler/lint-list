@@ -1,0 +1,13 @@
+{
+  "id": 773,
+  "title": "Legacy-client compatibility blocks shared runtime upgrades",
+  "category": "Maintenance Fossils",
+  "damaged_code": "```rust\n// Workaround for AppEngine 32-bit Python standard library compatibility\n// Compatibility fallback path kept for years for a specific customer\n// refusing to upgrade; blocks the toolchain bump for every other consumer\npub fn format_id(id: u64) -> String {\n    if cfg!(target_pointer_width = \"32\") {\n        (id as u32).to_string()\n    } else {\n        id.to_string()\n    }\n}\n\n#[cfg(target_pointer_width = \"32\")]\npub fn handle_large_buffer() { /* legacy-only hack */ }\n```",
+  "pattern": "A shared mainline or high-level business path retains obsolete target, runtime, or compiler workarounds (pointer-width checks, archaic target flags, compiler-version fallbacks) solely for a small set of legacy clients who refuse to upgrade, preventing normal upgrades for every other consumer.",
+  "why_bad": "A small legacy population imposes target-specific complexity on unrelated systems and holds the entire transitive closure of dependencies hostage, delaying security patches, performance optimizations, standard compiler upgrades, and modern language features across the ecosystem.",
+  "detection": "The linter must observe:\n1. Platform/compiler-specific checks or configurations (`cfg` flags, pointer-width or archaic target OS checks, compiler-version fallbacks) embedded in shared libraries or high-level business logic.\n2. The check exists exclusively to maintain compatibility with a specific, obsolete client environment and holds back the shared dependency/toolchain upgrade.\nDo not infer obsolescence or customer refusal merely from a `cfg` flag or a 32-bit target; legitimate supported targets are exempt.",
+  "counterexample": "`Context-dependent`\nLegitimate current multi-platform/hardware-abstraction support; legacy workloads already isolated from the shared mainline in their own runtime or containerized deployment.\n```rust\n// Valid: Legitimate multi-platform support in a hardware-abstracting library\n```",
+  "fix": "Isolate the legacy application in its own maintained runtime/deployment branch, or migrate it under an explicit support sunset. Remove the obsolete-only paths from the shared mainline and allow normal compiler and standard-library upgrades.\n```rust\npub fn format_id(id: u64) -> String {\n    id.to_string()\n}\n```",
+  "strength": "Contextual",
+  "source": "- Titus Winters et al., *Software Engineering at Google* (2020) [348]; *Software Engineering at Google (Winters et al.), Chapter 21, p. 454 [194, 1045]*"
+}

@@ -1,0 +1,13 @@
+{
+  "id": 233,
+  "title": "Domain Attributes Hidden Behind Tuple or Array Positions",
+  "category": "Primitive Obsession",
+  "damaged_code": "```rust\ntype Address = (String, String, String, String);\n\nfn calculate_area(dimensions: &[f64; 2]) -> f64 {\n    dimensions[0] * dimensions[1] // Magic offsets representing width and height\n}\n```",
+  "pattern": "A structured domain record is represented by an unnamed primitive tuple/array, or conceptually different attributes are grouped in a homogeneous indexed container merely because their storage types match.",
+  "why_bad": "Readers must remember the index-to-meaning mapping (e.g., which string is the city vs. the state, \"index 0 is width, index 1 is height\"), that knowledge spreads across every consumer, and changes to positional layout can silently break same-typed values or index accesses because the compiler cannot detect swapped fields of the same type.",
+  "detection": "Identify (a) primitive tuple aliases used as domain definitions, whether the elements are mixed-type or equal-typed, and (b) literal tuple/array index reads (e.g., `tuple.0`, `arr[1]`) used to recover distinct semantic fields from a homogeneous container. In both subcases, establish that the elements are separate attributes rather than a genuinely uniform mathematical sequence.",
+  "counterexample": "Conventional vectors and coordinates with uniform mathematical behavior and a standard dimension ordering (e.g., $(x, y, z)$ coordinates) are legitimate positional representations:\n```rust\nlet point_2d: (f64, f64) = (10.0, 20.0);\n```",
+  "fix": "Replace the domain record with a named struct and migrate index-based consumers to named fields. Introduce distinct field types as well where compile-time prevention of same-representation swaps is needed; field names alone clarify meaning but do not make such swaps impossible.\n```rust\nstruct Address {\n    street: String,\n    city: String,\n    state: String,\n    zip_code: String,\n}\n\nstruct Rectangle {\n    width: f64,\n    height: f64,\n}\n\nfn calculate_area(rect: &Rectangle) -> f64 {\n    rect.width * rect.height\n}\n```",
+  "strength": "Strong",
+  "source": "*Domain Modeling made Functional* by Scott Wlaschin (p. 75); *Practical Object-oriented Design* (p. 84); Sandi Metz *POODR*, Chapter 2: \"Obscuring References\", p. 24."
+}

@@ -1,0 +1,13 @@
+{
+  "id": 173,
+  "title": "Core Policy Coupled to Concrete Infrastructure Adapters",
+  "category": "Policy Mechanism",
+  "damaged_code": "```rust\n// In core domain module\nuse pg_client::PostgresClient;\n\npub struct OrderProcessor;\n\nimpl OrderProcessor {\n    pub fn settle_order(&self, id: u64, amount: f64) {\n        // Business policy compiled directly against a concrete database driver\n        let mut db = PostgresClient::connect(\"postgres://prod-db/orders\");\n        db.execute(\"INSERT INTO payments VALUES ($1, $2)\", &[&id, &amount]);\n    }\n}\n```",
+  "pattern": "Stable business or domain policy directly imports, instantiates, or calls volatile concrete databases, frameworks, serializers, logging implementations, or device adapters rather than depending on policy-appropriate interfaces.",
+  "why_bad": "Changes in infrastructure contracts (e.g., a database client upgrade, a table restructuring, or replacing the storage engine) can propagate into core policy, coupling high-value logic to low-level machinery and widening the scope of changes and rebuilding.",
+  "detection": "Inspect core-domain modules for imports (`use`, `import`) and actual usage of concrete infrastructure clients such as database drivers (PostgreSQL, MySQL, Redis), HTTP frameworks, serialization libraries, or cloud SDKs. Confirm that business policy depends on the concrete detail; a directory name or an import in an adapter is not by itself a violation.",
+  "counterexample": "Infrastructure adapters and composition/entry points that intentionally construct and wire concrete dependencies; stable language primitives, standard error formats, or ubiquitous runtime facilities (like `std::time`) that do not bind policy to a particular external device or storage implementation.",
+  "fix": "Define a domain-owned port or trait expressing the policy's needed operations, implement it in infrastructure, and inject that interface into the policy. Keep construction and concrete implementation details in adapters or the composition root so dependencies point toward the core.\n```rust\n// In core domain:\npub trait PaymentRepository {\n    fn save_payment(&mut self, order_id: u64, amount: f64);\n}\n\npub struct OrderProcessor<R: PaymentRepository> {\n    repo: R,\n}\n\n// Infrastructure implements PaymentRepository for its Postgres client;\n// the composition root constructs it and passes it in.\n```",
+  "strength": "Strong",
+  "source": "Robert C. Martin, *Clean Architecture* (2017), Chapter 11 (\"Dependency Inversion Principle\"), pp. 87-88; Robert C. Martin, *Clean Architecture* (2017), Chapter 14, \"Component Coupling: The Dependency Inversion Principle\", p. 263, 265."
+}

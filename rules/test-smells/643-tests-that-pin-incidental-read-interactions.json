@@ -1,0 +1,13 @@
+{
+  "id": 643,
+  "title": "Tests that pin incidental read interactions",
+  "category": "Test Smells",
+  "damaged_code": "```rust\n#[test]\nfn test_get_user_profile() {\n    let mut mock_db = MockDatabase::new();\n    // Non-state-changing query: should not be verified on interaction\n    mock_db.expect_get_user()\n        .with(eq(\"alice\"))\n        .times(1)\n        .returning(|_| Ok(User::new(\"alice\")));\n\n    let service = UserService::new(mock_db);\n    let _ = service.get_profile(\"alice\");\n    \n    // Verifying interaction instead of validating returned state\n    mock_db.verify(); \n}\n```",
+  "pattern": "A test verifies read-only collaborator calls (getters, database queries, data reads) as implementation steps, asserting *how* the system arrived at a result instead of the observable behavior those reads support.",
+  "why_bad": "Non-state-changing interactions are private data-flow details. Harmless changes such as adding a cache lookup or reordering queries break the test without exposing a consumer-visible regression, while the actual result may remain unchecked [209, 518, 529].",
+  "detection": "Mock or spy expectations (`verify()`, `times()`, ordering constraints) require specific getter, query, or read-only collaborator calls when those interactions are not themselves a documented behavioral requirement [530].",
+  "counterexample": "Interaction verification of a required externally observable effect, such as a deletion or a socket write, where the interaction itself is the primary side-effect being verified [530]; or an explicit contract that a particular read must not occur or must satisfy a resource/security constraint.\n\n```rust\n#[test]\nfn test_delete_user_is_state_changing() {\n    let mut mock_db = MockDatabase::new();\n    // State-changing side-effect: Reasonable to verify interaction\n    mock_db.expect_delete_user()\n        .with(eq(\"alice\"))\n        .times(1)\n        .returning(|_| Ok(()));\n\n    let service = UserService::new(mock_db);\n    let _ = service.delete_profile(\"alice\");\n    mock_db.verify();\n}\n```",
+  "fix": "Assert returned values and observable state instead of verifying reads [208, 526]. Keep interaction checks only where the interaction itself is part of the requirement (a state-changing operation), rather than an incidental way to calculate the result [518, 529].",
+  "strength": "Strong",
+  "source": "*   *Software Engineering at Google*, \"Interaction Testing\" (p. 275-279) [208, 209, 525, 527, 529]; *   *Software Engineering at Google*, \"Interaction Testing on Non-State-Changing Functions\" (p. 275-276) [518, 529, 530]"
+}

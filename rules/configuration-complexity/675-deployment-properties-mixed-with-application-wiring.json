@@ -1,0 +1,13 @@
+{
+  "id": 675,
+  "title": "Deployment Properties Mixed with Application Wiring",
+  "category": "Configuration Complexity",
+  "damaged_code": "```yaml\n# Spring/wiring configuration mixing object associations with credentials\nbeans:\n  - id: databaseConnection\n    class: com.system.infra.DbConnection # Changing this breaks class-loading invariants\n    properties:\n      - host: \"10.0.0.12\"\n      - password: \"production_clear_password\" # Operators must edit this file live to rotate keys\n  - id: billingService\n    class: com.system.domain.BillingService\n    properties:\n      - database: { ref: databaseConnection } # Code assembly / wiring\n```",
+  "pattern": "One configuration surface combines structural component assembly (dependency injection beans, class bindings, object references) with mutable deployment properties such as credentials, hosts, or tokens.",
+  "why_bad": "Forces operators to edit large, volatile structure files containing complex application internals just to update a password or hostname. Routine configuration changes expose structural wiring to accidental edits; a typo in the code-assembly section breaks core object references and turns an operational change into an opaque runtime crash.",
+  "detection": "Configuration files or schemas where class names, classpath entries, object graphs, serialization mappings, or bean references appear alongside environment-specific secrets (passwords, tokens) and connection settings (hostnames, IP addresses) that operators must change independently.",
+  "counterexample": "Simple metadata manifest descriptors without this mixed editing responsibility; separate deployment properties injected into stable wiring.\n```yaml\n# application_secrets.yaml - isolated and strictly access-controlled\ndatabase_password: \"highly_secret_password\"\n```",
+  "fix": "Keep component wiring in a separate code/configuration surface and inject deployment properties (secrets, hostnames) through dedicated properties files, environment variables, or secret inputs.\n```yaml\n# separate file: credentials.env\nDB_PASSWORD=\"production_clear_password\"\n```",
+  "strength": "Strong",
+  "source": "[Pragmatic Programmers] Michael T. Nygard - *Release It!_ Design and Deploy Production-Ready Software* (2007, Pragmatic Bookshelf).pdf, Section 14.2.; Michael T. Nygard, *Release It!* (2007), Chapter 14.2, \"Configuration Files\", p. 598-599."
+}

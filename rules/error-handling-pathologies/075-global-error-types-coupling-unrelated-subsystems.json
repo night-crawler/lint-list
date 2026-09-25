@@ -1,0 +1,13 @@
+{
+  "id": 75,
+  "title": "Global Error Types Coupling Unrelated Subsystems",
+  "category": "Error Handling Pathologies",
+  "damaged_code": "```rust\n// crate::errors — imported by db, http, parser, validation, storage, billing, ...\npub enum AppError {\n    DatabaseDisconnect,\n    RowNotFound,\n    InvalidJson(String),\n    ValidationError(String),\n    EmailSendFailed,\n    FileSystemFull,\n    S3Timeout,\n    InvalidPage(String), // only meaningful to the pagination module\n    // ...dozens more variants for database, parsing, validation, and network\n}\n\n// A pure validation helper now advertises S3 timeouts and DB disconnects.\npub fn validate_email(input: &str) -> Result<(), AppError> { /* ... */ }\n```",
+  "pattern": "Unrelated modules use one centralized catch-all error enum or class that lists subsystem-specific failures, making local interfaces depend on the entire application's error vocabulary.",
+  "why_bad": "Local changes propagate through a central dependency: adding a variant for one low-level module edits the global error file and can broaden rebuild and change impact across every unrelated importer. It also prevents local reasoning, as a helper's signature appears to permit unrelated failures such as network errors from pure validation. [24, Chapter 3, \"The Error.java Dependency Magnet\"]",
+  "detection": "Breadth case: a massive application error enum, with more than 20 variants across disjoint subsystems (such as databases, third-party APIs, and parsing libraries) as a source heuristic. Dependency case: an error enum or class imported by five or more logically unrelated modules while many variants belong only to one subsystem. Either case suffices; confirm that the type is a shared internal contract, not merely an adapter at final integration.",
+  "counterexample": "`Context-dependent`. A binary's root error adapter that exists solely to aggregate or map disparate module errors for final logging at the program boundary. A small, highly cohesive utility library with one core purpose may reasonably use one error type.",
+  "fix": "Define small, localized error enums for each bounded module, subsystem, or crate. Translate or combine them only where the application actually integrates those subsystems, so internal APIs expose only relevant failure categories.\n```rust\npub enum PageError {\n    InvalidPage(String),\n}\n```",
+  "strength": "Strong",
+  "source": "*Robert C. Martin - Clean Architecture (2017)*, Chapter 10; *Steve McConnell - Code Complete (2004)*, Chapter 7; *Robert C. Martin - Clean Code*, Chapter 3, \"The Error.java Dependency Magnet\" [24]"
+}

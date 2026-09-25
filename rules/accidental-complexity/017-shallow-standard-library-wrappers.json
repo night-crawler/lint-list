@@ -1,0 +1,13 @@
+{
+  "id": 17,
+  "title": "Shallow Standard-Library Wrappers",
+  "category": "Accidental Complexity",
+  "damaged_code": "```rust\nstruct MapHelper;\n\nimpl MapHelper {\n    pub fn insert_to_map(map: &mut HashMap<String, i32>, k: String, v: i32) {\n        map.insert(k, v);\n    }\n}\n```",
+  "pattern": "A helper function, empty helper struct, or interface boundary merely delegates to a standard-library or collection operation, without adding behavior or hiding meaningful complexity.",
+  "why_bad": "Callers must learn and maintain a custom API for a familiar operation that every developer already knows, increasing interface complexity and cognitive load without any encapsulation benefit.",
+  "detection": "Find functions or public methods whose entire implementation is one standard-library or collection call, forwarding raw arguments through an equivalent signature with no control flow, validation, or meaningful transformation. Include modules or empty structs consisting of such methods; a one-line collection wrapper is the narrow case. This is not a ban on short functions: if the wrapper fixes an argument or discards a result, assess whether that adaptation carries meaningful domain semantics before classifying it as ceremonial.",
+  "counterexample": "`Context-dependent`. Delegation required by a standard trait such as `io::Write` or `Default`; a deliberate thin boundary isolating a volatile external dependency at an API boundary; or a helper that performs authorization checks, logging, or structural validation prior to the operation.",
+  "fix": "Replace calls with the underlying standard operation at all call sites, preserving behavior, then delete the unnecessary helper function or empty helper struct. Retain boundaries that provide the stated isolation or interface obligations.",
+  "strength": "Strong",
+  "source": "John K. Ousterhout, *A Philosophy of Software Design* (2018), Chapter 4 (\"Modules Should Be Deep\"), pp. 25, 290–292; John K. Ousterhout, *A Philosophy of Software Design* (2018), Chapter 4 (\"Modules Should Be Deep - Classitis\"), p. 25."
+}

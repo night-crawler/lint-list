@@ -1,0 +1,13 @@
+{
+  "id": 537,
+  "title": "Connection Pools Oversized for Demand or Server Capacity",
+  "category": "Performance Cargo Cult",
+  "damaged_code": "```rust\n// Service receives ~2 requests per minute; the database allows 100 connections\nlet pool = PgPoolOptions::new()\n    .max_connections(5000) // Massive pool, never measured against demand or server limits\n    .connect(&database_url)\n    .await?;\n```",
+  "pattern": "A database or external-service connection pool is unbounded or sized beyond measured concurrent demand and the server's resource budget.",
+  "why_bad": "Idle connections waste file descriptors, kernel buffers, and server-side threads or processes (often 1-10MB each); excess active connections move contention into the server and can degrade throughput, exhaust database RAM, or trigger server-side connection drops [111, 422, 575, 576].",
+  "detection": "Either (a) a large database/TCP pool (e.g., > 100 connections) is configured for very low traffic without concurrency evidence, or (b) a database pool lacks a maximum cap or exceeds the server's RAM/CPU/connection capacity or is disproportionately larger than the worker thread pool that uses it. The example counts are illustrative, not fixed thresholds.",
+  "counterexample": "Measured high-concurrency workloads (e.g., microservices serving tens of thousands of concurrent requests per second) with capacity-backed pool sizing; modest, calibrated bounded pools sized to match the maximum number of concurrent request-handling threads.",
+  "fix": "Measure concurrent connection demand and the server budget, then set a bounded pool with a small idle baseline (e.g., 5 to 10 connections) and an acquisition timeout. Permit growth only within that budget when profiled concurrency justifies it; do not treat an example count as a universal target.",
+  "strength": "Strong",
+  "source": "*Systems Performance*, Chapter 2 (p. 111); *Release It!*, Section 10 (p. 422); *Pragmatic Programmers - Release It! (Nygard), p. 176, 178 [574, 575, 576]*"
+}

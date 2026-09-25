@@ -1,0 +1,13 @@
+{
+  "id": 646,
+  "title": "Shared Test State Leaks Beyond Its Scope",
+  "category": "Test Smells",
+  "damaged_code": "```rust\n#[test]\nfn test_set_database_url() {\n    std::env::set_var(\"DATABASE_URL\", \"postgres://test_db\");\n    assert_eq!(std::env::var(\"DATABASE_URL\").unwrap(), \"postgres://test_db\");\n    // Missing teardown! The env var stays modified for every later test\n}\n\n#[test]\nfn test_default_database_url() {\n    // FAILS if test_set_database_url runs first (or concurrently)!\n    assert!(std::env::var(\"DATABASE_URL\").is_err());\n}\n```",
+  "pattern": "A test mutates shared globals, environment variables, files, database state, or static singletons without complete isolation or guaranteed restoration of the original state.",
+  "why_bad": "It violates test isolation (hermeticity) and leaks state modifications across tests [507, 657]. Tests become non-deterministic, flaky, and highly order-dependent, unsafe to run concurrently, and produce confusing failures located far from the actual bug [331, 460, 507, 658].",
+  "detection": "Shared state (mutable static globals, environment variables, shared files, shared databases, singletons) is changed inside a test without teardown/rollback or a scoped guard that restores the prior state on every exit path, so other tests can observe the mutation.",
+  "counterexample": "Per-test database instances and file namespaces; suitably isolated thread-local state; scoped RAII guards that automatically restore the value on drop, when no concurrent test can observe the temporary shared state.",
+  "fix": "Prefer per-test resources so each test is hermetic [507]. If shared state is unavoidable, restore its original value with guaranteed teardown (a `tearDown` block, an automated wrapper, or a static setup/teardown setter such as `setTestingInstance`) and prevent concurrent observers via serialization or process isolation where needed [310, 376, 620, 657, 658].",
+  "strength": "Strong",
+  "source": "*   *Software Engineering at Google*, \"Properties common to all test sizes\" (p. 218) [507]\n*   *Working Effectively with Legacy Code*, \"Introduce Static Setter / Static Cling\" (p. 120-125, 372) [310, 331, 620, 653]\n*   *A Philosophy of Software Design*, \"Global variables\" (p. 46) [460]; *   *Working Effectively with Legacy Code*, \"Introduce Static Setter: Cleanup\" (p. 372-376) [657, 658]\n*   *Practical Object-Oriented Design*, \"Massimo Arnoldi on Singletons and Teardown\" (p. 397) [397]"
+}

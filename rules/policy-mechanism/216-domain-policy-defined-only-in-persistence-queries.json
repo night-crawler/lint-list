@@ -1,0 +1,13 @@
+{
+  "id": 216,
+  "title": "Domain Policy Defined Only in Persistence Queries",
+  "category": "Policy Mechanism",
+  "damaged_code": "```rust\nstruct PaymentCalculator;\n\nimpl PaymentCalculator {\n    fn get_total_due_for_active_accounts(&self, db: &Database) -> u64 {\n        // The business definition \"active account = not suspended with positive balance\"\n        // exists only inside this SQL string; the domain has no `is_active` definition.\n        let query = \"SELECT SUM(balance) FROM accounts WHERE suspended = 0 AND balance > 0\";\n        db.query_scalar(query)\n    }\n}\n```",
+  "pattern": "A core business definition or decision (e.g., who qualifies as an \"active account\" or a \"high-value customer\") is embedded solely in SQL, a database view, or a repository/query filter rather than having an explicit domain-owned definition.",
+  "why_bad": "Policy hidden among persistence details is difficult to locate, discuss with domain experts, test independently, and change consistently; SQL strings are rarely checked by the compiler. Separate copies of the same business definition can drift, and entities degrade into mere data containers.",
+  "detection": "Inspect SQL literals, views, and query builders for business-state criteria, thresholds, or calculations that define domain concepts such as active accounts or high-value customers. Confirm that these predicates embody policy rather than mechanical retrieval or indexing, and that the domain has no authoritative definition of the same concept.",
+  "counterexample": "Primary-key or identity lookups and simple status indexing are mechanical retrieval, not domain policy. Efficient database filtering or aggregation is legitimate when it faithfully implements a domain-owned definition; loading every record to evaluate it in memory can be substantially worse.",
+  "fix": "Give the policy a named domain-owned definition. Evaluate it on fetched domain values where appropriate, or translate the same definition into efficient database predicates/aggregation when data volume demands it, preserving all original criteria, arithmetic, aggregation, and consistency semantics rather than substituting a merely similar condition.\n```rust\nimpl Account {\n    fn is_active(&self) -> bool {\n        !self.suspended && self.balance > 0\n    }\n}\n```",
+  "strength": "Contextual",
+  "source": "*Eric Evans - Domain-Driven Design, Chapter 6, Section \"REPOSITORIES\"*; Scott Wlaschin, *Domain Modeling made Functional* (2017), Chapter 10, \"Persistence Ignorance\", p. 211, 471."
+}

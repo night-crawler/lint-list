@@ -1,0 +1,13 @@
+{
+  "id": 48,
+  "title": "Low-Level Errors Leaking Through Domain Interfaces",
+  "category": "Essential Complexity Denial Patterns",
+  "damaged_code": "```rust\n// Domain-level API whose signature names the database driver's error type\nfn get_user_name(&self, id: u32) -> Result<String, sqlx::Error> {\n    self.db.query(\"SELECT name FROM users WHERE id = ?\").bind(id).fetch_one()\n}\n```",
+  "pattern": "A high-level domain or business interface exposes driver-, system-, or infrastructure-specific errors (like `sqlx::Error` or `std::io::Error`) in its signature rather than errors appropriate to its abstraction level, whether as a `Result` error type or as a declared exception specification.",
+  "why_bad": "It breaks encapsulation. Callers become tightly coupled to the underlying database library or I/O engine, so changing a driver or its error vocabulary forces signature and handling changes through every intermediate layer up the stack, preventing modularity and refactoring [28:431].",
+  "detection": "Inspect domain methods and business functions for concrete database, filesystem, or other low-level implementation error types in (a) their `Result`/return error types, or (b) their exception-propagation declarations (`throws`/`throw(...)` clauses). Confirm that the error crosses an intended abstraction boundary rather than belonging to a single-layer utility API.",
+  "counterexample": "Closed single-layer applications or intentionally unified error categories without a separate domain abstraction. A boundary exposing a semantically appropriate domain error instead of a concrete driver error is the desired design:\n\n```rust\nfn get_user_name(&self, id: u32) -> Result<String, DomainError> {\n    self.db.query(\"...\")\n        .bind(id)\n        .fetch_one()\n        .map_err(|e| match e {\n            sqlx::Error::RowNotFound => DomainError::UserNotFound(id),\n            other => DomainError::Storage(other.into()),\n        })\n}\n```",
+  "fix": "Catch the low-level failure at the boundary and translate or wrap it into an accurate domain-level error category that matches the abstraction level of the calling module, preserving the diagnostic cause where appropriate [28:432]. Distinguish missing data from unavailability, timeout, or other failures instead of mapping every error to a not-found result.",
+  "strength": "Contextual",
+  "source": "*Code Complete* (McConnell), Chapter 8 [28:431]; Robert C. Martin, *Clean Code*, Chapter 7."
+}
