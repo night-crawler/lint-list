@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtemp, rm, unlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { extractFindings, planGroups } from "./index";
@@ -143,6 +143,35 @@ describe("snapshot boundaries", () => {
 		expect(scope.diffText).toBe(expected.stdout);
 		expect(scope.deletedFiles).toEqual(["main-only.rs"]);
 		expect(scope.files).toEqual(["shared.rs"]);
+	});
+
+	test(".lintignore excludes paths from diff and full snapshots with gitignore semantics", async () => {
+		const dir = await repository();
+		for (const file of ["kept.rs", "rules/a/1.json", "nested/rules/2.json", "gen/out.rs", "gen/keep.rs", "log.tmp"]) {
+			await mkdir(join(dir, file, ".."), { recursive: true });
+			await writeFile(join(dir, file), "base\n");
+		}
+		await exec("git", ["add", "."], { cwd: dir });
+		await exec("git", ["commit", "-qm", "base"], { cwd: dir });
+		await exec("git", ["checkout", "-qb", "feature"], { cwd: dir });
+		await mkdir(join(dir, "rules/b"), { recursive: true });
+		for (const file of ["kept.rs", "rules/a/1.json", "nested/rules/2.json", "gen/out.rs", "gen/keep.rs", "log.tmp"]) {
+			await writeFile(join(dir, file), "changed\n");
+		}
+		await exec("git", ["mv", "kept.rs", 'rules/b/moved "q".rs'], { cwd: dir });
+		await writeFile(join(dir, ".lintignore"), "# corpus\n/rules/\n*.tmp\ngen/*\n!gen/keep.rs\n");
+
+		const diff = await resolveDiffScope(exec, dir, "main");
+		if (diff?.kind !== "diff") throw new Error("Expected diff scope");
+		expect(diff.files).toEqual(["gen/keep.rs", "nested/rules/2.json"]);
+		expect(diff.deletedFiles).toEqual(["kept.rs"]);
+		expect(diff.diffText.match(/^diff --git .*$/gm)).toEqual([
+			"diff --git a/gen/keep.rs b/gen/keep.rs",
+			"diff --git a/kept.rs b/kept.rs",
+			"diff --git a/nested/rules/2.json b/nested/rules/2.json",
+		]);
+		const full = await resolveFullScope(exec, dir);
+		expect(full.files).toEqual([".lintignore", "gen/keep.rs", "nested/rules/2.json"]);
 	});
 });
 

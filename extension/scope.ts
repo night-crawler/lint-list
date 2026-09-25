@@ -1,5 +1,6 @@
 import { readFile, readdir } from "node:fs/promises";
 import { join, relative } from "node:path";
+import { type LintIgnore, loadLintIgnore } from "./lintignore";
 import type { AuditScope } from "./types";
 
 export type GitExec = (
@@ -64,11 +65,11 @@ function addedFileDiff(file: string, content: string): string {
 	return `${header}@@ -0,0 +1,${lines.length} @@\n${lines.map((line) => `+${line}`).join("\n")}\n${content.endsWith("\n") ? "" : "\\ No newline at end of file\n"}`;
 }
 
-async function snapshotFiles(cwd: string, files: string[]): Promise<{ files: string[]; diffText: string }> {
+async function snapshotFiles(cwd: string, files: string[], ignore: LintIgnore): Promise<{ files: string[]; diffText: string }> {
 	const included: string[] = [];
 	const diffs: string[] = [];
 	for (const file of files) {
-		if (!isSourcePath(file)) continue;
+		if (!isSourcePath(file) || ignore(file)) continue;
 		let content: string;
 		try {
 			content = await readFile(join(cwd, file), "utf8");
@@ -81,6 +82,64 @@ async function snapshotFiles(cwd: string, files: string[]): Promise<{ files: str
 		diffs.push(addedFileDiff(file, content));
 	}
 	return { files: included, diffText: diffs.join("") };
+}
+
+const GIT_QUOTE_ESCAPES: Record<string, number> = { a: 7, b: 8, t: 9, n: 10, v: 11, f: 12, r: 13, '"': 34, "\\": 92 };
+
+/** Decode one git C-quoted path token (`"a/\303\251"`); unquoted tokens pass through. */
+function unquoteGitPath(token: string): string {
+	if (!token.startsWith('"')) return token;
+	const bytes: number[] = [];
+	const end = token.length - 1;
+	for (let i = 1; i < end; ) {
+		const escape = token.indexOf("\\", i);
+		const runEnd = escape < 0 || escape >= end ? end : escape;
+		if (runEnd > i) {
+			bytes.push(...Buffer.from(token.slice(i, runEnd), "utf8"));
+			i = runEnd;
+		} else if (/[0-7]/.test(token[i + 1])) {
+			bytes.push(Number.parseInt(token.slice(i + 1, i + 4), 8));
+			i += 4;
+		} else {
+			const byte = GIT_QUOTE_ESCAPES[token[i + 1]];
+			if (byte === undefined) throw new Error(`Invalid git quoted path ${token}`);
+			bytes.push(byte);
+			i += 2;
+		}
+	}
+	return Buffer.from(bytes).toString("utf8");
+}
+
+/** Destination path of one `diff --git` section: `rename to`/`copy to` when present, else the symmetric header path. */
+function diffSectionPath(section: string): string {
+	const lines = section.split("\n");
+	for (const line of lines.slice(1)) {
+		if (/^(---|\+\+\+|@@|Binary files) /.test(line)) break;
+		const target = /^(?:rename|copy) to (.*)$/.exec(line)?.[1];
+		if (target !== undefined) return unquoteGitPath(target);
+	}
+	const header = lines[0].slice("diff --git ".length);
+	if (header.startsWith('"')) {
+		const end = /^"(?:[^"\\]|\\.)*"/.exec(header)?.[0];
+		if (end) return unquoteGitPath(end).replace(/^a\//, "");
+	} else {
+		const path = header.slice(2, 2 + (header.length - 5) / 2);
+		if (header === `a/${path} b/${path}`) return path;
+	}
+	throw new Error(`Cannot attribute git diff section: ${lines[0]}`);
+}
+
+/** Drop `diff --git` sections whose destination is ignored; kept bytes are unchanged. */
+function filterDiffSections(diffText: string, ignore: LintIgnore): string {
+	const starts: number[] = [];
+	if (diffText.startsWith("diff --git ")) starts.push(0);
+	for (let at = diffText.indexOf("\ndiff --git "); at >= 0; at = diffText.indexOf("\ndiff --git ", at + 1)) starts.push(at + 1);
+	let kept = diffText.slice(0, starts[0] ?? diffText.length);
+	for (let i = 0; i < starts.length; i++) {
+		const section = diffText.slice(starts[i], starts[i + 1] ?? diffText.length);
+		if (!ignore(diffSectionPath(section))) kept += section;
+	}
+	return kept;
 }
 
 /** Read metadata and patch from ONE git diff invocation, including rename/deletion paths without quoting loss. */
@@ -127,9 +186,11 @@ export async function resolveDiffScope(exec: GitExec, cwd: string, baseArg: stri
 		{ cwd, timeout: 15_000 },
 	);
 	if (patch.code !== 0) throw new Error("git diff failed; no audit snapshot was captured");
+	const ignore = await loadLintIgnore(cwd);
 	const files: string[] = [];
 	const deletedFiles: string[] = [];
 	let diffText = "";
+	let ignoredAny = false;
 	if (patch.stdout) {
 		const boundary = patch.stdout.indexOf("\0\0");
 		if (boundary < 0) throw new Error("git diff returned no raw-metadata/patch boundary");
@@ -140,9 +201,11 @@ export async function resolveDiffScope(exec: GitExec, cwd: string, baseArg: stri
 			let file = metadata[i++];
 			if (status === "R" || status === "C") file = metadata[i++];
 			if (!status || file === undefined) throw new Error("Invalid git diff raw metadata");
-			(status === "D" ? deletedFiles : files).push(file);
+			if (ignore(file)) ignoredAny = true;
+			else (status === "D" ? deletedFiles : files).push(file);
 		}
 		diffText = patch.stdout.slice(boundary + 2);
+		if (ignoredAny) diffText = filterDiffSections(diffText, ignore);
 	}
 	return { kind: "diff", base, baseCommit, files, deletedFiles, diffText };
 }
@@ -150,6 +213,7 @@ export async function resolveDiffScope(exec: GitExec, cwd: string, baseArg: stri
 /** Preserve full-tree mode with one all-additions snapshot, not per-rule filesystem scans. */
 export async function resolveFullScope(exec: GitExec, cwd: string): Promise<AuditScope> {
 	const tracked = await exec("git", ["ls-files", "-z", "--cached", "--others", "--exclude-standard"], { cwd, timeout: 15_000 });
+	const ignore = await loadLintIgnore(cwd);
 	const files: string[] = [];
 	if (tracked.code === 0) {
 		files.push(...tracked.stdout.split("\0").filter(Boolean));
@@ -157,11 +221,12 @@ export async function resolveFullScope(exec: GitExec, cwd: string): Promise<Audi
 		const walk = async (dir: string) => {
 			for (const entry of await readdir(dir, { withFileTypes: true })) {
 				if (entry.isDirectory()) {
-					if (SKIPPED_DIRS[entry.name] !== true) await walk(join(dir, entry.name));
+					const path = join(dir, entry.name);
+					if (SKIPPED_DIRS[entry.name] !== true && !ignore(relative(cwd, path), true)) await walk(path);
 				} else if (entry.isFile()) files.push(relative(cwd, join(dir, entry.name)));
 			}
 		};
 		await walk(cwd);
 	}
-	return { kind: "full", ...(await snapshotFiles(cwd, [...new Set(files)].sort())) };
+	return { kind: "full", ...(await snapshotFiles(cwd, [...new Set(files)].sort(), ignore)) };
 }

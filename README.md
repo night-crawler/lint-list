@@ -4,6 +4,7 @@ A corpus of 951 code-smell rules (50 categories, JSON) plus an [omp](https://omp
 **capture one snapshot → predict each lint → validate positive groups → report → (opt-in) fix**.
 
 ```
+.lintignore                   # excludes rules/ from this repo's own audits
 rules/                        # 951 rule JSONs, one directory per category
 classify_lint.py               # standalone configurable OpenAI-compatible classifier
 examples/feature-envy-*.diff   # violating and clean single-rule examples
@@ -14,6 +15,7 @@ extension/                    # the omp extension (lint-audit)
   probabilities.ts            # raw and conditional label-token scoring
   thinking.ts                 # explicit thinking preferences without silent SDK effort promotion
   scope.ts                    # single-pass git diff and full-tree snapshots
+  lintignore.ts               # .lintignore (gitignore-syntax) path exclusions
   report.ts                   # markdown report and confirmed-findings fix prompt
   types.ts                    # rules, predictions, findings and scope
   *.test.ts                   # bun regression tests
@@ -66,6 +68,10 @@ omp -p --auto-approve -e /path/to/lints-list/extension "/lint-audit fix=true"
    `scope=full`, or `auto` when no base is resolvable, also creates an all-additions snapshot of the working tree.
    Full-tree snapshots retain the existing binary, generated-directory and Git-ignore exclusions.
    `scope=diff` forces diff behavior even on `main`/`master`; `base=` only selects the base when using diff scope.
+   Both scopes drop paths matched by `<cwd>/.lintignore` (gitignore syntax: `#` comments, `!` negation, trailing
+   `/` for directories, leading or inner `/` anchors to the file's directory, `*`/`?`/`[...]`/`**`). Diff scope
+   removes matching files from the inventory and their `diff --git` sections from the patch; a rename is judged
+   by its destination path. As in Git, a file below an excluded directory cannot be re-included.
 2. **Predict every rule.** The configured `predictorModel` receives one independent, tool-free structured
    classification request per loaded rule. There is no routing or heuristic prefilter. Request order is:
 
