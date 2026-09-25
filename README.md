@@ -1,10 +1,10 @@
 # lint-list
 
-A corpus of 937 code-smell rules (50 categories, JSON) plus an [omp](https://omp.sh) extension:
+A corpus of 938 code-smell rules (50 categories, JSON) plus an [omp](https://omp.sh) extension:
 **capture one snapshot → predict each lint → validate positive groups → report → (opt-in) fix**.
 
 ```
-rules/                        # 937 rule JSONs, one directory per category
+rules/                        # 938 rule JSONs, one directory per category
 classify_lint.py               # standalone configurable OpenAI-compatible classifier
 examples/feature-envy-*.diff   # violating and clean single-rule examples
 extension/                    # the omp extension (lint-audit)
