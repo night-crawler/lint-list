@@ -7,7 +7,7 @@ export interface Rule {
 	detection?: string;
 	counterexample?: string;
 	fix?: string;
-	/** relative path of the source JSON, for diagnostics */
+	/** Source JSON path relative to the rules directory; excluded from prediction prompts. */
 	_path: string;
 }
 
@@ -48,7 +48,6 @@ export interface GroupResult {
 	raw?: string;
 }
 
-/** Whole-tree audit, or one bounded to the current branch's diff against a base ref. */
 export type AuditScope =
 	| { kind: "full"; files: string[]; diffText: string }
 	| { kind: "diff"; base: string; baseCommit: string; files: string[]; deletedFiles: string[]; diffText: string };

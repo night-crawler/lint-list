@@ -10,7 +10,7 @@ interface IgnoreRule {
 	dirOnly: boolean;
 }
 
-/** Translate one anchored gitignore glob; `*`, `?` and `[...]` never cross `/`, `**` spans segments. */
+// Single-segment wildcards cannot cross `/`; `**` can span directories.
 function compileGlob(glob: string): RegExp {
 	let source = "";
 	for (let i = 0; i < glob.length; i++) {

@@ -1,6 +1,7 @@
 import type { LabelProbabilities } from "./types";
 
 type TokenScore = { token: string; logprob: number };
+type LabelPosition = TokenScore & { top_logprobs: unknown[] };
 
 function tokenScore(value: unknown): TokenScore {
 	if (!value || typeof value !== "object" || !("token" in value) || typeof value.token !== "string" || !("logprob" in value)) {
@@ -15,10 +16,9 @@ function tokenScore(value: unknown): TokenScore {
 export const MIN_LABEL_MASS = 0.95;
 const BOOLEAN_TOKEN = /^[ \t\r\n]*(true|false)[ \t\r\n]*$/;
 
-/** Score only a standalone boolean in an already-validated JSON verdict, never its JSON prefix or reasoning. */
-export function labelProbabilities(positions: unknown[], verdictText: string): LabelProbabilities {
+function findLabelPosition(positions: unknown[], verdictText: string): LabelPosition {
 	if (positions.length === 0) throw new Error("Provider did not return final-answer token logprobs");
-	let labelPosition: (TokenScore & { top_logprobs: unknown[] }) | undefined;
+	let labelPosition: LabelPosition | undefined;
 	let offset = 0;
 	for (const position of positions) {
 		const selected = tokenScore(position);
@@ -34,6 +34,10 @@ export function labelProbabilities(positions: unknown[], verdictText: string): L
 	}
 	if (offset !== verdictText.length) throw new Error("Final-answer logprobs do not cover the complete verdict");
 	if (!labelPosition) throw new Error("Provider did not return a standalone boolean token; split or merged verdicts cannot be scored");
+	return labelPosition;
+}
+
+function labelLogprobs(labelPosition: LabelPosition): Record<"a" | "b", number | null> {
 	const tokens = new Map<string, number>();
 	for (const alternative of labelPosition.top_logprobs) {
 		const score = tokenScore(alternative);
@@ -55,6 +59,12 @@ export function labelProbabilities(positions: unknown[], verdictText: string): L
 		scores[label] = maximum + Math.log(values[label].reduce((sum, value) => sum + Math.exp(value - maximum), 0));
 		if (scores[label] > 1e-12) throw new Error("Label probability exceeds one");
 	}
+	return scores;
+}
+
+/** Score a standalone boolean in a validated JSON verdict; missing alternatives remain unknown. */
+export function labelProbabilities(positions: unknown[], verdictText: string): LabelProbabilities {
+	const scores = labelLogprobs(findLabelPosition(positions, verdictText));
 	const tokenProbabilities = { a: scores.a === null ? null : Math.exp(scores.a), b: scores.b === null ? null : Math.exp(scores.b) };
 	const observedLabelMass = (tokenProbabilities.a ?? 0) + (tokenProbabilities.b ?? 0);
 	if (observedLabelMass > 1 + 1e-12) throw new Error("Combined label probability exceeds one");
@@ -75,21 +85,27 @@ export function labelProbabilities(positions: unknown[], verdictText: string): L
 	};
 }
 
-/** Chat Completions chunks and Responses text deltas carry the same token-score shape. */
+function isObject(value: unknown): value is Record<string, unknown> {
+	return value !== null && typeof value === "object";
+}
+
+/** Read final-answer scores from Chat Completions or Responses SSE data, excluding reasoning chunks. */
 export function readLogprobEvent(data: string): { positions: unknown[]; final: boolean } | undefined {
 	if (!data || data === "[DONE]") return undefined;
 	const event: unknown = JSON.parse(data);
-	if (!event || typeof event !== "object") return undefined;
-	if ("choices" in event && Array.isArray(event.choices)) {
-		const choice = event.choices[0];
+	if (!isObject(event)) return undefined;
+	if (Array.isArray(event.choices)) {
+		const choice: unknown = event.choices[0];
+		if (!isObject(choice)) return undefined;
+		const delta = choice.delta;
 		// Chat endpoints may attach thought-token scores to logprobs.content as well.
 		// Mixed reasoning/text chunks cannot be scored unambiguously either.
-		if (choice?.delta?.reasoning_content || choice?.delta?.reasoning || choice?.delta?.reasoning_text) return undefined;
-		const positions = choice?.logprobs?.content;
+		if (isObject(delta) && (delta.reasoning_content || delta.reasoning || delta.reasoning_text)) return undefined;
+		const positions = isObject(choice.logprobs) ? choice.logprobs.content : undefined;
 		return Array.isArray(positions) ? { positions, final: false } : undefined;
 	}
-	if ("type" in event && (event.type === "response.output_text.delta" || event.type === "response.output_text.done")) {
-		const positions = "logprobs" in event ? event.logprobs : undefined;
+	if (event.type === "response.output_text.delta" || event.type === "response.output_text.done") {
+		const positions = event.logprobs;
 		return Array.isArray(positions) ? { positions, final: event.type === "response.output_text.done" } : undefined;
 	}
 	return undefined;

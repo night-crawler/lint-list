@@ -35,7 +35,7 @@ function sortFindings(findings: Finding[]): Finding[] {
 	});
 }
 
-/** Findings grouped by file; files ordered by their most severe finding, findings within a file by severity then line. */
+// Sorting before grouping makes each file appear at its most severe finding's position.
 function groupByFile(findings: Finding[]): Map<string, Finding[]> {
 	const byFile = new Map<string, Finding[]>();
 	for (const finding of sortFindings(findings)) {
@@ -157,7 +157,7 @@ export function buildReport(input: ReportInput): string {
 	return out.join("\n");
 }
 
-/** Prompt for the main session when fix=true: apply the confirmed findings, nothing else. */
+/** Request changes only for the supplied confirmed findings, with rule-specific fix guidance. */
 export function buildFixMessage(findings: Finding[], rulesById: Map<string, Rule>, reportPath: string): string {
 	const lines = [
 		"# Apply lint audit findings",

@@ -10,7 +10,11 @@ classify_lint.py               # standalone configurable OpenAI-compatible class
 examples/feature-envy-*.diff   # violating and clean single-rule examples
 extension/                    # the omp extension (lint-audit)
   package.json                # omp plugin manifest
-  index.ts                    # command, scope resolution, orchestration
+  index.ts                    # command registration and audit orchestration
+  config.ts                   # settings precedence, argument parsing and numeric limits
+  rules.ts                    # corpus loading and bounded candidate batches
+  progress.ts                 # per-audit progress state and terminal presentation
+  validator.ts                # read-only session lifecycle and structured finding validation
   predictor.ts                # independent binary predictions with a shared cached prefix
   probabilities.ts            # raw and conditional label-token scoring
   thinking.ts                 # explicit thinking preferences without silent SDK effort promotion
@@ -310,6 +314,12 @@ bun test
 The regression suite covers single-pass base-tip diff capture (including diverged branches, renames and unusual
 paths), immutable/full-tree snapshots, strict structured boolean verdicts, low-mass/missing/invalid probabilities,
 token alignment and reasoning separation, bounded candidate groups, malformed validation output and finding order.
+
+Keep behavior with its owning module: configuration validation belongs in `config.ts`, validator session
+events and cleanup in `validator.ts`, and progress counters/rendering in `AuditProgress`. Prediction stream
+scores are isolated per request in `LogprobAccumulator`; pure parsing and report formatting remain functions.
+Use `/** ... */` only for public contracts (observable behavior, constraints, errors, and field semantics).
+Use `//` for non-obvious implementation rationale. Omit comments that only repeat a name or operation.
 
 ## Rule format
 

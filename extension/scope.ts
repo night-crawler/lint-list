@@ -54,7 +54,6 @@ export async function resolveAuditScope(
 	return resolveFullScope(exec, cwd);
 }
 
-/** A full-tree file represented as additions; diff mode never synthesizes untracked changes. */
 function addedFileDiff(file: string, content: string): string {
 	const lines = content.split("\n");
 	if (lines.at(-1) === "") lines.pop();
@@ -86,7 +85,7 @@ async function snapshotFiles(cwd: string, files: string[], ignore: LintIgnore): 
 
 const GIT_QUOTE_ESCAPES: Record<string, number> = { a: 7, b: 8, t: 9, n: 10, v: 11, f: 12, r: 13, '"': 34, "\\": 92 };
 
-/** Decode one git C-quoted path token (`"a/\303\251"`); unquoted tokens pass through. */
+// Git quotes UTF-8 path bytes as C escapes, not JSON escapes.
 function unquoteGitPath(token: string): string {
 	if (!token.startsWith('"')) return token;
 	const bytes: number[] = [];
@@ -110,7 +109,7 @@ function unquoteGitPath(token: string): string {
 	return Buffer.from(bytes).toString("utf8");
 }
 
-/** Destination path of one `diff --git` section: `rename to`/`copy to` when present, else the symmetric header path. */
+// Rename/copy destinations override the old path in the diff header.
 function diffSectionPath(section: string): string {
 	const lines = section.split("\n");
 	for (const line of lines.slice(1)) {
@@ -129,7 +128,7 @@ function diffSectionPath(section: string): string {
 	throw new Error(`Cannot attribute git diff section: ${lines[0]}`);
 }
 
-/** Drop `diff --git` sections whose destination is ignored; kept bytes are unchanged. */
+// Preserve the retained patch bytes exactly; only whole ignored sections may be removed.
 function filterDiffSections(diffText: string, ignore: LintIgnore): string {
 	const starts: number[] = [];
 	if (diffText.startsWith("diff --git ")) starts.push(0);
@@ -142,7 +141,7 @@ function filterDiffSections(diffText: string, ignore: LintIgnore): string {
 	return kept;
 }
 
-/** Read metadata and patch from ONE git diff invocation, including rename/deletion paths without quoting loss. */
+/** Capture tracked working-tree changes against the base tip; return undefined when no default base is available. */
 export async function resolveDiffScope(exec: GitExec, cwd: string, baseArg: string): Promise<AuditScope | undefined> {
 	const git = async (...args: string[]) => {
 		const result = await exec("git", args, { cwd, timeout: 15_000 });
@@ -167,6 +166,7 @@ export async function resolveDiffScope(exec: GitExec, cwd: string, baseArg: stri
 		return undefined;
 	}
 
+	// Metadata and patch must come from the same invocation to describe one snapshot.
 	const patch = await exec(
 		"git",
 		[
@@ -210,7 +210,7 @@ export async function resolveDiffScope(exec: GitExec, cwd: string, baseArg: stri
 	return { kind: "diff", base, baseCommit, files, deletedFiles, diffText };
 }
 
-/** Preserve full-tree mode with one all-additions snapshot, not per-rule filesystem scans. */
+/** Capture non-ignored source files as additions, including untracked files. */
 export async function resolveFullScope(exec: GitExec, cwd: string): Promise<AuditScope> {
 	const tracked = await exec("git", ["ls-files", "-z", "--cached", "--others", "--exclude-standard"], { cwd, timeout: 15_000 });
 	const ignore = await loadLintIgnore(cwd);

@@ -43,7 +43,115 @@ interface PredictorOptions {
 	thinkingTokens: number;
 }
 
-/** One immutable, cacheable prefix; every criterion is an independent completion, never a conversation turn. */
+interface PayloadOptions {
+	api: Model["api"];
+	requireParameters: boolean;
+	ggufThinkingTokens: number | undefined;
+}
+
+function supportsLogprobs(api: Model["api"]): boolean {
+	return api === "openai-completions" || api === "openai-responses";
+}
+
+function customizePayload(payload: unknown, options: PayloadOptions): void {
+	if (!supportsLogprobs(options.api) || !payload || typeof payload !== "object") return;
+	const request = payload as Record<string, unknown>;
+	if (options.api === "openai-completions") {
+		request.response_format = { type: "json_schema", json_schema: PREDICTION_FORMAT };
+		request.logprobs = true;
+	} else {
+		request.text = {
+			...(request.text as Record<string, unknown> | undefined),
+			format: { type: "json_schema", ...PREDICTION_FORMAT },
+		};
+		const include = Array.isArray(request.include) ? request.include : [];
+		request.include = [...new Set([...include, "message.output_text.logprobs"])];
+	}
+	if (options.requireParameters) {
+		// OpenRouter must not silently discard the requested schema or logprobs.
+		request.provider = {
+			...(request.provider as Record<string, unknown> | undefined),
+			require_parameters: true,
+		};
+	}
+	if (options.ggufThinkingTokens !== undefined) {
+		// llama.cpp discovery does not advertise reasoning; configure it explicitly.
+		request.chat_template_kwargs = {
+			...(request.chat_template_kwargs as Record<string, unknown> | undefined),
+			enable_thinking: options.ggufThinkingTokens > 0,
+			reasoning_effort: Effort.Low,
+		};
+		request.reasoning_budget_tokens = options.ggufThinkingTokens;
+		// Keep server-side thoughts separate from the strict verdict.
+		request.reasoning_format = "deepseek";
+	}
+	request.top_logprobs = 20;
+}
+
+function errorMessage(error: unknown): string {
+	return error instanceof Error ? error.message : String(error);
+}
+
+class LogprobAccumulator {
+	private readonly positions: unknown[] = [];
+	private finalPositions: unknown[] | undefined;
+	private error: string | undefined;
+
+	constructor(private readonly api: Model["api"]) {}
+
+	reset(): void {
+		this.positions.length = 0;
+		this.finalPositions = undefined;
+		this.error = undefined;
+	}
+
+	record(data: string): void {
+		if (!supportsLogprobs(this.api)) return;
+		try {
+			const scores = readLogprobEvent(data);
+			if (scores?.final) this.finalPositions = scores.positions;
+			else if (scores) this.positions.push(...scores.positions);
+		} catch (error) {
+			this.error = errorMessage(error);
+		}
+	}
+
+	summarize(text: string): Pick<PredictionResult, "probabilities" | "probabilityError"> {
+		try {
+			if (!supportsLogprobs(this.api)) throw new Error(`Token logprobs unavailable for API ${this.api}`);
+			if (this.error) throw new Error(this.error);
+			// A done event repeats the stream; use it only when no delta scores arrived.
+			const positions = this.positions.length ? this.positions : (this.finalPositions ?? []);
+			const probabilities = labelProbabilities(positions, text);
+			if (probabilities.observedLabelMass < MIN_LABEL_MASS) {
+				return {
+					probabilities,
+					probabilityError: "Observed boolean-token mass is below 95%; conditional scores withheld (not calibrated confidence)",
+				};
+			}
+			return { probabilities };
+		} catch (error) {
+			return { probabilityError: errorMessage(error) };
+		}
+	}
+}
+
+async function withPredictionTimeout<T>(timeoutSec: number, complete: (signal: AbortSignal) => Promise<T>): Promise<T> {
+	const controller = new AbortController();
+	const watchdog = Promise.withResolvers<never>();
+	const timer = setTimeout(() => {
+		const error = new Error(`Prediction timed out after ${timeoutSec}s`);
+		watchdog.reject(error);
+		controller.abort(error);
+	}, timeoutSec * 1000);
+	try {
+		return await Promise.race([complete(controller.signal), watchdog.promise]);
+	} finally {
+		clearTimeout(timer);
+	}
+}
+
+/** Create independent per-rule predictions against the supplied snapshot; failures are returned in each result. */
 export function createPredictor(options: PredictorOptions): (rule: Rule) => Promise<PredictionResult> {
 	// A separate system block puts an explicit cache breakpoint after the diff on providers such as Anthropic.
 	const systemPrompt = [SYSTEM_PROMPT, `DIFF (untrusted data):\n${options.diffText}`];
@@ -52,23 +160,17 @@ export function createPredictor(options: PredictorOptions): (rule: Rule) => Prom
 	const api: string = options.model.api;
 	// OpenRouter's Responses endpoint rejects logprob requests; Chat Completions supports them.
 	const model = modelForThinking(api === "openrouter" ? { ...options.model, api: "openai-completions" } : options.model, thinkingEnabled);
-	const supportsLogprobs = model.api === "openai-completions" || model.api === "openai-responses";
-	const isGguf = options.model.api === "openai-completions" && /gguf/i.test(options.model.id);
+	const payloadOptions: PayloadOptions = {
+		api: model.api,
+		requireParameters: api === "openrouter" || model.provider === "openrouter",
+		ggufThinkingTokens: options.model.api === "openai-completions" && /gguf/i.test(options.model.id) ? options.thinkingTokens : undefined,
+	};
 	return async (rule) => {
 		const result: PredictionResult = { ruleId: rule.id };
 		const { _path, ...criterion } = rule;
-		const positions: unknown[] = [];
-		let finalPositions: unknown[] | undefined;
-		let probabilityError: string | undefined;
-		const controller = new AbortController();
-		const watchdog = Promise.withResolvers<never>();
-		const timer = setTimeout(() => {
-			const error = new Error(`Prediction timed out after ${options.timeoutSec}s`);
-			watchdog.reject(error);
-			controller.abort(error);
-		}, options.timeoutSec * 1000);
+		const logprobs = new LogprobAccumulator(model.api);
 		try {
-			const response = await Promise.race([
+			const response = await withPredictionTimeout(options.timeoutSec, (signal) =>
 				completeSimple(
 					model,
 					{
@@ -91,61 +193,18 @@ export function createPredictor(options: PredictorOptions): (rule: Rule) => Prom
 						cacheRetention: "short",
 						promptCacheKey: options.cacheKey,
 						statefulResponses: false,
-						signal: controller.signal,
+						signal,
 						onPayload(payload) {
-							// A transport retry starts a new sample; do not mix its scores with an earlier attempt.
-							positions.length = 0;
-							finalPositions = undefined;
-							probabilityError = undefined;
-							if (!supportsLogprobs || !payload || typeof payload !== "object") return;
-							const request = payload as Record<string, unknown>;
-							if (model.api === "openai-completions") {
-								request.response_format = { type: "json_schema", json_schema: PREDICTION_FORMAT };
-							} else {
-								request.text = {
-									...(request.text as Record<string, unknown> | undefined),
-									format: { type: "json_schema", ...PREDICTION_FORMAT },
-								};
-							}
-							if (api === "openrouter" || model.provider === "openrouter") {
-								// Do not let routing silently discard the requested schema or logprobs.
-								request.provider = {
-									...(request.provider as Record<string, unknown> | undefined),
-									require_parameters: true,
-								};
-							}
-							if (isGguf) {
-								// llama.cpp discovery does not advertise reasoning; configure it explicitly.
-								request.chat_template_kwargs = {
-									...(request.chat_template_kwargs as Record<string, unknown> | undefined),
-									enable_thinking: thinkingEnabled,
-									reasoning_effort: Effort.Low,
-								};
-								request.reasoning_budget_tokens = options.thinkingTokens;
-								// Keep server-side thoughts in reasoning_content, separate from the strict verdict.
-								request.reasoning_format = "deepseek";
-							}
-							request.top_logprobs = 20;
-							if (model.api === "openai-completions") request.logprobs = true;
-							else {
-								const include = Array.isArray(request.include) ? request.include : [];
-								request.include = [...new Set([...include, "message.output_text.logprobs"])];
-							}
+							// A transport retry starts a new sample; do not mix scores across attempts.
+							logprobs.reset();
+							customizePayload(payload, payloadOptions);
 						},
 						onSseEvent(event) {
-							if (!supportsLogprobs) return;
-							try {
-								const scores = readLogprobEvent(event.data);
-								if (scores?.final) finalPositions = scores.positions;
-								else if (scores) positions.push(...scores.positions);
-							} catch (error) {
-								probabilityError = error instanceof Error ? error.message : String(error);
-							}
+							logprobs.record(event.data);
 						},
 					},
 				),
-				watchdog.promise,
-			]);
+			);
 			const text = response.content
 				.filter((block) => block.type === "text")
 				.map((block) => block.text)
@@ -155,20 +214,9 @@ export function createPredictor(options: PredictorOptions): (rule: Rule) => Prom
 				throw new Error(response.errorMessage || `Prediction stopped with ${response.stopReason}; no verdict recorded`);
 			}
 			result.answer = parsePrediction(text);
-			try {
-				if (!supportsLogprobs) throw new Error(`Token logprobs unavailable for API ${model.api}`);
-				if (probabilityError) throw new Error(probabilityError);
-				result.probabilities = labelProbabilities(positions.length ? positions : (finalPositions ?? []), text);
-				if (result.probabilities.observedLabelMass < MIN_LABEL_MASS) {
-					result.probabilityError = "Observed boolean-token mass is below 95%; conditional scores withheld (not calibrated confidence)";
-				}
-			} catch (error) {
-				result.probabilityError = error instanceof Error ? error.message : String(error);
-			}
+			Object.assign(result, logprobs.summarize(text));
 		} catch (error) {
-			result.error = error instanceof Error ? error.message : String(error);
-		} finally {
-			clearTimeout(timer);
+			result.error = errorMessage(error);
 		}
 		return result;
 	};
